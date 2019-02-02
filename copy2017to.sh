@@ -7,7 +7,7 @@ while getopts "c:y:" option; do case "${option}" in
   y) YEAR="${OPTARG}";;
 esac done
 
-[ "$YEAR" != "2016" -o "$YEAR" != ] && echo ">>> ERROR! Year $YEAR not valid!" && exit 1
+[ "$YEAR" != 2016 -a "$YEAR" != 2018 ] && echo ">>> ERROR! Year $YEAR not valid!" && exit 1
 
 SCRATCHOLD="/scratch/ineuteli/analysis/LQ_2017"
 SCRATCHNEW="/scratch/ineuteli/analysis/LQ_$YEAR"
