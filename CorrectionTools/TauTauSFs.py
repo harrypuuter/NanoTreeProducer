@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
+# https://github.com/truggles/TauTriggerSFs2017/tree/tauTriggers2017_reMiniaod_test/
 '''
 Class to get Tau Trigger SF based on 2017 Rereco data
 and MCv2 (re-miniaod).
@@ -18,12 +19,15 @@ base = 'CorrectionTools/TauTriggerSFs2017/data'
 class TauTauSFs:
     
     def __init__(self, tauWP='medium', wpType='MVA', year=2017):
+        """Load histograms from files."""
         
         # Default to loading the Tau MVA Medium ID based WPs
         self.tauWP = tauWP
         self.wpType = wpType
-        assert( self.tauWP in ['vvloose', 'vloose', 'loose', 'medium', 'tight', 'vtight', 'vvtight'] ), "You must choose a WP from: vvloose, vloose, loose, medium, tight, vtight, or vvtight"
-        assert( self.wpType in ['MVA', 'dR0p3'] ), "Choose from two provided ID types: 'MVA', 'dR0p3'. 'MVA' uses dR0p5, and 'dR0p3' is also an MVA-based ID."
+        
+        assert(year in [2016,2017,2018]), "You must choose a year from: 2016, 2017, or 2018."
+        assert(self.tauWP in ['vvloose', 'vloose', 'loose', 'medium', 'tight', 'vtight', 'vvtight']), "You must choose a WP from: vvloose, vloose, loose, medium, tight, vtight, or vvtight"
+        assert(self.wpType in ['MVA', 'dR0p3']), "Choose from two provided ID types: 'MVA', 'dR0p3'. 'MVA' uses dR0p5, and 'dR0p3' is also an MVA-based ID."
         print "Loading efficiencies for Tau %s ID (%s WP)..." % (self.wpType, self.tauWP)
         
         # Assume this is in CMSSW with the below path structure
@@ -161,30 +165,3 @@ class TauTauSFs:
         sf = effData / effMC
         return sf
     
-    
-    #def getLeptonTauFakeSF(self, genmatch, eta):
-    #    """Get SF for lepton to tau fake."""
-    #    # https://indico.cern.ch/event/715039/timetable/#2-lepton-tau-fake-rates-update
-    #    # https://indico.cern.ch/event/719250/contributions/2971854/attachments/1635435/2609013/tauid_recommendations2017.pdf
-    #    # https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Muon%20to%20tau%20fake%20rate
-    #    eta = abs(eta)
-    #    
-    #    # electron -> tau (VLoose for tautau)
-    #    if genmatch==1:
-    #      if   eta<1.460: return 1.09
-    #      elif eta>1.558: return 1.19
-    #    
-    #    # muon -> tau (Loose for tautau)
-    #    elif genmatch==2:
-    #      if   eta<0.4: return 1.061
-    #      elif eta<0.8: return 1.022
-    #      elif eta<1.2: return 1.097
-    #      elif eta<1.7: return 1.030
-    #      else:         return 1.941
-    #    
-    #    # real tau (Tight)
-    #    #elif genmatch_2==5
-    #    #  return 0.88; // Tight
-    #    
-    #    return 1.0
-        
