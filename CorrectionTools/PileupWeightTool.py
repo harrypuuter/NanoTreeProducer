@@ -14,9 +14,9 @@ class PileupWeightTool:
         assert( sigma in ['central','up','down'] ), "You must choose a s.d. variation from: 'central', 'up', or 'down'."
         
         minbias = '69p2'
-        if sigma='down':
+        if sigma=='down':
           minbias = '66p0168' # -4.6%
-        elif sigma='up':
+        elif sigma=='up':
           minbias = '72p3832' # +4.6%
         
         if year==2016:
