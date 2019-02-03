@@ -54,7 +54,7 @@ samples_2017.cfg
 ```
 and then do, **submit** with something like
 ```
-./submit_qsub.py -c mutau -y 2017
+./submit.py -c mutau -y 2017
 ```
 To **check job success**, you need to ensure that all the output file contains the expected tree with the expected number of events (`-d`):
 ```
@@ -70,7 +70,7 @@ To **resubmit failed jobs**, do:
 ```
 ./resubmit.py -c mutau -y 2017
 ```
-Note: this submission works for the Sun Grid Engine (SGE) system of PSI Tier3 with `qsub`. For other batch systems, one needs to create their own version of `submit_qsub.sh` and `psibatch_runner.sh`.
+Note: this submission works for the Sun Grid Engine (SGE) system of PSI Tier3 with `qsub`. For other batch systems, one needs to create their own version of `submit.sh` and `psibatch_runner.sh`.
 
 
 ## Notes
