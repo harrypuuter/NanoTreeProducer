@@ -9,14 +9,13 @@ class TreeProducerMuMu(TreeProducerCommon):
     def __init__(self, name):
 
         super(TreeProducerMuMu, self).__init__(name)
-        
         print 'TreeProducerMuMu is called', name
         
-        ##################
-        # trees branches #
-        ##################
         
-        # MUON 1
+        ##############
+        #   MUON 1   #
+        ##############
+        
         self.pt_1                           = num.zeros(1, dtype=float)
         self.eta_1                          = num.zeros(1, dtype=float)
         self.phi_1                          = num.zeros(1, dtype=float)
@@ -37,7 +36,11 @@ class TreeProducerMuMu(TreeProducerCommon):
         self.tree.Branch('pfRelIso04_all_1',     self.pfRelIso04_all_1, 'pfRelIso04_all_1/D')
         self.tree.Branch('genPartFlav_1',        self.genPartFlav_1, 'genPartFlav_1/I')
         
-        # MUON 2
+        
+        ##############
+        #   MUON 2   #
+        ##############
+        
         self.pt_2                           = num.zeros(1, dtype=float)
         self.eta_2                          = num.zeros(1, dtype=float)
         self.phi_2                          = num.zeros(1, dtype=float)
@@ -58,7 +61,11 @@ class TreeProducerMuMu(TreeProducerCommon):
         self.tree.Branch('pfRelIso04_all_2',     self.pfRelIso04_all_2, 'pfRelIso04_all_2/D')
         self.tree.Branch('genPartFlav_2',        self.genPartFlav_2, 'genPartFlav_2/I')
         
-        # TAU
+        
+        ###########
+        #   TAU   #
+        ###########
+        
         self.pt_3                           = num.zeros(1, dtype=float)
         self.eta_3                          = num.zeros(1, dtype=float)
         self.m_3                            = num.zeros(1, dtype=float)
@@ -88,5 +95,5 @@ class TreeProducerMuMu(TreeProducerCommon):
         self.tree.Branch('idMVAoldDM2017v2_3',   self.idMVAoldDM2017v2_3, 'idMVAoldDM2017v2_3/I')
         self.tree.Branch('idMVAnewDM2017v2_3',   self.idMVAnewDM2017v2_3, 'idMVAnewDM2017v2_3/I')
         self.tree.Branch('idIso_3',              self.idIso_3, 'idIso_3/I')
-
         
+

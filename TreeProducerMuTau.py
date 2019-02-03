@@ -6,14 +6,15 @@ from TreeProducerCommon import *
 class TreeProducerMuTau(TreeProducerCommon):
 
     def __init__(self, name):
+        
         super(TreeProducerMuTau, self).__init__(name)
         print 'TreeProducerMuTau is called', name
         
-        ##################
-        # trees branches #
-        ##################
         
-        # MUON
+        ############
+        #   MUON   #
+        ############
+        
         self.pt_1                           = num.zeros(1, dtype=float)
         self.eta_1                          = num.zeros(1, dtype=float)
         self.phi_1                          = num.zeros(1, dtype=float)
@@ -36,7 +37,11 @@ class TreeProducerMuTau(TreeProducerCommon):
         
         self.genPartFlav_1[0]  = -1
         
-        # TAU
+        
+        ###########
+        #   TAU   #
+        ###########
+        
         self.pt_2                           = num.zeros(1, dtype=float)
         self.eta_2                          = num.zeros(1, dtype=float)
         self.phi_2                          = num.zeros(1, dtype=float)

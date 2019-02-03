@@ -79,6 +79,7 @@ class TreeProducerCommon(object):
         self.trigweight                 = num.zeros(1, dtype=float)
         self.puweight                   = num.zeros(1, dtype=float)
         self.zptweight                  = num.zeros(1, dtype=float)
+        self.ttptweight                 = num.zeros(1, dtype=float)
         self.idisoweight_1              = num.zeros(1, dtype=float)
         self.idisoweight_2              = num.zeros(1, dtype=float)
         self.btagweight                 = num.zeros(1, dtype=float)
@@ -109,6 +110,7 @@ class TreeProducerCommon(object):
         self.tree.Branch('trigweight',                 self.trigweight, 'trigweight/D')
         self.tree.Branch('puweight',                   self.puweight, 'puweight/D')
         self.tree.Branch('zptweight',                  self.zptweight, 'zptweight/D')
+        self.tree.Branch('ttptweight',                 self.ttptweight, 'ttptweight/D')
         self.tree.Branch('idisoweight_1',              self.idisoweight_1, 'idisoweight_1/D')
         self.tree.Branch('idisoweight_2',              self.idisoweight_2, 'idisoweight_2/D')
         self.tree.Branch('btagweight',                 self.btagweight, 'btagweight/D')
@@ -123,6 +125,7 @@ class TreeProducerCommon(object):
         self.btagweight[0]      = 1.
         self.btagweight_deep[0] = 1.
         self.zptweight[0]       = 1.
+        self.ttptweight[0]      = 1.
         self.genmet[0]          = -1
         self.genmetphi[0]       = -9
         

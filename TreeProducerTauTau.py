@@ -3,14 +3,15 @@ from TreeProducerCommon import *
 class TreeProducerTauTau(TreeProducerCommon):
 
     def __init__(self, name):
+        
         super(TreeProducerTauTau, self).__init__(name)
         print 'TreeProducerTauTau is called', name
         
-        ##################
-        # trees branches #
-        ##################
         
-        # TAU 1
+        #############
+        #   TAU 1   #
+        #############
+        
         self.pt_1                           = num.zeros(1, dtype=float)
         self.eta_1                          = num.zeros(1, dtype=float)
         self.phi_1                          = num.zeros(1, dtype=float)
@@ -86,7 +87,10 @@ class TreeProducerTauTau(TreeProducerCommon):
         self.genvistauphi_1[0] = -9
         
         
-        # TAU 2
+        #############
+        #   TAU 2   #
+        #############
+        
         self.pt_2                           = num.zeros(1, dtype=float)
         self.eta_2                          = num.zeros(1, dtype=float)
         self.phi_2                          = num.zeros(1, dtype=float)
