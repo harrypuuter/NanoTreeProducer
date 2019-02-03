@@ -14,19 +14,16 @@ class MuTauProducer(Module):
 
     def __init__(self, name, dataType, **kwargs):
         
-        year                 = kwargs.get('year',  2017 )
-        tes                  = kwargs.get('tes',   1.0  )
-        doZpt                = kwargs.get('doZpt', 'DY' in name )
-        doTTpt               = kwargs.get('doTTpt', 'TT' in name )
-        channel              = 'mutau'
-        
         self.name            = name
-        self.year            = year
-        self.tes             = tes
         self.out             = TreeProducerMuTau(name)
         self.isData          = dataType=='data'
-        self.doZpt           = doZpt
-        self.doTTpt          = doTTpt
+        self.year            = kwargs.get('year',    2017 )
+        self.tes             = kwargs.get('tes',     1.0  )
+        self.doZpt           = kwargs.get('doZpt',   'DY' in name )
+        self.doTTpt          = kwargs.get('doTTpt',  'TT' in name )
+        self.doTight         = kwargs.get('doTight', self.tes!=1 ) or True
+        self.channel         = 'mutau'
+        year, channel        = self.year, self.channel
         
         setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
@@ -176,6 +173,14 @@ class MuTauProducer(Module):
         #####################################
         
         
+        # VETOS
+        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event, [ltau.id1], [-1], self.channel)
+        self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
+        if self.doTight and (self.out.lepton_vetos[0] or event.Muon_pfRelIso04_all[ltau.id1]>0.15 or\
+                             ord(event.Tau_idAntiMu[ltau.id2])<2 or ord(event.Tau_idAntiEle[ltau.id2])<1):
+          return False
+        
+        
         # JETS
         jetIds  = [ ]
         bjetIds = [ ]
@@ -284,7 +289,7 @@ class MuTauProducer(Module):
         # EVENT
         self.out.isData[0]                     = self.isData
         self.out.run[0]                        = event.run
-        self.out.luminosityBlock[0]            = event.luminosityBlock
+        self.out.lumi[0]                       = event.luminosityBlock
         self.out.event[0]                      = event.event & 0xffffffffffffffff
         self.out.met[0]                        = event.MET_pt
         self.out.metphi[0]                     = event.MET_phi
@@ -377,10 +382,6 @@ class MuTauProducer(Module):
         self.out.pzetamiss[0]  = pzetaMET
         self.out.pzetavis[0]   = pzetaVis
         self.out.dzeta[0]      = pzetaMET - 0.85*pzetaVis
-        
-        
-        # VETOS
-        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event, [ltau.id1], [-1], self.name)
         
         
         # WEIGHTS

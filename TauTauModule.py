@@ -14,19 +14,16 @@ class TauTauProducer(Module):
     
     def __init__(self, name, dataType, **kwargs):
         
-        year                 = kwargs.get('year',  2017 )
-        tes                  = kwargs.get('tes',   1.0  )
-        doZpt                = kwargs.get('doZpt', 'DY' in name )
-        doTTpt               = kwargs.get('doTTpt', 'TT' in name )
-        channel              = 'tautau'
-        
         self.name            = name
-        self.year            = year
-        self.tes             = tes
         self.out             = TreeProducerTauTau(name)
         self.isData          = dataType=='data'
-        self.doZpt           = doZpt
-        self.doTTpt          = doTTpt
+        self.year            = kwargs.get('year',    2017 )
+        self.tes             = kwargs.get('tes',     1.0  )
+        self.doZpt           = kwargs.get('doZpt',   'DY' in name )
+        self.doTTpt          = kwargs.get('doTTpt',  'TT' in name )
+        self.doTight         = kwargs.get('doTight', self.tes!=1 )
+        self.channel         = 'tautau'
+        year, channel        = self.year, self.channel
         
         setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
@@ -374,7 +371,6 @@ class TauTauProducer(Module):
         
         
         # GENERATOR 2
-        #print type(event.Tau_genPartFlav[ditau.id2])
         if not self.isData:
           self.out.genPartFlav_2[0]            = ord(event.Tau_genPartFlav[ditau.id2])
           genvistau = Collection(event, 'GenVisTau')
@@ -401,7 +397,7 @@ class TauTauProducer(Module):
         # EVENT
         self.out.isData[0]                     = self.isData
         self.out.run[0]                        = event.run
-        self.out.luminosityBlock[0]            = event.luminosityBlock
+        self.out.out.lumi[0]                   = event.luminosityBlock
         #print 'event =', event.event & 0xffffffffffffffff, 'original = ', event.event
         self.out.event[0]                      = event.event & 0xffffffffffffffff
         self.out.met[0]                        = event.MET_pt
@@ -510,6 +506,7 @@ class TauTauProducer(Module):
         
         # VETOS
         self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0]  = extraLeptonVetos(event, [-1], [-1], self.name)
+        self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
         
         
         # WEIGHTS
@@ -522,10 +519,10 @@ class TauTauProducer(Module):
           if self.doTTpt:
             toppt1, toppt2 = getTTPTMass(event)
             self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
-          diTauLeg1SF   = self.tauSFs.getTriggerSF(   self.out.pt_1, self.out.eta_1, self.out.phi_1 )
-          diTauLeg2SF   = self.tauSFs.getTriggerSF(   self.out.pt_2, self.out.eta_2, self.out.phi_2 )
-          diTauLeg1SFVT = self.tauSFsVT.getTriggerSF( self.out.pt_1, self.out.eta_1, self.out.phi_1 )
-          diTauLeg2SFVT = self.tauSFsVT.getTriggerSF( self.out.pt_2, self.out.eta_2, self.out.phi_2 )
+          diTauLeg1SF                 = self.tauSFs.getTriggerSF(   self.out.pt_1, self.out.eta_1, self.out.phi_1 )
+          diTauLeg2SF                 = self.tauSFs.getTriggerSF(   self.out.pt_2, self.out.eta_2, self.out.phi_2 )
+          diTauLeg1SFVT               = self.tauSFsVT.getTriggerSF( self.out.pt_1, self.out.eta_1, self.out.phi_1 )
+          diTauLeg2SFVT               = self.tauSFsVT.getTriggerSF( self.out.pt_2, self.out.eta_2, self.out.phi_2 )
           self.out.genweight[0]       = event.genWeight
           self.out.trigweight[0]      = diTauLeg1SF*diTauLeg2SF
           self.out.trigweightVT[0]    = diTauLeg1SFVT*diTauLeg2SFVT

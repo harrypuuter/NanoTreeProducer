@@ -14,17 +14,16 @@ class EleMuProducer(Module):
 
     def __init__(self, name, dataType, **kwargs):
         
-        year                 = kwargs.get('year',  2017 )
-        doZpt                = kwargs.get('doZpt', 'DY' in name )
-        doTTpt               = kwargs.get('doTTpt', 'TT' in name )
-        channel              = 'mumu'
-        
         self.name            = name
-        self.year            = year
         self.out             = TreeProducerEleMu(name)
         self.isData          = dataType=='data'
-        self.doZpt           = doZpt
-        self.doTTpt          = doTTpt
+        self.year            = kwargs.get('year',    2017 )
+        self.tes             = kwargs.get('tes',     1.0  )
+        self.doZpt           = kwargs.get('doZpt',   'DY' in name )
+        self.doTTpt          = kwargs.get('doTTpt',  'TT' in name )
+        self.doTight         = kwargs.get('doTight', self.tes!=1 )
+        self.channel         = 'elemu'
+        year, channel        = self.year, self.channel
         
         setYear(year)
         if year==2016:
@@ -273,7 +272,7 @@ class EleMuProducer(Module):
         # EVENT
         self.out.isData[0]                     = self.isData
         self.out.run[0]                        = event.run
-        self.out.luminosityBlock[0]            = event.luminosityBlock
+        self.out.lumi[0]                       = event.luminosityBlock
         self.out.event[0]                      = event.event & 0xffffffffffffffff
         self.out.met[0]                        = event.MET_pt
         self.out.metphi[0]                     = event.MET_phi
@@ -376,7 +375,8 @@ class EleMuProducer(Module):
         
         
         # VETOS
-        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event, [dilepton.id2], [dilepton.id1], self.name)
+        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event, [dilepton.id2], [dilepton.id1], self.channel)
+        self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
         
         
         # WEIGHTS
