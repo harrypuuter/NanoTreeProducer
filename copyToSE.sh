@@ -70,7 +70,7 @@ for year in $YEAR; do
     done
     [ ! -e $dir ] && echo ">>>   ERROR! $dir does not exist..." && exit 1
   done
-    
+  
   i=0
   N=`echo $FILES | wc -w`
   for f in $FILES; do
@@ -81,5 +81,5 @@ for year in $YEAR; do
     peval "$CMD"
   done
   echo
-
+  
 done
