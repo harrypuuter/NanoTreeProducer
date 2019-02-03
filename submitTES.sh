@@ -8,7 +8,7 @@ CHECKDAS=0
 RESUBMIT=0
 TES_FIRST=0.97
 TES_LAST=1.03
-STEP_SIZE=0.01
+STEP_SIZE=0.002
 TES=`seq $TES_FIRST $STEP_SIZE $TES_LAST`
 while getopts "ac:dcfmry:" option; do case "${option}" in
   a) OPTIONS+=" -a";;
@@ -29,15 +29,15 @@ for year in $YEARS; do
       [[ $tes = 1.000 ]] && continue
       for samplename in $SAMPLES; do
         [[ $samplename = '#'* ]] && continue
-      
+        
         if [ $CHECKDAS -gt 0 ]; then
           peval "./checkFiles.py -c $channel -y $year --tes $tes $OPTIONS"
         elif [ $RESUBMIT -gt 0 ]; then
           peval "./resubmit.py -c $channel -y $year --tes $tes $OPTIONS"
         else
-          peval "./submit_qsub.py -c $channel -y $year --tes $tes $OPTIONS"
+          peval "./submit.py -c $channel -y $year --tes $tes $OPTIONS"
         fi
-      
+        
       done
     done
   done

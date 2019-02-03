@@ -4,7 +4,7 @@ import os, glob, sys, shlex, re
 from commands import getoutput
 from argparse import ArgumentParser
 from checkFiles import getSampleShortName, matchSampleToPattern, header
-from submit_qsub import args, bcolors, createJobs, getFileListPNFS, getFileListDAS, submitJobs, split_seq
+from submit import args, bcolors, createJobs, getFileListPNFS, getFileListDAS, submitJobs, split_seq
 import itertools
 import subprocess
 from ROOT import TFile, Double

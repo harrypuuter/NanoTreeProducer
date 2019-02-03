@@ -52,6 +52,8 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
                                             help="set verbose" )
     args = parser.parse_args()
+else:
+  args = None
 
 subdirs = [ 'TT', 'DY', 'W*J', 'ST', 'LQ', 'Tau', 'SingleMuon', 'SingleElectron' ]
 sample_dict = [
