@@ -105,8 +105,9 @@ def getFileListPNFS(dataset):
     return files
 
 
-def createJobs(jobsfile, filelist, outdir, name, nchunks, channel, year):
+def createJobs(jobsfile, filelist, outdir, name, nchunks, channel, year, **kwargs):
   infiles = [ ]
+  tes     = kwargs.get('tes', 1.)
   for file in filelist:
       #if pattern.find('pnfs')!=-1:
       #    infiles.append("dcap://t3se01.psi.ch:22125/"+ pattern + '/' + file)
@@ -117,10 +118,12 @@ def createJobs(jobsfile, filelist, outdir, name, nchunks, channel, year):
       else:
           #infiles.append("root://cms-xrd-global.cern.ch/"+file)
           infiles.append("root://xrootd-cms.infn.it/"+file)
-  cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s \n'%(','.join(infiles),outdir,name,nchunks,channel,year)
+  cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
+  if tes!=1.:
+    cmd += " --tes %.3f"%(tes)
   if args.verbose:
     print cmd
-  jobsfile.write(cmd)
+  jobsfile.write(cmd+'\n')
   return 1
   
 
@@ -146,6 +149,11 @@ def main():
     years       = args.years
     tes         = args.tes
     batchSystem = 'psibatch_runner.sh'
+    tag         = ""
+    
+    if tes!=1.:
+      tag += "_TES%.3f"%(tes)
+    tag = tag.replace('.','p')
     
     for year in years:
       
@@ -200,7 +208,7 @@ def main():
             
             # JOBLIST
             ensureDirectory('joblist')
-            jobList = 'joblist/joblist%s_%s.txt'%(name,channel)
+            jobList = 'joblist/joblist%s_%s%s.txt'%(name,channel,tag)
             print "Creating job file %s..."%(jobList)
             jobName = getSampleShortName(directory)[1]
             jobs    = open(jobList,'w')
@@ -226,7 +234,7 @@ def main():
             #filelists = list(split_seq(files,1))
             for file in filelists:
             #print "FILES = ",f
-                createJobs(jobs,file,outdir,name,nChunks,channel,year=year)
+                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes)
                 nChunks = nChunks+1
             jobs.close()
             

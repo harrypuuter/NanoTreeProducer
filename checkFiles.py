@@ -18,7 +18,7 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     description = '''Check if the job output files are valid, compare the number of events to DAS (-d), hadd them into one file per sample (-m), and merge datasets (-a).'''
     parser = ArgumentParser(prog="checkFiles",description=description,epilog="Good luck!")
     parser.add_argument('-y', '--year',     dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
@@ -45,6 +45,8 @@ if __name__ == '__main__':
                                             help="veto this sample" )
     parser.add_argument('-t', '--type',     dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                             help="filter data or MC to submit" )
+    parser.add_argument('-T', '--tes',      dest='tes', type=float, default=1.0, action='store',
+                                            help="tau energy scale" )
     parser.add_argument('-l', '--tag',      dest='tag', type=str, default="", action='store',
                                             help="add a tag to the output file" )
     parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
@@ -54,6 +56,7 @@ if __name__ == '__main__':
 subdirs = [ 'TT', 'DY', 'W*J', 'ST', 'LQ', 'Tau', 'SingleMuon', 'SingleElectron' ]
 sample_dict = [
    ('DY',             "DYJetsToLL_M-10to50",              "DYJetsToLL_M-10to50_Tune*madgraph*pythia8"                ),
+   ('DY',             "DYJetsToLL_M-10to50_nlo",          "DYJetsToLL_M-10to50_Tune*amcatnlo*pythia8"                ),
    ('DY',             "DYJetsToLL_M-50_ext",              "DYJetsToLL_M-50_Tune*madgraph*pythia8/*ext1"              ), # ext before reg !
    ('DY',             "DYJetsToLL_M-50_reg",              "DYJetsToLL_M-50_Tune*madgraph*pythia8"                    ),
    ('DY',             "DY1JetsToLL_M-50",                 "DY1JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
@@ -119,12 +122,21 @@ haddsets = [
 
 
 def main(args):
+  #from checkJobs import getSubmittedJobs
   
   years      = args.years
   channels   = args.channels
-  tag        = args.tag
-  if len(tag)>0 and '_' not in tag[0]:
-    tag = '_'+tag
+  outtag     = args.tag
+  intag      = ""
+  tes        = args.tes
+  #submitted  = getSubmittedJobs()
+  
+  if len(outtag)>0 and '_' not in outtag[0]:
+    outtag = '_'+outtag
+  if tes!=1.:
+    intag += "_TES%.3f"%(tes)
+  intag  = intag.replace('.','p')
+  outtag = intag+outtag
   
   for year in years:
     indir      = "output_%s/"%(year)
@@ -165,8 +177,8 @@ def main(args):
             
             subdir, samplename = getSampleShortName(directory)
             outdir  = "%s/%s"%(samplesdir,subdir)
-            outfile = "%s/%s_%s%s.root"%(outdir,samplename,channel,tag)
-            infiles = '%s/*_%s.root'%(directory,channel)
+            outfile = "%s/%s_%s%s.root"%(outdir,samplename,channel,outtag)
+            infiles = '%s/*_%s%s.root'%(directory,channel,intag)
             
             if args.verbose:
               print "directory = %s"%(directory)
@@ -177,6 +189,7 @@ def main(args):
             #if directory.find('W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8__ytakahas-NanoTest_20180507_W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8-a7a5b67d3e3590e4899e147be08660be__USER')==-1: continue
             filelist = glob.glob(infiles)
             if not filelist: continue
+            #running = [f for f in filelist if any(j.outfile in f for j in submitted)]
             
             if checkFiles(filelist,directory):
               print bcolors.BOLD + bcolors.OKGREEN + '[OK] ' + directory + ' ... can be hadded ' + bcolors.ENDC
@@ -243,8 +256,8 @@ def main(args):
               sampleset  = [s.replace('$RUN','Run%d'%year) for s in sampleset]
             
             outdir  = "%s/%s"%(samplesdir,subdir)
-            outfile = "%s/%s_%s%s.root"%(outdir,samplename,channel,tag)
-            infiles = ['%s/%s_%s%s.root'%(outdir,s,channel,tag) for s in sampleset] #.replace('ele','e')
+            outfile = "%s/%s_%s%s.root"%(outdir,samplename,channel,outtag)
+            infiles = ['%s/%s_%s%s.root'%(outdir,s,channel,outtag) for s in sampleset] #.replace('ele','e')
             ensureDirectory(outdir)
             
             # OVERWRITE ?
@@ -298,7 +311,7 @@ def isValidSample(pattern):
   return True
 
 
-indexpattern = re.compile(r".*_(\d+)_[a-z]+\.root")
+indexpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?\.root")
 def checkFiles(filelist,directory):
     if args.verbose:
       print "checkFiles: %s, %s"%(filelist,directory)
@@ -336,11 +349,14 @@ def checkFiles(filelist,directory):
       return False
     
     # TODO: check all chunks (those>imax)
-    imax = max(ifound)+1
-    if len(filelist)<imax:
-      imiss = [ i for i in range(0,max(ifound)) if i not in ifound ]
-      chunktext = ('chunks ' if len(imiss)>1 else 'chunk ') + ', '.join(str(i) for i in imiss)
-      print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files (%s) ?"%(directory,len(imiss),len(filelist),chunktext) + bcolors.ENDC
+    if ifound:
+      imax = max(ifound)+1
+      if len(filelist)<imax:
+        imiss = [ i for i in range(0,max(ifound)) if i not in ifound ]
+        chunktext = ('chunks ' if len(imiss)>1 else 'chunk ') + ', '.join(str(i) for i in imiss)
+        print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files (%s) ?"%(directory,len(imiss),len(filelist),chunktext) + bcolors.ENDC
+    else:
+      print bcolors.BOLD + bcolors.WARNING + "[WN] %s did not find any valid chunk pattern in file list ?"%(directory) + bcolors.ENDC
     
     return True
     
