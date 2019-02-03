@@ -6,42 +6,44 @@ from TreeProducerMuMu import *
 from CorrectionTools.MuonSFs import *
 from CorrectionTools.PileupWeightTool import *
 from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass
+from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass, getTTPTMass
 
 
 class MuMuProducer(Module):
     
     def __init__(self, name, dataType, **kwargs):
         
-        year        = kwargs.get('year',  2017 )
-        doZpt       = kwargs.get('doZpt', 'DY' in name )
-        channel     = 'mumu'
+        year                 = kwargs.get('year',  2017 )
+        doZpt                = kwargs.get('doZpt', 'DY' in name )
+        doTTpt               = kwargs.get('doTTpt', 'TT' in name )
+        channel              = 'mumu'
         
-        self.name   = name
-        self.year   = year
-        self.out    = TreeProducerMuMu(name)
-        self.isData = dataType=='data'
-        self.doZpt  = doZpt
+        self.name            = name
+        self.year            = year
+        self.out             = TreeProducerMuMu(name)
+        self.isData          = dataType=='data'
+        self.doZpt           = doZpt
+        self.doTTpt          = doTTpt
         
         setYear(year)
-        self.vlooseIso    = getVLooseTauIso(year)
+        self.vlooseIso       = getVLooseTauIso(year)
         if year==2016:
-          self.trigger    = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
-          self.muon1CutPt = 23
+          self.trigger       = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
+          self.muon1CutPt    = 23
         else:
-          self.trigger    = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27
-          self.muon1CutPt = 25
-        self.muon2CutPt   = 15
+          self.trigger       = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27
+          self.muon1CutPt    = 25
+        self.muon2CutPt      = 15
         
         if not self.isData:
-          self.muSFs     = MuonSFs(year=year)
-          self.puTool    = PileupWeightTool(year=year)
+          self.muSFs         = MuonSFs(year=year)
+          self.puTool        = PileupWeightTool(year=year)
           self.btagTool      = BTagWeightTool('CSVv2','medium',channel='mutau',year=year)
           self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel='mutau',year=year)
-          if self.doZpt:
+          if self.doZpt or self.doTTpt:
             self.recoilTool  = RecoilCorrectionTool(year=year)
-        self.csvv2_wp    = BTagWPs('CSVv2',year=year)
-        self.deepcsv_wp  = BTagWPs('DeepCSV',year=year)
+        self.csvv2_wp        = BTagWPs('CSVv2',year=year)
+        self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
         self.Nocut = 0
         self.Trigger = 1
@@ -62,15 +64,14 @@ class MuMuProducer(Module):
         
     def beginJob(self):
         pass
-    
+        
     def endJob(self):
         self.out.outputfile.Write()
         self.out.outputfile.Close()
-    
+        
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
-
-
+        
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):        
         pass
         
@@ -181,17 +182,8 @@ class MuMuProducer(Module):
           self.btagTool.fillEfficiencies(event,jetIds)
           self.btagTool_deep.fillEfficiencies(event,jetIds)
         
-        #eventSum = ROOT.TLorentzVector()
-        #
-        #for lep in muons :
-        #    eventSum += lep.p4()
-        #for lep in electrons :
-        #    eventSum += lep.p4()
-        #for j in filter(self.jetSel,jets):
-        #    eventSum += j.p4()
         
-        
-        # MUONS
+        # MUON 1
         self.out.pt_1[0]                       = event.Muon_pt[dilepton.id1]
         self.out.eta_1[0]                      = event.Muon_eta[dilepton.id1]
         self.out.phi_1[0]                      = event.Muon_phi[dilepton.id1]
@@ -201,6 +193,8 @@ class MuMuProducer(Module):
         self.out.q_1[0]                        = event.Muon_charge[dilepton.id1]
         self.out.pfRelIso04_all_1[0]           = event.Muon_pfRelIso04_all[dilepton.id1]
         
+        
+        # MUON 2
         self.out.pt_2[0]                       = event.Muon_pt[dilepton.id2]
         self.out.eta_2[0]                      = event.Muon_eta[dilepton.id2]
         self.out.phi_2[0]                      = event.Muon_phi[dilepton.id2]
@@ -210,12 +204,8 @@ class MuMuProducer(Module):
         self.out.q_2[0]                        = event.Muon_charge[dilepton.id2]
         self.out.pfRelIso04_all_2[0]           = event.Muon_pfRelIso04_all[dilepton.id2]
         
-        if not self.isData:
-            self.out.genPartFlav_1[0]          = ord(event.Muon_genPartFlav[dilepton.id1])
-            self.out.genPartFlav_2[0]          = ord(event.Muon_genPartFlav[dilepton.id2])
         
-        
-        # TAU
+        # TAU for jet -> tau fake rate measurement
         maxId = -1
         maxPt = 20
         taus  = Collection(event, 'Tau')
@@ -279,6 +269,8 @@ class MuMuProducer(Module):
         self.out.npvsGood[0]                   = event.PV_npvsGood
         
         if not self.isData:
+          self.out.genPartFlav_1[0]            = ord(event.Muon_genPartFlav[dilepton.id1])
+          self.out.genPartFlav_2[0]            = ord(event.Muon_genPartFlav[dilepton.id2])
           self.out.genmet[0]                   = event.GenMET_pt
           self.out.genmetphi[0]                = event.GenMET_phi
           self.out.nPU[0]                      = event.Pileup_nPU
@@ -366,7 +358,7 @@ class MuMuProducer(Module):
         
         
         # VETOS
-        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0]  = extraLeptonVetos(event, [dilepton.id1, dilepton.id2], [-1], self.name)
+        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event, [dilepton.id1, dilepton.id2], [-1], self.name)
         
         
         # WEIGHTS
@@ -376,6 +368,9 @@ class MuMuProducer(Module):
             self.out.m_genboson[0]    = zboson.M()
             self.out.pt_genboson[0]   = zboson.Pt()
             self.out.zptweight[0]     = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+          if self.doTTpt:
+            toppt1, toppt2 = getTTPTMass(event)
+            self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
           self.out.genweight[0]       = event.genWeight
           self.out.puweight[0]        = self.puTool.getWeight(event.Pileup_nTrueInt)
           self.out.trigweight[0]      = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])

@@ -7,45 +7,47 @@ from CorrectionTools.MuonSFs import *
 from CorrectionTools.PileupWeightTool import *
 from CorrectionTools.LeptonTauFakeSFs import *
 from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass
+from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass, getTTPTMass
 
 
 class MuTauProducer(Module):
 
     def __init__(self, name, dataType, **kwargs):
         
-        year             = kwargs.get('year',  2017 )
-        tes              = kwargs.get('tes',   1.0  )
-        channel          = 'mutau'
+        year                 = kwargs.get('year',  2017 )
+        tes                  = kwargs.get('tes',   1.0  )
+        doZpt                = kwargs.get('doZpt', 'DY' in name )
+        doTTpt               = kwargs.get('doTTpt', 'TT' in name )
+        channel              = 'mutau'
         
-        self.name        = name
-        self.year        = year
-        self.tes         = tes
-        self.out         = TreeProducerMuTau(name)
-        self.isData      = dataType=='data'
-        self.doZpt       = 'DY' in self.name
-        
+        self.name            = name
+        self.year            = year
+        self.tes             = tes
+        self.out             = TreeProducerMuTau(name)
+        self.isData          = dataType=='data'
+        self.doZpt           = doZpt
+        self.doTTpt          = doTTpt
         
         setYear(year)
-        self.vlooseIso   = getVLooseTauIso(year)
+        self.vlooseIso       = getVLooseTauIso(year)
         if year==2016:
-          self.trigger   = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
-          self.muonCutPt = 23
+          self.trigger       = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
+          self.muonCutPt     = 23
         else:
-          self.trigger   = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27
-          self.muonCutPt = 25
-        self.tauCutPt    = 20
+          self.trigger       = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27 #or e.HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1
+          self.muonCutPt     = 25
+        self.tauCutPt        = 20
         
         if not self.isData:
-          self.muSFs     = MuonSFs(year=year)
-          self.puTool    = PileupWeightTool(year=year)
-          self.ltfSFs    = LeptonTauFakeSFs('tight','vloose',year=year)
+          self.muSFs         = MuonSFs(year=year)
+          self.puTool        = PileupWeightTool(year=year)
+          self.ltfSFs        = LeptonTauFakeSFs('tight','vloose',year=year)
           self.btagTool      = BTagWeightTool('CSVv2','medium',channel=channel,year=year)
           self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
-          if self.doZpt:
+          if self.doZpt or self.doTTpt:
             self.recoilTool  = RecoilCorrectionTool(year=year)
-        self.csvv2_wp    = BTagWPs('CSVv2',year=year)
-        self.deepcsv_wp  = BTagWPs('DeepCSV',year=year)
+        self.csvv2_wp        = BTagWPs('CSVv2',year=year)
+        self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
         self.Nocut = 0
         self.Trigger = 1
@@ -388,6 +390,9 @@ class MuTauProducer(Module):
             self.out.m_genboson[0]    = zboson.M()
             self.out.pt_genboson[0]   = zboson.Pt()
             self.out.zptweight[0]     = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+          if self.doTTpt:
+            toppt1, toppt2 = getTTPTMass(event)
+            self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
           self.out.genweight[0]       = event.genWeight
           self.out.puweight[0]        = self.puTool.getWeight(event.Pileup_nTrueInt)
           self.out.trigweight[0]      = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])

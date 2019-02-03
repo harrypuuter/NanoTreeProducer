@@ -7,46 +7,49 @@ from CorrectionTools.ElectronSFs import *
 from CorrectionTools.PileupWeightTool import *
 from CorrectionTools.LeptonTauFakeSFs import *
 from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass
+from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass, getTTPTMass
 
 
 class EleTauProducer(Module):
     
     def __init__(self, name, dataType, **kwargs):
         
-        year           = kwargs.get('year',  2017 )
-        tes            = kwargs.get('tes',   1.0  )
-        channel        = 'eletau'
+        year                 = kwargs.get('year',  2017 )
+        tes                  = kwargs.get('tes',   1.0  )
+        doZpt                = kwargs.get('doZpt', 'DY' in name )
+        doTTpt               = kwargs.get('doTTpt', 'TT' in name )
+        channel              = 'eletau'
         
-        self.name      = name
-        self.year      = year
-        self.tes       = tes
-        self.out       = TreeProducerEleTau(name)
-        self.isData    = dataType=='data'
-        self.doZpt     = 'DY' in self.name
+        self.name            = name
+        self.year            = year
+        self.tes             = tes
+        self.out             = TreeProducerEleTau(name)
+        self.isData          = dataType=='data'
+        self.doZpt           = doZpt
+        self.doTTpt          = doTTpt
         
         setYear(year)
-        self.vlooseIso = getVLooseTauIso(year)
+        self.vlooseIso       = getVLooseTauIso(year)
         if year==2016:
-          self.trigger = lambda e: e.HLT_Ele25_eta2p1_WPTight_Gsf or e.HLT_Ele45_WPLoose_Gsf_L1JetTauSeeded #or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20_SingleL1 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau30
-          self.electronCutPt = 26
+          self.trigger       = lambda e: e.HLT_Ele25_eta2p1_WPTight_Gsf or e.HLT_Ele45_WPLoose_Gsf_L1JetTauSeeded #or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20_SingleL1 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau30
+          self.eleCutPt      = 26
         else:
           # HLT_Ele32_WPTight_Gsf_L1DoubleEG
           # HLT_Ele32_WPTight_Gsf
-          self.trigger = lambda e: e.HLT_Ele35_WPTight_Gsf or e.HLT_Ele32_WPTight_Gsf
-          self.electronCutPt = 36
-        self.tauCutPt  = 20
+          self.trigger       = lambda e: e.HLT_Ele35_WPTight_Gsf or e.HLT_Ele32_WPTight_Gsf
+          self.eleCutPt      = 36
+        self.tauCutPt        = 20
         
         if not self.isData:
-          self.eleSFs   = ElectronSFs(year=year)
-          self.puTool   = PileupWeightTool(year=year)
-          self.ltfSFs   = LeptonTauFakeSFs('loose','tight',year=year)
+          self.eleSFs        = ElectronSFs(year=year)
+          self.puTool        = PileupWeightTool(year=year)
+          self.ltfSFs        = LeptonTauFakeSFs('loose','tight',year=year)
           self.btagTool      = BTagWeightTool('CSVv2','medium',channel=channel,year=year)
           self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
-          if self.doZpt:
+          if self.doZpt or self.doTTpt:
             self.recoilTool  = RecoilCorrectionTool(year=year)
-        self.csvv2_wp   = BTagWPs('CSVv2',year=year)
-        self.deepcsv_wp = BTagWPs('DeepCSV',year=year)
+        self.csvv2_wp        = BTagWPs('CSVv2',year=year)
+        self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
         self.Nocut = 0
         self.Trigger = 1
@@ -114,7 +117,7 @@ class EleTauProducer(Module):
         
         idx_goodelectrons = [ ]
         for ielectron in range(event.nElectron):
-            if event.Electron_pt[ielectron] < self.electronCutPt: continue
+            if event.Electron_pt[ielectron] < self.eleCutPt: continue
             if abs(event.Electron_eta[ielectron]) > 2.1: continue
             if abs(event.Electron_dz[ielectron]) > 0.2: continue
             if abs(event.Electron_dxy[ielectron]) > 0.045: continue
@@ -133,6 +136,9 @@ class EleTauProducer(Module):
         
         idx_goodtaus = [ ]
         for itau in range(event.nTau):
+            #if self.tes!=1.0:
+            #  event.Tau_pt[itau]   *= self.tes
+            #  event.Tau_mass[itau] *= self.tes
             if event.Tau_pt[itau] < self.tauCutPt: continue
             if abs(event.Tau_eta[itau]) > 2.3: continue
             if abs(event.Tau_dz[itau]) > 0.2: continue
@@ -223,9 +229,9 @@ class EleTauProducer(Module):
         self.out.pfRelIso03_all_1[0]           = event.Electron_pfRelIso03_all[ltau.id1]
         self.out.cutBased_1[0]                 = event.Electron_cutBased[ltau.id1]
         self.out.mvaFall17Iso_1[0]             = getvar(event,'Electron_mvaFall17Iso')[ltau.id1]
+        self.out.mvaFall17Iso_WPL_1[0]         = getvar(event,'Electron_mvaFall17Iso_WPL')[ltau.id1]
         self.out.mvaFall17Iso_WP80_1[0]        = getvar(event,'Electron_mvaFall17Iso_WP80')[ltau.id1]
         self.out.mvaFall17Iso_WP90_1[0]        = getvar(event,'Electron_mvaFall17Iso_WP90')[ltau.id1]
-        self.out.mvaFall17Iso_WPL_1[0]         = getvar(event,'Electron_mvaFall17Iso_WPL')[ltau.id1]
         
         
         # TAU
@@ -308,7 +314,6 @@ class EleTauProducer(Module):
           self.out.genmetphi[0]                = event.GenMET_phi
           self.out.nPU[0]                      = event.Pileup_nPU
           self.out.nTrueInt[0]                 = event.Pileup_nTrueInt
-          self.out.genWeight[0]                = event.genWeight
           try:
             self.out.LHE_Njets[0]              = event.LHE_Njets
           except RuntimeError:
@@ -397,6 +402,9 @@ class EleTauProducer(Module):
             self.out.m_genboson[0]    = zboson.M()
             self.out.pt_genboson[0]   = zboson.Pt()
             self.out.zptweight[0]     = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+          if self.doTTpt:
+            toppt1, toppt2 = getTTPTMass(event)
+            self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
           self.out.genweight[0]       = event.genWeight
           self.out.puweight[0]        = self.puTool.getWeight(event.Pileup_nTrueInt)
           self.out.trigweight[0]      = self.eleSFs.getTriggerSF(self.out.pt_1[0], self.out.eta_1[0])
@@ -404,7 +412,7 @@ class EleTauProducer(Module):
           self.out.idisoweight_2[0]   = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
           self.out.btagweight[0]      = self.btagTool.getWeight(event,jetIds)
           self.out.btagweight_deep[0] = self.btagTool_deep.getWeight(event,jetIds)
-          self.out.weight[0]          = self.out.genWeight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
+          self.out.weight[0]          = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
         
         
         self.out.tree.Fill()

@@ -7,47 +7,56 @@ from CorrectionTools.TauTauSFs import TauTauSFs
 from CorrectionTools.PileupWeightTool import PileupWeightTool
 from CorrectionTools.LeptonTauFakeSFs import LeptonTauFakeSFs
 from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass
+from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass, getTTPTMass
 
 
 class TauTauProducer(Module):
-
+    
     def __init__(self, name, dataType, **kwargs):
         
-        year           = kwargs.get('year',  2017 )
-        tes            = kwargs.get('tes',   1.0  )
-        channel        = 'tautau'
+        year                 = kwargs.get('year',  2017 )
+        tes                  = kwargs.get('tes',   1.0  )
+        doZpt                = kwargs.get('doZpt', 'DY' in name )
+        doTTpt               = kwargs.get('doTTpt', 'TT' in name )
+        channel              = 'tautau'
         
-        self.name      = name
-        self.year      = year
-        self.tes       = tes
-        self.out       = TreeProducerTauTau(name)
-        self.isData    = dataType=='data'
-        self.doZpt     = 'DY' in self.name
+        self.name            = name
+        self.year            = year
+        self.tes             = tes
+        self.out             = TreeProducerTauTau(name)
+        self.isData          = dataType=='data'
+        self.doZpt           = doZpt
+        self.doTTpt          = doTTpt
         
         setYear(year)
-        self.vlooseIso = getVLooseTauIso(year)
-        if year==2017:
-          self.trigger = lambda e: e.HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg or e.HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg or e.HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg
+        self.vlooseIso       = getVLooseTauIso(year)
+        if year==2016:
+          if self.isData:
+            self.trigger     = lambda e: e.HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg \
+                               if e.run<280919 else e.HLT_DoubleMediumCombinedIsoPFTau35_Trk1_eta2p1_Reg
+          else:
+            self.trigger     = lambda e: e.HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg or e.HLT_DoubleMediumCombinedIsoPFTau35_Trk1_eta2p1_Reg
+        elif year==2017:
+            self.trigger     = lambda e: e.HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg or e.HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg or e.HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg
         else:
           if self.isData:
-            self.trigger = lambda e: e.HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg or e.HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg or e.HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg \
-                                       if e.run<317509 else e.HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg
+            self.trigger     = lambda e: e.HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg or e.HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg or e.HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg \
+                               if e.run<317509 else e.HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg
           else:
-            self.trigger = lambda e: e.HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg
-        self.tauCutPt = 40
+            self.trigger     = lambda e: e.HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg
+        self.tauCutPt        = 40
         
         if not self.isData:
-          self.tauSFs   = TauTauSFs('tight',year=year)
-          self.tauSFsVT = TauTauSFs('vtight',year=year)
-          self.ltfSFs   = LeptonTauFakeSFs('loose','vloose',year=year)
-          self.puTool   = PileupWeightTool(year=year)
+          self.tauSFs        = TauTauSFs('tight',year=year)
+          self.tauSFsVT      = TauTauSFs('vtight',year=year)
+          self.ltfSFs        = LeptonTauFakeSFs('loose','vloose',year=year)
+          self.puTool        = PileupWeightTool(year=year)
           self.btagTool      = BTagWeightTool('CSVv2','medium',channel=channel,year=year)
           self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
-          if self.doZpt:
+          if self.doZpt or self.doTTpt:
             self.recoilTool  = RecoilCorrectionTool(year=year)
-        self.csvv2_wp   = BTagWPs('CSVv2',year=year)
-        self.deepcsv_wp = BTagWPs('DeepCSV',year=year)
+        self.csvv2_wp        = BTagWPs('CSVv2',year=year)
+        self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
         self.Nocut = 0
         self.Trigger = 1
@@ -193,7 +202,9 @@ class TauTauProducer(Module):
         
         idx_goodtaus = [ ]
         for itau in range(event.nTau):
-            #print 'pt=', event.Tau_pt[itau], abs(event.Tau_eta[itau])
+            #if self.tes!=1.0:
+            #  event.Tau_pt[itau]   *= self.tes
+            #  event.Tau_mass[itau] *= self.tes
             if event.Tau_pt[itau] < self.tauCutPt: continue
             if abs(event.Tau_eta[itau]) > 2.1: continue
             if abs(event.Tau_dz[itau]) > 0.2: continue
@@ -508,6 +519,9 @@ class TauTauProducer(Module):
             self.out.m_genboson[0]    = zboson.M()
             self.out.pt_genboson[0]   = zboson.Pt()
             self.out.zptweight[0]     = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+          if self.doTTpt:
+            toppt1, toppt2 = getTTPTMass(event)
+            self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
           diTauLeg1SF   = self.tauSFs.getTriggerSF(   self.out.pt_1, self.out.eta_1, self.out.phi_1 )
           diTauLeg2SF   = self.tauSFs.getTriggerSF(   self.out.pt_2, self.out.eta_2, self.out.phi_2 )
           diTauLeg1SFVT = self.tauSFsVT.getTriggerSF( self.out.pt_1, self.out.eta_1, self.out.phi_1 )
@@ -525,8 +539,7 @@ class TauTauProducer(Module):
         
         self.out.tree.Fill() 
         return True
-
+        
 
 # define modules using the syntax 'name = lambda : constructor' to avoid having them loaded when not needed
-
-#TauTauModule = lambda : TauTauProducer(jetSelection= lambda j : j.pt > 30) 
+# TauTauModule = lambda : TauTauProducer(jetSelection= lambda j : j.pt > 30)
