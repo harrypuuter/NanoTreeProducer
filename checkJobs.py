@@ -242,14 +242,16 @@ def average(jobs):
   return printTime(sum(runtimes)/len(runtimes))
   
 
-def getRunningJobs():
-    jobs      = [ ]
-    stuck     = [ ]
-    running   = [ ]
-    waiting   = [ ]
-    process   = subprocess.Popen("qstat", stdout=subprocess.PIPE, shell=True)
-    (out,err) = process.communicate()
-    status    = process.wait()
+
+def getSubmittedJobs(running=False,count=False):
+    runningOnly = False
+    jobs        = [ ]
+    stuck       = [ ]
+    running     = [ ]
+    waiting     = [ ]
+    process     = subprocess.Popen('qstat', stdout=subprocess.PIPE, shell=True)
+    (out,err)   = process.communicate()
+    status      = process.wait()
     for line in out.split('\n'):
       match = qstatpattern.match(line)
       if match:
@@ -267,10 +269,15 @@ def getRunningJobs():
             running.append(job)
           if job.stuck:
             stuck.append(job)
-    print ">>>  waiting: %4d /%4d"%(len(waiting),len(jobs))
-    print ">>>  stuck:   %4d /%4d"%(len(stuck),len(jobs))
-    print ">>>  running: %4d /%4d"%(len(running),len(jobs))
-    #print ">>>  running: %4d /%4d, %12s"%(len(running),len(jobs),average(running))
+    if count:
+      print ">>>  waiting: %4d /%4d"%(len(waiting),len(jobs))
+      print ">>>  stuck:   %4d /%4d"%(len(stuck),len(jobs))
+      print ">>>  running: %4d /%4d"%(len(running),len(jobs))
+      #print ">>>  running: %4d /%4d, %12s"%(len(running),len(jobs),average(running))
+    if runningOnly:
+      return running
+    return jobs
+    
 
 
 def main(args):
@@ -280,7 +287,7 @@ def main(args):
   njobs      = args.njobs
   
   if args.running:
-    getRunningJobs()
+    getSubmittedJobs()
     return
   
   for year in years:
