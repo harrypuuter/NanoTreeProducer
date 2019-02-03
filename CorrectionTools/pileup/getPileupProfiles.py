@@ -4,18 +4,20 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmV2018Analysis
 # https://twiki.cern.ch/twiki/bin/view/CMS/TWikiLUM#PileupInformation
 
-import os, sys
+import os, sys, shutil
 from argparse import ArgumentParser
 import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
 from ROOT import TFile, TTree
 
 argv = sys.argv
-description = '''This script make some checks.'''
+description = '''This script makes pileup profiles for MC and data.'''
 parser = ArgumentParser(prog="pileup",description=description,epilog="Succes!")
 parser.add_argument('-y', '--year',     dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2018], action='store',
                                         help="select year" )
 parser.add_argument('-c', '--channel',  dest='channel', choices=['mutau','etau'], type=str, default='mutau', action='store',
                                         help="select channel" )
+parser.add_argument('-t', '--type',     dest='types', choices=['data','mc'], type=str, nargs='+', default=['data','mc'], action='store',
+                                        help="make profile for data and/or MC" )
 parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true', 
                                         help="print verbose" )
 args = parser.parse_args()
@@ -56,14 +58,20 @@ def getMCProfile(outfilename,indir,samples,channel,year):
     
 
 
-def getDataProfile(outfilename,JSON,pileup,bins,minbias):
+def getDataProfile(outfilename,JSON,pileup,bins,minbias,local=False):
     """Get pileup profile in data with pileupCalc.py tool."""
     print ">>> getDataProfile(%s,%d,%s)"%(outfilename,bins,minbias)
-    minbias *= 1000
-    command = "pileupCalc.py -i %s --inputLumiJSON %s --minBiasXsec %d --calcMode true --maxPileupBin %d --numPileupBins %d %s"%(JSON,pileup,bins,bins,minbias,outfilename)
+    if local:
+      JSON   = copyToLocal(JSON)
+      pileup = copyToLocal(pileup)
+      command = "./pileupCalc.py -i %s --inputLumiJSON %s --calcMode true --maxPileupBin %d --numPileupBins %d --minBiasXsec %d %s --verbose"%(JSON,pileup,bins,bins,minbias*1000,outfilename)
+    else:
+      command = "pileupCalc.py -i %s --inputLumiJSON %s --calcMode true --maxPileupBin %d --numPileupBins %d --minBiasXsec %d %s"%(JSON,pileup,bins,bins,minbias*1000,outfilename)
+    print ">>>   executing command (this may take a while):"
     print ">>>   " + command
     os.system(command)
     
+    # CHECK
     if not os.path.isfile(outfilename):
       print ">>>   Warning! getDataProfile: Could find output file %s!"%(outfilename)
       return    
@@ -72,7 +80,7 @@ def getDataProfile(outfilename,JSON,pileup,bins,minbias):
       print ">>>   Warning! getDataProfile: Could not open output file %s!"%(outfilename)
       return
     hist = file.Get('pileup')
-    print ">>>   pileup profile in data with min. bias has a mean of %.1f"%(minbias,hist.GetMean())
+    print ">>>   pileup profile in data with min. bias %s mb has a mean of %.1f"%(minbias,hist.GetMean())
     file.Close()
     
 
@@ -139,13 +147,29 @@ def getGenProfile(outfilename,year):
     
 
 
+def copyToLocal(filename):
+  """Copy file to current directory, and return new name."""
+  fileold = filename
+  filenew = filename.split('/')[-1]
+  shutil.copyfile(fileold,filenew)
+  if not os.path.isfile(filenew):
+    print ">>> ERROR! Copy %s failed!"%(filenew)
+  return filenew
+
+
+
 def main():
     
+    years   = args.years
     channel = args.channel
+    types   = args.types
+    
     for year in args.years:
       filename  = "MC_PileUp_%d.root"%(year)
       indir     = "/scratch/ineuteli/analysis/LQ_%d"%(year)
       if year==2016:
+        JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
+        pileup  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/pileup_latest.txt"
         samples = [
           ( 'TT', "TT",                   ),
           ( 'DY', "DYJetsToLL_M-10to50",  ),
@@ -167,8 +191,6 @@ def main():
           ( 'VV', "WZ",                   ),
           ( 'VV', "ZZ",                   ),
         ]
-        JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
-        pileup  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/pileup_latest.txt"
       elif year==2017:
         JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Final/Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt"
         pileup  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/pileup_latest.txt"    
@@ -225,13 +247,15 @@ def main():
         ]
       
       # MC
-      getMCProfile(filename,indir,samples,channel,year)
+      if 'mc' in args.types:
+        getMCProfile(filename,indir,samples,channel,year)
       
       # DATA
-      minbiases = [ 69.2, ] # 80.0 ] #66156, 72.383
-      for minbias in minbiases:
-        filename = "Data_PileUp_%d_%s_new.root"%(year,str(minbias).replace('.','p'))
-        getDataProfile(filename,JSON,pileup,100,minbias)
+      if 'data' in args.types:
+        minbiases = [ 69.2, 80.0, 69.2*1.046, 69.2*0.954 ]
+        for minbias in minbiases:
+          filename = "Data_PileUp_%d_%s_new.root"%(year,str(minbias).replace('.','p'))
+          getDataProfile(filename,JSON,pileup,100,minbias)
       
 
 

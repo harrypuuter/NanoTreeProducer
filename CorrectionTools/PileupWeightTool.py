@@ -13,14 +13,20 @@ class PileupWeightTool:
         assert( year in [2016,2017,2018] ), "You must choose a year from: 2016, 2017, or 2018."
         assert( sigma in ['central','up','down'] ), "You must choose a s.d. variation from: 'central', 'up', or 'down'."
         
+        minbias = '69p2'
+        if sigma='down':
+          minbias = '66p0168' # -4.6%
+        elif sigma='up':
+          minbias = '72p3832' # +4.6%
+        
         if year==2016:
-          self.datafile = ensureTFile( path+'Data_PileUp_2016_69p2.root', 'READ')
+          self.datafile = ensureTFile( path+'Data_PileUp_2016_%s.root'%(minbias), 'READ')
           self.mcfile   = ensureTFile( path+'MC_PileUp_2016_Moriond17.root', 'READ')
-        if year==2017:
-          self.datafile = ensureTFile( path+'Data_PileUp_2017_69p2.root', 'READ')
+        elif year==2017:
+          self.datafile = ensureTFile( path+'Data_PileUp_2017_%s.root'%(minbias), 'READ')
           self.mcfile   = ensureTFile( path+'MC_PileUp_2017_Winter17_V2.root', 'READ')
         else:
-          self.datafile = ensureTFile( path+'Data_PileUp_2018_69p2.root', 'READ')
+          self.datafile = ensureTFile( path+'Data_PileUp_2018_%s.root'%(minbias), 'READ')
           self.mcfile   = ensureTFile( path+'MC_PileUp_2018_Autumn18.root', 'READ')
         self.datahist = self.datafile.Get('pileup')
         self.mchist   = self.mcfile.Get('pileup')
