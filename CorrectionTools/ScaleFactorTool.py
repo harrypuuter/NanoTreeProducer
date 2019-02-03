@@ -75,15 +75,15 @@ class ScaleFactor:
         if ybin==0: ybin = 1
         elif ybin>self.hist.GetYaxis().GetNbins(): ybin -= 1
         sf   = self.hist.GetBinContent(xbin,ybin)
-        #print "ScaleFactor::getSF: %s, pt = %6.2f, eta = %6.3f, data = %6.3f, mc = %6.3f, sf = %6.3f"%(self.name,pt,eta,data,mc,sf)
-        #print "ScaleFactor::getSF: %s, pt = %6.2f, eta = %6.3f, sf = %6.3f"%(self.name,pt,eta,sf)
+        #print "ScaleFactor(%s)::getSF: pt = %6.2f, eta = %6.3f, data = %6.3f, mc = %6.3f, sf = %6.3f"%(self.name,pt,eta,data,mc,sf)
+        #print "ScaleFactor(%s)::getSF: pt = %6.2f, eta = %6.3f, sf = %6.3f"%(self.name,pt,eta,sf)
         return sf
     
 
 
 class ScaleFactorHTT:
     
-    def __init__(self, filename, graphname="ZMass", name="<noname>"):
+    def __init__(self, filename, graphname='ZMass', name="<noname>"):
         #print '>>> ScaleFactor::init("%s","%s",name="%s")'%(filename,graphname,name)
         self.name      = name
         self.filename  = filename
@@ -108,7 +108,7 @@ class ScaleFactorHTT:
           sf   = 1.0
         else:
           sf   = data/mc
-        #print "ScaleFactorHTT::getSF: %s, pt = %6.2f, eta = %6.3f, data = %6.3f, mc = %6.3f, sf = %6.3f"%(self.name,pt,eta,data,mc,sf)
+        #print "ScaleFactorHTT(%s)::getSF: pt = %6.2f, eta = %6.3f, data = %6.3f, mc = %6.3f, sf = %6.3f"%(self.name,pt,eta,data,mc,sf)
         return sf
     
 
