@@ -11,14 +11,14 @@ gROOT.SetBatch(True)
 argv = sys.argv
 description = '''This script extracts histograms to create b tag efficiencies.'''
 parser = ArgumentParser(prog="pileup",description=description,epilog="Succes!")
-parser.add_argument('-y', '--year',    dest='years', choices=[2017,2018], type=int, nargs='+', default=[2017], action='store',
-                                       help="select year" )
-parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau','tautau'], type=str, nargs='+', default=['mutau'], action='store',
-                                       help="channels to submit" )
+parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
+                                       help="year to run" )
+parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau','tautau','mumu'], type=str, nargs='+', default=['mutau'], action='store',
+                                       help="channels to run" )
 parser.add_argument('-t', '--tagger',  dest='taggers', choices=['CSVv2','DeepCSV'], type=str, nargs='+', default=['CSVv2'], action='store',
-                                       help="channels to submit" )
+                                       help="tagger to run" )
 parser.add_argument('-w', '--wp',      dest='wps', choices=['loose','medium','tight'], type=str, nargs='+', default=['medium'], action='store',
-                                       help="channels to submit" )
+                                       help="working point to run" )
 parser.add_argument('-p', '--plot',    dest="plot", default=False, action='store_true', 
                                        help="plot efficiencies" )
 parser.add_argument('-v', '--verbose', dest="verbose", default=False, action='store_true', 
@@ -39,7 +39,7 @@ def getBTagEfficiencies(tagger,wp,outfilename,indir,samples,channel,plot=False):
       histname = '%s_%s_%s'%(tagger,flavor,wp)
       hists[histname] = None
       hists[histname+'_all'] = None   
-    for subdir, samplename, sampletitle in samples:
+    for subdir, samplename in samples:
       filename = "%s/%s/%s_%s.root"%(indir,subdir,samplename,channel)
       print ">>>   %s"%(filename)
       file = TFile(filename,'READ')
@@ -67,7 +67,7 @@ def getBTagEfficiencies(tagger,wp,outfilename,indir,samples,channel,plot=False):
       for histname, nhist in nhists.iteritems():
         print ">>>     %-26s%2d"%(histname+':',nhist)
     else:
-      print ">>>   no histograms added !"%(sum(nhists[n] for n in nhists))
+      print ">>>   no histograms added !"
       return
     
     # SAVE HISTOGRAMS
@@ -173,34 +173,83 @@ def ensureDirectory(dirname):
 
 def main():
     
-    missing  = [ "DY4Jets", "TTToSemi", "WJets", "W1Jets", "WZ", "ST_t-channel" ]
-    samples0 = [
-      ( 'DY', "DYJetsToLL_M-50",      "Drell-Yan 50",         ),
-      ( 'DY', "DY1JetsToLL_M-50",     "Drell-Yan 1J 50",      ),
-      ( 'DY', "DY2JetsToLL_M-50",     "Drell-Yan 2J 50",      ),
-      ( 'DY', "DY3JetsToLL_M-50",     "Drell-Yan 3J 50",      ),
-      ( 'DY', "DY4JetsToLL_M-50",     "Drell-Yan 4J 50",      ),
-      ( 'TT', "TTTo2L2Nu",            "ttbar 2l2#nu",         ),
-      ( 'TT', "TTToHadronic",         "ttbar hadronic",       ),
-      ( 'TT', "TTToSemiLeptonic",     "ttbar semileptonic",   ),
-      ( 'WJ', "WJetsToLNu",           "W + jets",             ),
-      ( 'WJ', "W1JetsToLNu",          "W + 1J",               ),
-      ( 'WJ', "W2JetsToLNu",          "W + 2J",               ),
-      ( 'WJ', "W3JetsToLNu",          "W + 3J",               ),
-      ( 'WJ', "W4JetsToLNu",          "W + 4J",               ),
-      ( 'ST', "ST_t-channel_top",     "ST t-channel top",     ),
-      ( 'ST', "ST_t-channel_antitop", "ST t-channel antitop", ),
-      #( 'ST', "ST_s-channel",         "ST s-channel",         ),
-      ( 'ST', "ST_tW_top",            "ST tW",                ),
-      ( 'ST', "ST_tW_antitop",        "ST atW",               ),
-      ( 'VV', "WW",                   "WW",                   ),
-      ( 'VV', "WZ",                   "WZ",                   ),
-      ( 'VV', "ZZ",                   "ZZ",                   ),
-    ]
-    samples_2018 = [(d,n,t) for (d,n,t) in samples0 if not any(s in n for s in missing)]
+    years    = args.years
+    channels = args.channels
     
     for year in args.years:
-      samples = samples_2018 if year==2018 else samples0
+      if year==2016:
+        samples = [
+          ( 'TT', "TT",                   ),
+          ( 'DY', "DYJetsToLL_M-10to50",  ),
+          ( 'DY', "DYJetsToLL_M-50_reg",  ),
+          ( 'DY', "DY1JetsToLL_M-50",     ),
+          ( 'DY', "DY2JetsToLL_M-50",     ),
+          #( 'DY', "DY3JetsToLL_M-50",     ),
+          ( 'WJ', "WJetsToLNu",           ),
+          ( 'WJ', "W1JetsToLNu",          ),
+          ( 'WJ', "W2JetsToLNu",          ),
+          ( 'WJ', "W3JetsToLNu",          ),
+          #( 'WJ', "W4JetsToLNu",          ),
+          ( 'ST', "ST_tW_top",            ),
+          ( 'ST', "ST_tW_antitop",        ),
+          #( 'ST', "ST_t-channel_top",     ),
+          ( 'ST', "ST_t-channel_antitop", ),
+          #( 'ST', "ST_s-channel",         ),
+          ( 'VV', "WW",                   ),
+          ( 'VV', "WZ",                   ),
+          ( 'VV', "ZZ",                   ),
+        ]
+      elif year==2017:
+        samples = [ 
+          ( 'TT', "TTTo2L2Nu",            ),
+          ( 'TT', "TTToHadronic",         ),
+          ( 'TT', "TTToSemiLeptonic",     ),
+          ( 'DY', "DYJetsToLL_M-10to50",  ),
+          ( 'DY', "DYJetsToLL_M-50",      ),
+          ( 'DY', "DY1JetsToLL_M-50",     ),
+          ( 'DY', "DY2JetsToLL_M-50",     ),
+          ( 'DY', "DY3JetsToLL_M-50",     ),
+          ( 'DY', "DY4JetsToLL_M-50",     ),
+          ( 'WJ', "WJetsToLNu",           ),
+          ( 'WJ', "W1JetsToLNu",          ),
+          ( 'WJ', "W2JetsToLNu",          ),
+          ( 'WJ', "W3JetsToLNu",          ),
+          ( 'WJ', "W4JetsToLNu",          ),
+          ( 'ST', "ST_tW_top",            ),
+          ( 'ST', "ST_tW_antitop",        ),
+          ( 'ST', "ST_t-channel_top",     ),
+          ( 'ST', "ST_t-channel_antitop", ),
+          #( 'ST', "ST_s-channel",         ),
+          ( 'VV', "WW",                   ),
+          ( 'VV', "WZ",                   ),
+          ( 'VV', "ZZ",                   ),
+        ]
+      else:
+        samples = [
+          ( 'TT', "TTTo2L2Nu",            ),
+          ( 'TT', "TTToHadronic",         ),
+          ( 'TT', "TTToSemiLeptonic",     ),
+          #( 'DY', "DYJetsToLL_M-10to50",  ),
+          ( 'DY', "DYJetsToLL_M-50",      ),
+          ( 'DY', "DY1JetsToLL_M-50",     ),
+          ( 'DY', "DY2JetsToLL_M-50",     ),
+          ( 'DY', "DY3JetsToLL_M-50",     ),
+          #( 'DY', "DY4JetsToLL_M-50",     ),
+          ( 'WJ', "WJetsToLNu",           ),
+          ( 'WJ', "W1JetsToLNu",          ),
+          ( 'WJ', "W2JetsToLNu",          ),
+          ( 'WJ', "W3JetsToLNu",          ),
+          ( 'WJ', "W4JetsToLNu",          ),
+          ( 'ST', "ST_tW_top",            ),
+          ( 'ST', "ST_tW_antitop",        ),
+          #( 'ST', "ST_t-channel_top",     ),
+          #( 'ST', "ST_t-channel_antitop", ),
+          ( 'ST', "ST_s-channel",         ),
+          ( 'VV', "WW",                   ),
+          ( 'VV', "WZ",                   ),
+          ( 'VV', "ZZ",                   ),
+        ]
+      
       for channel in args.channels:
         for tagger in args.taggers:
           for wp in args.wps:

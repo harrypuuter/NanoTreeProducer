@@ -57,32 +57,33 @@ class BTagWeightTool:
         """Load b tag weights from CSV file."""
         print "Loading BTagWeightTool for %s (%s WP)..."%(tagger,wp)
         
-        assert( tagger in ['CSVv2','DeepCSV']), "BTagWeightTool: You must choose a tagger from: CSVv2, DeepCSV!"
-        assert( wp in ['loose','medium','tight']), "BTagWeightTool: You must choose a WP from: loose, medium, tight!"
-        assert( sigma in ['central','up','down']), "BTagWeightTool: You must choose a WP from: central, up, down!"
+        assert(tagger in ['CSVv2','DeepCSV']), "BTagWeightTool: You must choose a tagger from: CSVv2, DeepCSV!"
+        assert(wp in ['loose','medium','tight']), "BTagWeightTool: You must choose a WP from: loose, medium, tight!"
+        assert(sigma in ['central','up','down']), "BTagWeightTool: You must choose a WP from: central, up, down!"
+        #assert(channel in ['mutau','eletau','tautau','mumu']), "BTagWeightTool: You must choose a channel from: mutau, eletau, tautau, mumu!"
         
          # FILE
         if year==2016:
           if 'deep' in tagger.lower():
             csvname = path+'DeepCSV_Moriond17_B_H.csv'
-            effname = path+'DeepCSV_94X_eff.root'
+            effname = path+'DeepCSV_2016_Moriond17_eff.root'
           else:
             csvname = path+'CSVv2_Moriond17_B_H.csv'
-            effname = path+'CSVv2_94X_eff.root'
+            effname = path+'CSVv2_2016_Moriond17_eff.root'
         elif year==2017:
           if 'deep' in tagger.lower():
             csvname = path+'DeepCSV_94XSF_V3_B_F.csv'
-            effname = path+'DeepCSV_94X_eff.root'
+            effname = path+'DeepCSV_2017_12Apr2017_eff.root'
           else:
             csvname = path+'CSVv2_94XSF_V2_B_F.csv'
-            effname = path+'CSVv2_94X_eff.root'
+            effname = path+'CSVv2_2017_12Apr2017_eff.root'
         elif year==2018:
           if 'deep' in tagger.lower():
             csvname = path+'DeepCSV_94XSF_V3_B_F.csv'
-            effname = path+'DeepCSV_94X_eff.root'
+            effname = path+'DeepCSV_2018_Autumn18_eff.root'
           else:
             csvname = path+'CSVv2_94XSF_V2_B_F.csv'
-            effname = path+'CSVv2_94X_eff.root'
+            effname = path+'CSVv2_2018_Autumn18_eff.root'
         
         # TAGGING WP
         self.wp     = getattr(BTagWPs(tagger,year),wp)
