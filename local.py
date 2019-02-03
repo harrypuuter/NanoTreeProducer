@@ -26,12 +26,6 @@ kwargs = {
   'doZpt': args.doZpt,
 }
 
-if channel=='etau':
-  channel = 'eletau'
-elif channel=='elemu':
-  channel = 'EleMu'
-
-
 if isinstance(infiles,str):
   infiles = infiles.split(',')
 if infiles:
@@ -61,6 +55,12 @@ else:
           'root://cms-xrd-global.cern.ch//store/data/Run2017C/SingleMuon/NANOAOD/31Mar2018-v1/100000/EC085F70-1A64-E811-A184-003048F2E8C2.root', #    4686
           'root://cms-xrd-global.cern.ch//store/data/Run2017C/SingleMuon/NANOAOD/31Mar2018-v1/30000/3666FB57-B255-E811-BC5F-1866DA7F7AC2.root',  #   43637
           ###'root://cms-xrd-global.cern.ch//store/data/Run2017C/SingleMuon/NANOAOD/31Mar2018-v1/30000/DCA41AD0-A752-E811-A430-44A8420CC940.root',  # 1878250
+        ]
+      elif channel=='eletau':
+        infiles = [
+          ###'root://xrootd-cms.infn.it//store/data/Run2017C/SingleElectron/NANOAOD/31Mar2018-v1/70000/B49726E9-2C47-E811-A3A5-0CC47A745282.root', #   88572
+          ###'root://xrootd-cms.infn.it//store/data/Run2017C/SingleElectron/NANOAOD/31Mar2018-v1/70000/3213D26F-2046-E811-B06C-0CC47A4C8E22.root', #  950133
+          'root://xrootd-cms.infn.it//store/data/Run2017C/SingleElectron/NANOAOD/31Mar2018-v1/70000/C28E7FB2-4345-E811-AEB0-02163E017FF5.root', # 3094290
         ]
       else:
         infiles = [
