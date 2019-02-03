@@ -19,6 +19,7 @@ path = 'CorrectionTools/btag/'
 class BTagWPs:
   """Contain b tagging working points."""
   def __init__( self, tagger, year=2017 ):
+    assert( year in [2016,2017,2018] ), "You must choose a year from: 2016, 2017, or 2018."
     if year==2016:
       if 'deep' in tagger.lower():
         self.loose    = 0.2217 # 0.2219 for 2016ReReco vs. 2016Legacy
@@ -46,9 +47,6 @@ class BTagWPs:
         self.loose    = 0.5803 # for 94X
         self.medium   = 0.8838
         self.tight    = 0.9693
-    else:
-      print "ERROR! BTagWPs::__init__: %s not a valid year!"%(year)
-      exit(1)
   
 
 class BTagWeightTool:
@@ -57,6 +55,7 @@ class BTagWeightTool:
         """Load b tag weights from CSV file."""
         print "Loading BTagWeightTool for %s (%s WP)..."%(tagger,wp)
         
+        assert(year in [2016,2017,2018]), "You must choose a year from: 2016, 2017, or 2018."
         assert(tagger in ['CSVv2','DeepCSV']), "BTagWeightTool: You must choose a tagger from: CSVv2, DeepCSV!"
         assert(wp in ['loose','medium','tight']), "BTagWeightTool: You must choose a WP from: loose, medium, tight!"
         assert(sigma in ['central','up','down']), "BTagWeightTool: You must choose a WP from: central, up, down!"
