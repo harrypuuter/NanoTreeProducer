@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 
 import os, re, glob
 from commands import getoutput
@@ -8,31 +8,34 @@ from argparse import ArgumentParser
 import checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header, ensureDirectory
 
-parser = ArgumentParser()
-parser.add_argument('-f', '--force',   dest='force', action='store_true', default=False,
-                                       help="submit jobs without asking confirmation" )
-parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
-                                       help="select year" )
-parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau','tautau','mumu'], type=str, nargs='+', default=['mutau'], action='store',
-                                       help="channels to submit" )
-parser.add_argument('-s', '--sample',  dest='samples', type=str, nargs='+', default=[ ], action='store',
-                                       help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
-parser.add_argument('-x', '--veto',    dest='veto', action='store', type=str, default=None,
-                                       help="veto this sample" )
-parser.add_argument('-t', '--type',    dest='type', choices=['data','mc'], type=str, default=None, action='store',
-                                       help="filter data or MC to submit" )
-parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, action='store',
-                                       help="tau energy scale" )
-parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=4,
-                                       help="number of files per job" )
-parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
-                                       help="select queue for submission" )
-parser.add_argument('-m', '--mock',    dest='mock', action='store_true', default=False,
-                                       help="mock-submit jobs for debugging purposes" )
-parser.add_argument('-v', '--verbose', dest='verbose', default=False, action='store_true',
-                                       help="set verbose" )
-args = parser.parse_args()
-checkFiles.args = args
+if __name__ == "__main__":
+  parser = ArgumentParser()
+  parser.add_argument('-f', '--force',   dest='force', action='store_true', default=False,
+                                         help="submit jobs without asking confirmation" )
+  parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
+                                         help="select year" )
+  parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau','tautau','mumu'], type=str, nargs='+', default=['mutau'], action='store',
+                                         help="channels to submit" )
+  parser.add_argument('-s', '--sample',  dest='samples', type=str, nargs='+', default=[ ], action='store',
+                                         help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
+  parser.add_argument('-x', '--veto',    dest='veto', action='store', type=str, default=None,
+                                         help="veto this sample" )
+  parser.add_argument('-t', '--type',    dest='type', choices=['data','mc'], type=str, default=None, action='store',
+                                         help="filter data or MC to submit" )
+  parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, action='store',
+                                         help="tau energy scale" )
+  parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=4,
+                                         help="number of files per job" )
+  parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
+                                         help="select queue for submission" )
+  parser.add_argument('-m', '--mock',    dest='mock', action='store_true', default=False,
+                                         help="mock-submit jobs for debugging purposes" )
+  parser.add_argument('-v', '--verbose', dest='verbose', default=False, action='store_true',
+                                         help="set verbose" )
+  args = parser.parse_args()
+  checkFiles.args = args
+else:
+  args = None
 
 class bcolors:
     HEADER = '\033[95m'
@@ -70,6 +73,7 @@ def split_seq(iterable, size):
     
 
 def getFileListDAS(dataset):
+    """Get list of files from DAS."""
     instance = 'prod/global'
     if 'USER' in dataset:
         instance = 'prod/phys03'
@@ -79,55 +83,48 @@ def getFileListDAS(dataset):
       print "Executing ",cmd
     cmd_out = getoutput( cmd )
     tmpList = cmd_out.split(os.linesep)
-    files = [ ]
+    files   = [ ]
     for line in tmpList:
-        if '.root' in line:
-            files.append(line)    
+      if '.root' in line:
+        #files.append("root://cms-xrd-global.cern.ch/"+line)   
+        files.append("root://xrootd-cms.infn.it/"+line)    
     return files 
     
 
 def getFileListPNFS(dataset):
+    """Get list of files from PSI T3's SE."""
     #instance = 'prod/global'
     #if dataset.find('USER')!=-1:
     #    instance = 'prod/phys03'
     #cmd='das_client --limit=0 --query="file dataset=%s instance=%s"'%(dataset,instance)
     user = 'ytakahas'
     name = '/pnfs/psi.ch/cms/trivcat/store/user/'+user+'/' + dataset.replace('__','/')
-    cmd='ls %s'%(name)
+    cmd  = 'ls %s'%(name)
     if args.verbose:
       print "Executing ",cmd
     cmd_out = getoutput( cmd )
     tmpList = cmd_out.split(os.linesep)
-    files = []
+    files   = [ ]
     for line in tmpList:
-        if '.root' in line:
-            files.append(name+'/'+line.rstrip())
+      if '.root' in line:
+        files.append("dcap://t3se01.psi.ch:22125/"+name+'/'+line.rstrip())
     return files
+    
 
-
-def createJobs(jobsfile, filelist, outdir, name, nchunks, channel, year, **kwargs):
-  infiles = [ ]
-  tes     = kwargs.get('tes', 1.)
-  for file in filelist:
-      #if pattern.find('pnfs')!=-1:
-      #    infiles.append("dcap://t3se01.psi.ch:22125/"+ pattern + '/' + file)
-      #    infiles.append("root://cms-xrd-global.cern.ch/"+ pattern.replace('/pnfs/psi.ch/cms/trivcat','') + '/' + file)
-      #else:
-      if 'LQ' in file:
-          infiles.append("dcap://t3se01.psi.ch:22125/"+file)
-      else:
-          #infiles.append("root://cms-xrd-global.cern.ch/"+file)
-          infiles.append("root://xrootd-cms.infn.it/"+file)
-  cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
-  if tes!=1.:
-    cmd += " --tes %.3f"%(tes)
-  if args.verbose:
-    print cmd
-  jobsfile.write(cmd+'\n')
-  return 1
-  
+def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs):
+    """Create file with commands to execute per job."""
+    tes     = kwargs.get('tes', 1.)
+    cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
+    if tes!=1.:
+      cmd += " --tes %.3f"%(tes)
+    if args.verbose:
+      print cmd
+    jobsfile.write(cmd+'\n')
+    return 1
+    
 
 def submitJobs(jobName, jobList, nchunks, outdir, batchSystem):
+    """Submit job."""
     if args.verbose:
       print 'Reading joblist...'
       print jobList
@@ -191,12 +188,11 @@ def main():
             name = None
             
             if 'pnfs' in directory:
-                name = directory.split('/')[8].replace('/','') + '__' + directory.split('/')[9].replace('/','') + '__' + directory.split('/')[10].replace('/','')
-                #files = getFileListPNFS(directory)
-                files = getFileListPNFS(name)
+              files = getFileListPNFS(name)
+              name = directory.split('/')[8].replace('/','') + '__' + directory.split('/')[9].replace('/','') + '__' + directory.split('/')[10].replace('/','')
             else:
-                files = getFileListDAS(directory)
-                name = directory.split('/')[1].replace('/','') + '__' + directory.split('/')[2].replace('/','') + '__' + directory.split('/')[3].replace('/','')
+              files = getFileListDAS(directory)
+              name = directory.split('/')[1].replace('/','') + '__' + directory.split('/')[2].replace('/','') + '__' + directory.split('/')[3].replace('/','')
             
             if not files:
               print bcolors.BOLD + bcolors.WARNING + "Warning!!! FILELIST empty" + bcolors.ENDC
@@ -214,6 +210,7 @@ def main():
             jobs    = open(jobList,'w')
             nFilesPerJob = args.nFilesPerJob
             outdir  = ensureDirectory("output_%s/%s"%(year,name))
+            ensureDirectory(outdir+'/logs/')
             
             # NFILESPERJOBS CHECKS
             # Diboson (WW, WZ, ZZ) have very large files and acceptance,
@@ -221,11 +218,6 @@ def main():
             if nFilesPerJob>1 and any(vv in jobName[:8] for vv in [ 'WW', 'WZ', 'ZZ', 'DY', 'WJ', 'W1J', 'W2J', 'W3J', 'W4J', 'Single', 'Tau' ]):
               print bcolors.BOLD + bcolors.WARNING + "[WN] setting number of files per job from %s to 1 for %s"%(nFilesPerJob,jobName) + bcolors.ENDC
               nFilesPerJob = 1
-            
-            try: os.stat(outdir)
-            except: os.mkdir(outdir)
-            try: os.stat(outdir+'/logs/')
-            except: os.mkdir(outdir+'/logs/')
             
             # CREATE JOBS
             nChunks = 0
@@ -239,7 +231,7 @@ def main():
             jobs.close()
             
             # SUBMIT
-            jobName += "_%s_%s"%(channel,year)
+            jobName += "_%s_%s"%(channel,year)+tag
             if args.force:
               submitJobs(jobName,jobList,nChunks,outdir,batchSystem)
             else:
@@ -258,7 +250,6 @@ def main():
 
 
 if __name__ == "__main__":
-    
     print
     main()
     print "Done\n"
