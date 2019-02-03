@@ -3,7 +3,6 @@
 import os, glob, sys, shlex, re
 from commands import getoutput
 from argparse import ArgumentParser
-import checkFiles, submit_qsub
 from checkFiles import getSampleShortName, matchSampleToPattern, header
 from submit_qsub import args, bcolors, createJobs, getFileListPNFS, getFileListDAS, submitJobs, split_seq
 import itertools
