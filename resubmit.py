@@ -3,20 +3,52 @@
 import os, glob, sys, shlex, re
 from commands import getoutput
 from argparse import ArgumentParser
+import submit, checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header
 from submit import args, bcolors, createJobs, getFileListPNFS, getFileListDAS, submitJobs, split_seq
 import itertools
 import subprocess
 from ROOT import TFile, Double
 
-
+parser = ArgumentParser()
+parser.add_argument('-f', '--force',   dest='force', action='store_true', default=False,
+                                       help="submit jobs without asking confirmation" )
+parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
+                                       help="select year" )
+parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau','tautau','mumu'], type=str, nargs='+', default=['mutau'], action='store',
+                                       help="channels to submit" )
+parser.add_argument('-s', '--sample',  dest='samples', type=str, nargs='+', default=[ ], action='store',
+                                       help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
+parser.add_argument('-x', '--veto',    dest='veto', action='store', type=str, default=None,
+                                       help="veto this sample" )
+parser.add_argument('-t', '--type',    dest='type', choices=['data','mc'], type=str, default=None, action='store',
+                                       help="filter data or MC to submit" )
+parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, action='store',
+                                       help="tau energy scale" )
+parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=4,
+                                       help="number of files per job" )
+parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
+                                       help="select queue for submission" )
+parser.add_argument('-m', '--mock',    dest='mock', action='store_true', default=False,
+                                       help="mock-submit jobs for debugging purposes" )
+parser.add_argument('-v', '--verbose', dest='verbose', default=False, action='store_true',
+                                       help="set verbose" )
+args = parser.parse_args()
+checkFiles.args = args
+submit.args = args
 
 def main():
     
     channels     = args.channels
     years        = args.years
+    tes          = args.tes
     batchSystem  = 'psibatch_runner.sh'    
-    chunkpattern = re.compile(r".*_(\d+)_[a-z]+\.root")
+    chunkpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?\.root")
+    tag          = ""
+    
+    if tes!=1.:
+      tag += "_TES%.3f"%(tes)
+    tag = tag.replace('.','p')
     
     for year in years:
       
@@ -42,7 +74,7 @@ def main():
         for directory in samplelist:
             #if directory.find('W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8__ytakahas-NanoTest_20180507_W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8-a7a5b67d3e3590e4899e147be08660be__USER')==-1: continue
             outdir       = "output_%s/%s"%(year,directory)
-            outfilelist  = glob.glob(outdir + '/*_' + channel + '.root')
+            outfilelist  = glob.glob("%s/*_%s%s.root"%(outdir,channel,tag))
             nFilesPerJob = args.nFilesPerJob
             jobName      = getSampleShortName(directory)[1]
             if not outfilelist: continue
