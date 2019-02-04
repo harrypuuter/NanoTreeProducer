@@ -35,7 +35,10 @@ def Tau_idIso(event,i):
     return 0 if raw>4.5 else 1 if raw>3.5 else 3 if raw>2.5 else 7 if raw>1.5 else 15 if raw>0.8 else 31 # VVLoose, VLoose, Loose, Medium, Tight
   return 0 if raw>4.5 else 1 if raw>3.5 else 3 # VVLoose, VLoose
   
-root_type = { float: 'D', int: 'I', bool: 'O', str: 'b' }
+root_type = {
+  float: 'D',  int: 'I',  bool: 'O',
+  'f':   'D',  'i': 'I',  '?':  'O',  'b': 'b'
+}
 
 class TreeProducerCommon(object):
     
