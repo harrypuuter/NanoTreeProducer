@@ -21,7 +21,7 @@ class MuTauProducer(Module):
         self.tes             = kwargs.get('tes',     1.0  )
         self.doZpt           = kwargs.get('doZpt',   'DY' in name )
         self.doTTpt          = kwargs.get('doTTpt',  'TT' in name )
-        self.doTight         = kwargs.get('doTight', self.tes!=1 ) or True
+        self.doTight         = kwargs.get('doTight', self.tes!=1 )
         self.channel         = 'mutau'
         year, channel        = self.year, self.channel
         
