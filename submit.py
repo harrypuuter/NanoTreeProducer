@@ -36,7 +36,7 @@ if __name__ == "__main__":
   checkFiles.args = args
 else:
   args = None
-  
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -98,8 +98,8 @@ def getFileListPNFS(dataset):
     #    instance = 'prod/phys03'
     #cmd='das_client --limit=0 --query="file dataset=%s instance=%s"'%(dataset,instance)
     user = 'ytakahas'
-    name = '/pnfs/psi.ch/cms/trivcat/store/user/'+user+'/' + dataset.replace('__','/')
-    cmd  = 'ls %s'%(name)
+    #name = '/pnfs/psi.ch/cms/trivcat/store/user/%s/%s'%(user,dataset.replace('__','/'))
+    cmd  = 'ls %s'%(dataset)
     if args.verbose:
       print "Executing ",cmd
     cmd_out = getoutput( cmd )
@@ -107,7 +107,7 @@ def getFileListPNFS(dataset):
     files   = [ ]
     for line in tmpList:
       if '.root' in line:
-        files.append("dcap://t3se01.psi.ch:22125/"+name+'/'+line.rstrip())
+        files.append("dcap://t3se01.psi.ch:22125/"+dataset+'/'+line.rstrip())
     return files
     
 
@@ -178,7 +178,7 @@ def main():
               print "\ndirectory =",directory
             
             # FILTER
-            if 'SingleMuon' in directory and channel not in ['mutau','mumu']: continue
+            if 'SingleMuon' in directory and channel not in ['mutau','mumu','elemu']: continue
             if 'SingleElectron' in directory and channel!='eletau': continue
             if 'Tau' in directory[:5] and channel!='tautau': continue
             if 'LQ3' in directory[:5] and channel not in ['mutau','eletau','tautau']: continue
@@ -188,7 +188,7 @@ def main():
             name = None
             
             if 'pnfs' in directory:
-              files = getFileListPNFS(name)
+              files = getFileListPNFS(directory)
               name = directory.split('/')[8].replace('/','') + '__' + directory.split('/')[9].replace('/','') + '__' + directory.split('/')[10].replace('/','')
             else:
               files = getFileListDAS(directory)
