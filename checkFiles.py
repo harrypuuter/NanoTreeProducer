@@ -247,7 +247,7 @@ def main(args):
               print subdir, samplename, sampleset
             if args.samples and not matchSampleToPattern(samplename,args.samples): continue
             if args.veto and matchSampleToPattern(directory,args.veto): continue
-            if 'SingleMuon' in subdir and channel not in ['mutau','mumu']: continue
+            if 'SingleMuon' in subdir and channel not in ['mutau','mumu','elemu']: continue
             if 'SingleElectron' in subdir and channel!='eletau': continue
             if 'Tau' in subdir and channel!='tautau': continue
             if 'LQ3' in subdir and channel not in ['mutau','tautau','eletau']: continue
@@ -462,9 +462,10 @@ def ensureDirectory(dirname):
   return dirname
   
 headeri = 0
-def header(year,channel):
+def header(year,channel,tag=""):
   global headeri
   title  = "%s, %s"%(year,channel)
+  if tag: title += ", %s"%(tag)
   string = ("\n\n" if headeri>0 else "") +\
            "   ###%s\n"    % ('#'*(len(title)+3)) +\
            "   #  %s  #\n" % (title) +\
