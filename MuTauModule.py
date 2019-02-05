@@ -128,7 +128,7 @@ class MuTauProducer(Module):
         
         idx_goodtaus = [ ]
         for itau in range(event.nTau):
-            if self.tes!=1.0:
+            if self.tes!=1.0 and event.Tau_genPartFlav[itau]==5:
               event.Tau_pt[itau]   *= self.tes
               event.Tau_mass[itau] *= self.tes
             if event.Tau_pt[itau] < self.tauCutPt: continue
