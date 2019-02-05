@@ -67,7 +67,7 @@ sample_dict = [
    ('DY',             "DY4JetsToLL_M-50",                 "DY4JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext"                    ), # ext before reg !
    ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIISummer16"           ),
-   ('WJ',             "WJetsToLNu",                       "WJetsToLNu_Tune*madgraph*pythia8/RunIIFall17"             ),
+   ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIIFall17"             ),
    ('WJ',             "WJetsToLNu",                       "WJetsToLNu_Tune*madgraph*pythia8"                         ),
    ('WJ',             "W1JetsToLNu",                      "W1JetsToLNu_Tune*madgraph*pythia8"                        ),
    ('WJ',             "W2JetsToLNu",                      "W2JetsToLNu_Tune*madgraph*pythia8"                        ),
@@ -235,7 +235,7 @@ def main(args):
                 if args.cleanup:
                   rmcmd = 'rm %s'%(infiles)
                   print bcolors.BOLD + bcolors.OKBLUE + "   removing %d output files..."%(len(infiles)) + bcolors.ENDC
-                  if verbose:
+                  if args.verbose:
                     print rmcmd
                   os.system(rmcmd)
                 print
@@ -347,7 +347,7 @@ def checkFiles(filelist,directory):
       if match: ifound.append(int(match.group(1)))
     
     if len(badfiles)>0:
-      print bcolors.FAIL + "[NG] %s:   %d out of %d files have no tree!"%(directory,len(badfiles),len(filelist)) + bcolors.ENDC
+      print bcolors.BOLD + bcolors.FAIL + "[NG] %s:   %d out of %d files have no tree!"%(directory,len(badfiles),len(filelist)) + bcolors.ENDC
       return False
     
     # TODO: check all chunks (those>imax)
