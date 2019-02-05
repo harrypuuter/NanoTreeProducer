@@ -1,6 +1,6 @@
 #! /bin/bash
 
-CHANNEL='mutau mumu tautau'
+CHANNELS='mutau mumu tautau'
 YEAR="2018"
 while getopts "c:y:" option; do case "${option}" in
   c) CHANNELS="${OPTARG}";;
@@ -16,15 +16,11 @@ if [ "$YEAR" == "2016" ]; then
   SAMPLES="
     DY/DY3JetsToLL_M-50
     DY/DY4JetsToLL_M-50
-    WJ//W4JetsToLNu
-    ST/ST_t-channel_top
   "
 else
   SAMPLES="
-    #DY/DYJetsToLL_M-10to50
     DY/DY4JetsToLL_M-50
     WJ/WJetsToLNu
-    #TT/TTToSemiLeptonic
     ST/ST_t-channel_top
     ST/ST_t-channel_antitop
   "
@@ -40,7 +36,7 @@ for channel in $CHANNELS; do
     filenew="$SCRATCHNEW/${samplename}_${channel}.root"  
     [ ! -e $fileold ] && echo "Warning! $fileold does not exist!" && continue 
     
-    #echo "Copying $fileold to $filenew!"
+    echo "Copying $fileold to $filenew!"
     cp -v $fileold $filenew
   done
 done
