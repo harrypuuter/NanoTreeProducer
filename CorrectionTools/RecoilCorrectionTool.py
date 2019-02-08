@@ -2,6 +2,7 @@
 # Author: Izaak Neutelings (November 2018)
 # https://twiki.cern.ch/twiki/bin/view/CMS/MSSMAHTauTauEarlyRun2#Top_quark_pT_reweighting
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopPtReweighting#MC_SFs_Reweighting
+# https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from ScaleFactorTool import ensureTFile
 from ROOT import TLorentzVector
@@ -16,28 +17,32 @@ class RecoilCorrectionTool:
         
         assert(year in [2016,2017,2018]), "You must choose a year from: 2016, 2017, or 2018."        
         
-        #if year==2016:
-        #  self.file = ensureTFile( path+'Zpt_weights_2017_Izaak.root', 'READ')
-        #elif year==2017:
-        #  self.file = ensureTFile( path+'Zpt_weights_2017_Izaak.root', 'READ')
-        #else:
-        #  self.file = ensureTFile( path+'Zpt_weights_2017_Izaak.root', 'READ')
-        #self.file = self.file.Get('zptmass_weights')
-        #self.hist.SetDirectory(0)
-        #self.file.Close()
+        if year==2016:
+          self.file = ensureTFile(path+'Zpt_weights_2016_Cecile.root', 'READ')
+          histname  = "zptmass_histo"
+        else:
+          self.file = ensureTFile(path+'Zpt_weights_2017_Izaak.root', 'READ')
+          histname  = "zptmass_weights"
+        self.hist = self.file.Get(histname)
+        self.hist.SetDirectory(0)
+        self.file.Close()
     
     def getZptWeight(self,Zpt,Zmass):
         """Get Z pT weight for a given Z boson pT and mass."""
-        #weight = self.hist.GetBinContent(self.hist.GetXaxis().FindBin(Zpt),self.hist.GetXaxis().FindBin(Zmass))
-        #print ">>> Warning! RecoilCorrectionTool::getZptWeight: Could not make pileup weight for npu=%s data=%s, mc=%s"%(npu,data,mc)
-        #return weight
-        return 1.
+        xbin = self.hist.GetXaxis().FindBin(Zmass)
+        ybin = self.hist.GetYaxis().FindBin(Zpt)
+        if xbin==0: xbin = 1
+        elif xbin>self.hist.GetXaxis().GetNbins(): xbin -= 1
+        if ybin==0: ybin = 1
+        elif ybin>self.hist.GetYaxis().GetNbins(): ybin -= 1
+        weight = self.hist.GetBinContent(xbin,ybin)
+        return weight
     
     def getTTptWeight(self,toppt1,toppt2):
         """Get top pT weight."""
         #sqrt(exp(0.156-0.00137*min(toppt1,400.0))*exp(0.156-0.00137*min(toppt2,400.0)))
-        return sqrt(exp(0.0615-0.0005*min(toppt1,400.0))*exp(0.0615-0.0005*min(toppt2,400.0)))
-        
+        return sqrt(exp(0.0615-0.0005*min(toppt1,800.0))*exp(0.0615-0.0005*min(toppt2,800.0)))
+    
 
 def getZPTMass(event):
     """Calculate Z boson pT and mass."""
