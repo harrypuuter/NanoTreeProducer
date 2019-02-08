@@ -27,6 +27,7 @@ class MuTauProducer(Module):
         
         setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
+        #self.filter          = getMETFilters(year,isData)
         if year==2016:
           self.trigger       = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
           self.muonCutPt     = lambda e: 23
@@ -51,6 +52,7 @@ class MuTauProducer(Module):
         
         self.Nocut = 0
         self.Trigger = 1
+        #self.METFilter = 2
         self.GoodMuons = 2
         self.GoodTaus = 3
         self.GoodDiLepton = 4
@@ -59,6 +61,7 @@ class MuTauProducer(Module):
         
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.Nocut,               "no cut"                 )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.Trigger,             "trigger"                )
+        #self.out.cutflow.GetXaxis().SetBinLabel(1+self.METFilter,           "METFilter"              )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.GoodMuons,           "muon object"            )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.GoodTaus,            "tau object"             )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.GoodDiLepton,        "mutau pair"             )
@@ -109,6 +112,14 @@ class MuTauProducer(Module):
         #####################################
         self.out.cutflow.Fill(self.Trigger)
         #####################################
+        
+        
+        #if not event.Flag_globalSuperTightHalo2016Filter:
+        #    return False
+        #
+        ######################################
+        #self.out.cutflow.Fill(self.METFilter)
+        ######################################
         
         
         idx_goodmuons = [ ]
@@ -400,6 +411,7 @@ class MuTauProducer(Module):
           self.out.genweight[0]       = event.genWeight
           self.out.puweight[0]        = self.puTool.getWeight(event.Pileup_nTrueInt)
           self.out.trigweight[0]      = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
+          self.out.trigweight_HTT[0]  = self.muSFs.getTriggerSF_HTT(self.out.pt_1[0],self.out.eta_1[0])
           self.out.idisoweight_1[0]   = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
           self.out.idisoweight_2[0]   = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
           self.out.btagweight[0]      = self.btagTool.getWeight(event,jetIds)
