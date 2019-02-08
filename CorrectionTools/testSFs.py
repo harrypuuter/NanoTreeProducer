@@ -24,7 +24,7 @@ from ElectronSFs import *
 print ">>>   imported ElectronSFs classes after %.1f seconds"%(time.time()-start1)
 
 start1 = time.time()
-from BTagWeightTool import *
+from BTaggingTool import *
 print ">>>   imported BTagWeightTool classes after %.1f seconds"%(time.time()-start1)
 print ">>>   imported everything after %.1f seconds"%(time.time()-start0)
 print ">>> "
@@ -61,12 +61,27 @@ def muonPOG():
   # TRIGGER (Muon POG)
   start1 = time.time()
   print ">>> initializing trigger SFs from Muon POG..."
-  sftool_mu_trig_POG = ScaleFactor(path+"EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/abseta_pt_ratio",'mu_trig',ptvseta=True)
+  sftool_trig = ScaleFactor(path+"MuonPOG/Run2017/EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/abseta_pt_ratio",'mu_trig',ptvseta=True)
   print ">>>   initialized in %.1f seconds"%(time.time()-start1)
-  printMatrix('trigger POG',sftool_mu_trig_POG.getSF)
+  printMatrix('trigger POG',sftool_trig.getSF)
   
   # ID (Muon POG)
-  sftool_mu_idiso_POG = ScaleFactor(path+"EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/pt_abseta_ratio",'mu_trig')
+  start1 = time.time()
+  sftool_id  = ScaleFactor(path+"MuonPOG/Run2018/RunABCD_SF_ID.root","NUM_MediumID_DEN_genTracks_pt_abseta",'mu_id',ptvseta=False)
+  print ">>>   initialized in %.1f seconds"%(time.time()-start1)
+  printMatrix('id POG',sftool_id.getSF)
+  
+  # ISO (Muon POG)
+  start1 = time.time()
+  sftool_iso = ScaleFactor(path+"MuonPOG/Run2018/RunABCD_SF_ISO.root","NUM_TightRelIso_DEN_MediumID_pt_abseta",'mu_iso',ptvseta=False)
+  print ">>>   initialized in %.1f seconds"%(time.time()-start1)
+  printMatrix('iso POG',sftool_iso.getSF)
+  
+  # ID/ISO (Muon POG)
+  start1 = time.time()
+  sftool_idiso    = sftool_id*sftool_iso
+  print ">>>   initialized in %.1f seconds"%(time.time()-start1)
+  printMatrix('idiso POG',sftool_idiso.getSF)  
   print ">>> "
   
 
@@ -94,7 +109,7 @@ def electronHTT():
   sftool_ele_reco_HTT = ScaleFactor(pathHTT_el+"egammaEffi.txt_EGM2D_runBCDEF_passingRECO.root","EGamma_SF2D",'ele_reco',ptvseta=True)
   printMatrix('reco POG',sftool_ele_reco_HTT.getSF)
   
-  # ID ISO (HTT)
+  # ID/ISO (HTT)
   sftool_ele_idiso_HTT = ScaleFactorHTT(pathHTT_el+"Electron_IdIso_IsoLt0.15_IsoID_eff.root","ZMass",'ele_idiso')
   printMatrix('idiso HTT',sftool_ele_idiso_HTT.getSF)
   
@@ -105,6 +120,17 @@ def muonSFs():
   start1 = time.time()
   print ">>> initializing MuonSF object..."
   muSFs = MuonSFs()
+  print ">>>   initialized in %.1f seconds"%(time.time()-start1)
+  
+  # GET SFs
+  printMatrix('trigger',muSFs.getTriggerSF)
+  printMatrix('idiso',muSFs.getIdIsoSF)
+  print ">>> "
+  
+  # MUON 2018 SFs
+  start1 = time.time()
+  print ">>> initializing MuonSF(2018) object..."
+  muSFs = MuonSFs(year=2018)
   print ">>>   initialized in %.1f seconds"%(time.time()-start1)
   
   # GET SFs
@@ -147,13 +173,13 @@ def btagSFs(tagger='CSVv2'):
 
 if __name__ == "__main__":
   
-  #muonPOG()
+  muonPOG()
   #muonHTT()
   #electronHTT()
   #muonSFs()
   #electronSFs()
-  btagSFs('CSVv2')
-  btagSFs('DeepCSV')
+  #btagSFs('CSVv2')
+  #btagSFs('DeepCSV')
   print ">>> "
   print ">>> done after %.1f seconds"%(time.time()-start0)
   print
