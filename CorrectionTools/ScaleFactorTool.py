@@ -81,7 +81,7 @@ class ScaleFactorHTT(ScaleFactor):
           self.effs_mc[etalabel]   = self.file.Get(graphname+etalabel+"_MC")
         self.file.Close()
         
-        
+    
     def getSF(self, pt, eta):
         """Get SF for a given pT, eta."""
         abseta = abs(eta)
