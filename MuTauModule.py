@@ -29,10 +29,13 @@ class MuTauProducer(Module):
         self.vlooseIso       = getVLooseTauIso(year)
         if year==2016:
           self.trigger       = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
-          self.muonCutPt     = 23
+          self.muonCutPt     = lambda e: 23
+        elif year==2017:
+          self.trigger       = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27 #or e.HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1
+          self.muonCutPt     = lambda e: 25 if e.HLT_IsoMu24 else 28
         else:
           self.trigger       = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27 #or e.HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1
-          self.muonCutPt     = 25
+          self.muonCutPt     = lambda e: 25
         self.tauCutPt        = 20
         
         if not self.isData:
@@ -110,7 +113,7 @@ class MuTauProducer(Module):
         
         idx_goodmuons = [ ]
         for imuon in range(event.nMuon):
-            if event.Muon_pt[imuon] < self.muonCutPt: continue
+            if event.Muon_pt[imuon] < self.muonCutPt(event): continue
             if abs(event.Muon_eta[imuon]) > 2.4: continue
             if abs(event.Muon_dz[imuon]) > 0.2: continue
             if abs(event.Muon_dxy[imuon]) > 0.045: continue
