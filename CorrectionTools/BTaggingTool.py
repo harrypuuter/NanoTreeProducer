@@ -61,7 +61,7 @@ class BTagWeightTool:
         assert(sigma in ['central','up','down']), "BTagWeightTool: You must choose a WP from: central, up, down!"
         #assert(channel in ['mutau','eletau','tautau','mumu']), "BTagWeightTool: You must choose a channel from: mutau, eletau, tautau, mumu!"
         
-         # FILE
+        # FILE
         if year==2016:
           if 'deep' in tagger.lower():
             csvname = path+'DeepCSV_Moriond17_B_H.csv'
@@ -164,7 +164,7 @@ class BTagWeightTool:
           if self.tagged(event,id):
             self.hists[flavor].Fill(event.Jet_pt[id],event.Jet_eta[id])
           self.hists[flavor+'_all'].Fill(event.Jet_pt[id],event.Jet_eta[id])
-    
+        
     def setDirectory(self,directory,subdirname=None):
         if subdirname:
           subdir = directory.Get(subdirname)
@@ -178,8 +178,6 @@ def flavorToFLAV(flavor):
   return FLAV_B if abs(flavor)==5 else FLAV_C if abs(flavor)==4 or abs(flavor)==15 else FLAV_UDSG       
 
 def flavorToString(flavor):
-  if abs(flavor)==5: return 'b'
-  if abs(flavor)==4: return 'c'
-  return 'udsg'
+  return 'b' if abs(flavor)==5 else 'c' if abs(flavor)==4 else 'udsg'
   
 
