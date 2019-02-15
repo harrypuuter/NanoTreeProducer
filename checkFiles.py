@@ -47,6 +47,8 @@ if __name__ == '__main__':
                                             help="filter data or MC to submit" )
     parser.add_argument('-T', '--tes',      dest='tes', type=float, default=1.0, action='store',
                                             help="tau energy scale" )
+    parser.add_argument('-L', '--ltf',      dest='ltf', type=float, default=1.0, action='store',
+                                            help="lepton to tau fake energy scale" )
     parser.add_argument('-l', '--tag',      dest='tag', type=str, default="", action='store',
                                             help="add a tag to the output file" )
     parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
@@ -131,12 +133,15 @@ def main(args):
   outtag     = args.tag
   intag      = ""
   tes        = args.tes
+  ltf        = args.ltf
   #submitted  = getSubmittedJobs()
   
-  if len(outtag)>0 and '_' not in outtag[0]:
+  if outtag and '_' not in outtag[0]:
     outtag = '_'+outtag
   if tes!=1.:
     intag += "_TES%.3f"%(tes)
+  if ltf!=1.:
+    intag += "_LTF%.3f"%(ltf)
   intag  = intag.replace('.','p')
   outtag = intag+outtag
   
@@ -169,7 +174,7 @@ def main(args):
     
     # CHECK samples
     for channel in channels:
-      print header(year,channel)
+      print header(year,channel,intag)
       
       # HADD samples
       if not args.haddother or args.make:
@@ -233,7 +238,7 @@ def main(args):
                 
                 # CLEAN UP
                 if args.cleanup:
-                  rmcmd = 'rm %s'%(infiles)
+                  rmcmd = 'rm %s; rm %s/logs/*_%s_%s%s*'%(infiles,directory,channel,year,intag)
                   print bcolors.BOLD + bcolors.OKBLUE + "   removing %d output files..."%(len(infiles)) + bcolors.ENDC
                   if args.verbose:
                     print rmcmd
@@ -465,7 +470,7 @@ headeri = 0
 def header(year,channel,tag=""):
   global headeri
   title  = "%s, %s"%(year,channel)
-  if tag: title += ", %s"%(tag)
+  if tag: title += ", %s"%(tag.lstrip('_'))
   string = ("\n\n" if headeri>0 else "") +\
            "   ###%s\n"    % ('#'*(len(title)+3)) +\
            "   #  %s  #\n" % (title) +\

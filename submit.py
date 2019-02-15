@@ -18,12 +18,14 @@ if __name__ == "__main__":
                                          help="channels to submit" )
   parser.add_argument('-s', '--sample',  dest='samples', type=str, nargs='+', default=[ ], action='store',
                                          help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
-  parser.add_argument('-x', '--veto',    dest='veto', action='store', type=str, default=None,
+  parser.add_argument('-x', '--veto',    dest='vetos', nargs='+', default=[ ], action='store',
                                          help="veto this sample" )
   parser.add_argument('-t', '--type',    dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                          help="filter data or MC to submit" )
   parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, action='store',
                                          help="tau energy scale" )
+  parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
+                                         help="lepton to tau fake energy scale" )
   parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=4,
                                          help="number of files per job" )
   parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
@@ -47,6 +49,11 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     
+nFilesPerJob_defaults = [
+  ( 1, ['DY','W*J','WW','WZ','ZZ','TT_','Single','Tau','ST_t-channel_top*2016']),
+  (10, ['LQ3']),
+]
+
 
 def checkExistingFiles(outdir,channel,njob):
     filelist = glob.glob("%s/*%s.root"%(outdir,channel))
@@ -74,6 +81,7 @@ def split_seq(iterable, size):
 
 def getFileListDAS(dataset):
     """Get list of files from DAS."""
+    dataset  = dataset.replace('__', '/')
     instance = 'prod/global'
     if 'USER' in dataset:
         instance = 'prod/phys03'
@@ -93,13 +101,9 @@ def getFileListDAS(dataset):
 
 def getFileListPNFS(dataset):
     """Get list of files from PSI T3's SE."""
-    #instance = 'prod/global'
-    #if dataset.find('USER')!=-1:
-    #    instance = 'prod/phys03'
-    #cmd='das_client --limit=0 --query="file dataset=%s instance=%s"'%(dataset,instance)
-    user = 'ytakahas'
-    #name = '/pnfs/psi.ch/cms/trivcat/store/user/%s/%s'%(user,dataset.replace('__','/'))
-    cmd  = 'ls %s'%(dataset)
+    dataset = dataset.replace('__', '/')
+    user    = 'ytakahas'
+    cmd     = 'ls %s'%(dataset)
     if args.verbose:
       print "Executing ",cmd
     cmd_out = getoutput( cmd )
@@ -114,9 +118,12 @@ def getFileListPNFS(dataset):
 def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs):
     """Create file with commands to execute per job."""
     tes     = kwargs.get('tes', 1.)
+    ltf     = kwargs.get('ltf', 1.)
     cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
     if tes!=1.:
       cmd += " --tes %.3f"%(tes)
+    if ltf!=1.:
+      cmd += " --ltf %.3f"%(ltf)
     if args.verbose:
       print cmd
     jobsfile.write(cmd+'\n')
@@ -145,11 +152,14 @@ def main():
     channels    = args.channels
     years       = args.years
     tes         = args.tes
+    ltf         = args.ltf
     batchSystem = 'psibatch_runner.sh'
     tag         = ""
     
     if tes!=1.:
       tag += "_TES%.3f"%(tes)
+    if ltf!=1.:
+      tag += "_LTF%.3f"%(ltf)
     tag = tag.replace('.','p')
     
     for year in years:
@@ -162,14 +172,14 @@ def main():
           if line[:2].count('#')>0: continue
           if line=='': continue
           if args.samples and not matchSampleToPattern(line,args.samples): continue
-          if args.veto and matchSampleToPattern(line,args.veto): continue
+          if args.vetos and matchSampleToPattern(line,args.vetos): continue
           if args.type=='mc' and any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
           if args.type=='data' and not any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
           directories.append(line)
       #print directories
       
       for channel in channels:
-        print header(year,channel)
+        print header(year,channel,tag)
         
         # SUBMIT SAMPLES
         for directory in directories:
@@ -185,14 +195,14 @@ def main():
             
             print bcolors.BOLD + bcolors.OKGREEN + directory + bcolors.ENDC
             files = None
-            name = None
+            name  = None
             
             if 'pnfs' in directory:
               files = getFileListPNFS(directory)
-              name = directory.split('/')[8].replace('/','') + '__' + directory.split('/')[9].replace('/','') + '__' + directory.split('/')[10].replace('/','')
+              name  = directory.split('/')[8].replace('/','') + '__' + directory.split('/')[9].replace('/','') + '__' + directory.split('/')[10].replace('/','')
             else:
               files = getFileListDAS(directory)
-              name = directory.split('/')[1].replace('/','') + '__' + directory.split('/')[2].replace('/','') + '__' + directory.split('/')[3].replace('/','')
+              name  = directory.split('/')[1].replace('/','') + '__' + directory.split('/')[2].replace('/','') + '__' + directory.split('/')[3].replace('/','')
             
             if not files:
               print bcolors.BOLD + bcolors.WARNING + "Warning!!! FILELIST empty" + bcolors.ENDC
@@ -204,20 +214,24 @@ def main():
             
             # JOBLIST
             ensureDirectory('joblist')
-            jobList = 'joblist/joblist%s_%s%s.txt'%(name,channel,tag)
+            jobList      = 'joblist/joblist%s_%s%s.txt'%(name,channel,tag)
             print "Creating job file %s..."%(jobList)
-            jobName = getSampleShortName(directory)[1]
-            jobs    = open(jobList,'w')
+            jobName      = getSampleShortName(directory)[1]
+            jobName     += "_%s_%s"%(channel,year)+tag
+            jobs         = open(jobList,'w')
             nFilesPerJob = args.nFilesPerJob
-            outdir  = ensureDirectory("output_%s/%s"%(year,name))
+            outdir       = ensureDirectory("output_%s/%s"%(year,name))
             ensureDirectory(outdir+'/logs/')
             
             # NFILESPERJOBS CHECKS
             # Diboson (WW, WZ, ZZ) have very large files and acceptance,
             # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
-            if nFilesPerJob>1 and any(vv in jobName[:8] for vv in [ 'WW', 'WZ', 'ZZ', 'DY', 'WJ', 'W1J', 'W2J', 'W3J', 'W4J', 'Single', 'Tau' ]):
+            if nFilesPerJob>1 and any(s in jobName[:len(s)+3] for s in [ 'WW', 'WZ', 'ZZ', 'DY', 'WJ', 'W1J', 'W2J', 'W3J', 'W4J', 'Single', 'Tau', 'TT_' ]):
               print bcolors.BOLD + bcolors.WARNING + "[WN] setting number of files per job from %s to 1 for %s"%(nFilesPerJob,jobName) + bcolors.ENDC
               nFilesPerJob = 1
+            #for default, patterns in nFilesPerJob_defaults:
+            #  if matchSampleToPattern(jobName,patterns):
+            #    nFilesPerJob = default
             
             # CREATE JOBS
             nChunks = 0
@@ -226,12 +240,11 @@ def main():
             #filelists = list(split_seq(files,1))
             for file in filelists:
             #print "FILES = ",f
-                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes)
+                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes,ltf=ltf)
                 nChunks = nChunks+1
             jobs.close()
             
             # SUBMIT
-            jobName += "_%s_%s"%(channel,year)+tag
             if args.force:
               submitJobs(jobName,jobList,nChunks,outdir,batchSystem)
             else:

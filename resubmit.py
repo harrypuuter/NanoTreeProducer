@@ -19,12 +19,14 @@ parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau
                                        help="channels to submit" )
 parser.add_argument('-s', '--sample',  dest='samples', type=str, nargs='+', default=[ ], action='store',
                                        help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
-parser.add_argument('-x', '--veto',    dest='veto', action='store', type=str, default=None,
+parser.add_argument('-x', '--veto',    dest='vetos', type=str, nargs='+', default=[ ], action='store',
                                        help="veto this sample" )
 parser.add_argument('-t', '--type',    dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                        help="filter data or MC to submit" )
 parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, action='store',
                                        help="tau energy scale" )
+parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
+                                       help="lepton to tau fake energy scale" )
 parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=4,
                                        help="number of files per job" )
 parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
@@ -42,12 +44,15 @@ def main():
     channels     = args.channels
     years        = args.years
     tes          = args.tes
+    ltf          = args.ltf
     batchSystem  = 'psibatch_runner.sh'    
     chunkpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?\.root")
     tag          = ""
     
     if tes!=1.:
       tag += "_TES%.3f"%(tes)
+    if ltf!=1.:
+      tag += "_LTF%.3f"%(ltf)
     tag = tag.replace('.','p')
     
     for year in years:
@@ -58,7 +63,7 @@ def main():
       for directory in sorted(os.listdir(outdir)):
           if not os.path.isdir(outdir+directory): continue
           if args.samples and not matchSampleToPattern(directory,args.samples): continue
-          if args.veto and matchSampleToPattern(directory,args.veto): continue
+          if args.vetos and matchSampleToPattern(directory,args.vetos): continue
           if args.type=='mc' and any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
           if args.type=='data' and not any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
           samplelist.append(directory)
@@ -69,7 +74,7 @@ def main():
       
       # RESUBMIT samples
       for channel in channels:
-        print header(year,channel)
+        print header(year,channel,tag)
         
         for directory in samplelist:
             #if directory.find('W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8__ytakahas-NanoTest_20180507_W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8-a7a5b67d3e3590e4899e147be08660be__USER')==-1: continue
@@ -77,19 +82,20 @@ def main():
             outfilelist  = glob.glob("%s/*_%s%s.root"%(outdir,channel,tag))
             nFilesPerJob = args.nFilesPerJob
             jobName      = getSampleShortName(directory)[1]
-            jobName     += "_%s_%s"%(channel,year)
+            jobName     += "_%s_%s"%(channel,year)+tag
             if not outfilelist: continue
             
             # GET INPUT FILES
             if 'LQ' in directory:
-              infiles = getFileListPNFS(directory)
+              print directory
+              infiles = getFileListPNFS('/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'+directory)
             else:
-              infiles = getFileListDAS('/' + directory.replace('__', '/'))
-        
+              infiles = getFileListDAS('/'+directory)
+            
             # NFILESPERJOBS CHECKS
             # Diboson (WW, WZ, ZZ) have very large files and acceptance,
             # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
-            if nFilesPerJob>1 and any(vv in jobName[:8] for vv in [ 'WW', 'WZ', 'ZZ', 'DY', 'WJ', 'W1J', 'W2J', 'W3J', 'W4J', 'Single', 'Tau', 'TT_' ]):
+            if nFilesPerJob>1 and any(s in jobName[:len(s)+3] for s in [ 'WW', 'WZ', 'ZZ', 'DY', 'WJ', 'W1J', 'W2J', 'W3J', 'W4J', 'Single', 'Tau', 'TT_' ]):
               print bcolors.BOLD + bcolors.WARNING + "[WN] setting number of files per job from %s to 1 for %s"%(nFilesPerJob,jobName) + bcolors.ENDC
               nFilesPerJob = 1
             
@@ -116,7 +122,7 @@ def main():
                   if not file.IsZombie() and file.GetListOfKeys().Contains('tree') and file.GetListOfKeys().Contains('cutflow'):
                     continue
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year)
+                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf)
                   badchunks.append(chunk)
               
               # BAD CHUNKS
@@ -131,7 +137,7 @@ def main():
                 print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files ! Resubmitting %s..."%(directory,len(misschunks),len(outfilelist),chunktext) + bcolors.ENDC
                 for chunk in misschunks:
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year)
+                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf)
             
             # RESUBMIT
             nChunks = len(badchunks)+len(misschunks)
