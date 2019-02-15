@@ -6,7 +6,7 @@ from TreeProducerMuMu import *
 from CorrectionTools.MuonSFs import *
 from CorrectionTools.PileupWeightTool import *
 from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass, getTTPTMass
+from CorrectionTools.RecoilCorrectionTool import *
 
 
 class MuMuProducer(Module):
@@ -16,22 +16,27 @@ class MuMuProducer(Module):
         self.name            = name
         self.out             = TreeProducerMuMu(name)
         self.isData          = dataType=='data'
-        self.year            = kwargs.get('year',    2017 )
-        self.tes             = kwargs.get('tes',     1.0  )
-        self.doZpt           = kwargs.get('doZpt',   'DY' in name )
-        self.doTTpt          = kwargs.get('doTTpt',  'TT' in name )
-        self.doTight         = kwargs.get('doTight', self.tes!=1 )
+        self.year            = kwargs.get('year',     2017 )
+        self.tes             = kwargs.get('tes',      1.0  )
+        self.ltf             = kwargs.get('ltf',      1.0  )
+        self.doZpt           = kwargs.get('doZpt',    'DY' in name )
+        self.doRecoil        = kwargs.get('doRecoil', 'DY' in name or re.search(r"W.Jets",name)) or True
+        self.doTTpt          = kwargs.get('doTTpt',   'TT' in name )
+        self.doTight         = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 )
         self.channel         = 'mumu'
         year, channel        = self.year, self.channel
-                
+        
         setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
         if year==2016:
           self.trigger       = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
-          self.muon1CutPt    = 23
+          self.muon1CutPt    = lambda e: 23
+        elif year==2017:
+          self.trigger       = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27 #or e.HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1
+          self.muon1CutPt    = lambda e: 25 if e.HLT_IsoMu24 else 28
         else:
-          self.trigger       = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27
-          self.muon1CutPt    = 25
+          self.trigger       = lambda e: e.HLT_IsoMu24 or e.HLT_IsoMu27 #or e.HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1
+          self.muon1CutPt    = lambda e: 25
         self.muon2CutPt      = 15
         
         if not self.isData:
@@ -39,8 +44,8 @@ class MuMuProducer(Module):
           self.puTool        = PileupWeightTool(year=year)
           self.btagTool      = BTagWeightTool('CSVv2','medium',channel='mutau',year=year)
           self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel='mutau',year=year)
-          if self.doZpt or self.doTTpt:
-            self.recoilTool  = RecoilCorrectionTool(year=year)
+          if self.doRecoil or self.doZpt or self.doTTpt:
+            self.recoilTool  = RecoilCorrectionTool(year=year,doZpt=self.doZpt)
         self.csvv2_wp        = BTagWPs('CSVv2',year=year)
         self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
@@ -121,7 +126,7 @@ class MuMuProducer(Module):
         #####################################
         
         
-        if not any(event.Muon_pt[i]>self.muon1CutPt for i in idx_goodmuons) or len(idx_goodmuons)<2: # higher pT cut
+        if not any(event.Muon_pt[i]>self.muon1CutPt(event) for i in idx_goodmuons) or len(idx_goodmuons)<2: # higher pT cut
             return False
         
         #####################################
@@ -180,6 +185,34 @@ class MuMuProducer(Module):
         if not self.isData and event.Muon_pfRelIso04_all[dilepton.id1]<0.50 and event.Muon_pfRelIso04_all[dilepton.id2]<0.50:
           self.btagTool.fillEfficiencies(event,jetIds)
           self.btagTool_deep.fillEfficiencies(event,jetIds)
+        
+        
+        # EVENT
+        self.out.isData[0]                     = self.isData
+        self.out.run[0]                        = event.run
+        self.out.lumi[0]                       = event.luminosityBlock
+        self.out.event[0]                      = event.event & 0xffffffffffffffff
+        ###self.out.puppimet[0]                  = event.PuppiMET_pt
+        ###self.out.puppimetphi[0]               = event.PuppiMET_phi
+        ###self.out.metsignificance[0]           = event.MET_significance
+        ###self.out.metcovXX[0]                  = event.MET_covXX
+        ###self.out.metcovXY[0]                  = event.MET_covXY
+        ###self.out.metcovYY[0]                  = event.MET_covYY
+        ###self.out.fixedGridRhoFastjetAll[0]    = event.fixedGridRhoFastjetAll
+        self.out.npvs[0]                       = event.PV_npvs
+        self.out.npvsGood[0]                   = event.PV_npvsGood
+        
+        if not self.isData:
+          self.out.genPartFlav_1[0]            = ord(event.Muon_genPartFlav[dilepton.id1])
+          self.out.genPartFlav_2[0]            = ord(event.Muon_genPartFlav[dilepton.id2])
+          self.out.genmet[0]                   = event.GenMET_pt
+          self.out.genmetphi[0]                = event.GenMET_phi
+          self.out.nPU[0]                      = event.Pileup_nPU
+          self.out.nTrueInt[0]                 = event.Pileup_nTrueInt
+          try:
+            self.out.LHE_Njets[0]              = event.LHE_Njets
+          except RuntimeError:
+            self.out.LHE_Njets[0]              = -1
         
         
         # MUON 1
@@ -250,34 +283,37 @@ class MuMuProducer(Module):
           self.out.genPartFlav_3[0]            = -1
         
         
-        # EVENT
-        self.out.isData[0]                     = self.isData
-        self.out.run[0]                        = event.run
-        self.out.lumi[0]                       = event.luminosityBlock
-        self.out.event[0]                      = event.event & 0xffffffffffffffff
-        self.out.met[0]                        = event.MET_pt
-        self.out.metphi[0]                     = event.MET_phi
-        ###self.out.puppimet[0]                  = event.PuppiMET_pt
-        ###self.out.puppimetphi[0]               = event.PuppiMET_phi
-        ###self.out.metsignificance[0]           = event.MET_significance
-        ###self.out.metcovXX[0]                  = event.MET_covXX
-        ###self.out.metcovXY[0]                  = event.MET_covXY
-        ###self.out.metcovYY[0]                  = event.MET_covYY
-        ###self.out.fixedGridRhoFastjetAll[0]    = event.fixedGridRhoFastjetAll
-        self.out.npvs[0]                       = event.PV_npvs
-        self.out.npvsGood[0]                   = event.PV_npvsGood
-        
+        # WEIGHTS
+        met = ROOT.TLorentzVector()
+        met.SetPxPyPzE(event.MET_pt*math.cos(event.MET_phi),event.MET_pt*math.cos(event.MET_phi),0,event.MET_pt)
+        self.out.met_uncorr[0]                 = event.MET_pt
+        self.out.metphi_uncorr[0]              = event.MET_phi
         if not self.isData:
-          self.out.genPartFlav_1[0]            = ord(event.Muon_genPartFlav[dilepton.id1])
-          self.out.genPartFlav_2[0]            = ord(event.Muon_genPartFlav[dilepton.id2])
-          self.out.genmet[0]                   = event.GenMET_pt
-          self.out.genmetphi[0]                = event.GenMET_phi
-          self.out.nPU[0]                      = event.Pileup_nPU
-          self.out.nTrueInt[0]                 = event.Pileup_nTrueInt
-          try:
-            self.out.LHE_Njets[0]              = event.LHE_Njets
-          except RuntimeError:
-            self.out.LHE_Njets[0]              = -1
+          if self.doRecoil:
+            boson, boson_vis = getBoson(event)
+            self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,event.nJet)
+            event.MET_pt                       = met.Pt()
+            event.MET_phi                      = met.Phi()
+            self.out.m_genboson[0]             = boson.M()
+            self.out.pt_genboson[0]            = boson.Pt()
+            if self.doZpt:
+              self.out.zptweight[0]            = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
+          elif self.doZpt:
+            zboson = getZBoson(event)         
+            self.out.m_genboson[0]             = zboson.M()
+            self.out.pt_genboson[0]            = zboson.Pt()
+            self.out.zptweight[0]              = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+          elif self.doTTpt:
+            toppt1, toppt2                     = getTTPt(event)
+            self.out.ttptweight[0]             = getTTptWeight(toppt1,toppt2)
+          self.out.genweight[0]                = event.genWeight
+          self.out.puweight[0]                 = self.puTool.getWeight(event.Pileup_nTrueInt)
+          self.out.trigweight[0]               = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
+          self.out.idisoweight_1[0]            = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
+          self.out.idisoweight_2[0]            = self.muSFs.getIdIsoSF(self.out.pt_2[0],self.out.eta_2[0])
+          self.out.btagweight[0]               = self.btagTool.getWeight(event,jetIds)
+          self.out.btagweight_deep[0]          = self.btagTool_deep.getWeight(event,jetIds)
+          self.out.weight[0]                   = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
         
         
         # JETS
@@ -327,12 +363,8 @@ class MuMuProducer(Module):
           self.out.bpt_2[0]                    = -9.
           self.out.beta_2[0]                   = -9.
         
-        
-        self.out.njets[0]                      = len(jetIds)
-        self.out.nfjets[0]                     = nfjets
-        self.out.ncjets[0]                     = ncjets
-        self.out.nbtag[0]                      = nbtag
-        
+        self.out.met[0]                        = event.MET_pt
+        self.out.metphi[0]                     = event.MET_phi
         self.out.pfmt_1[0]                     = math.sqrt( 2 * self.out.pt_1[0] * self.out.met[0] * ( 1 - math.cos(deltaPhi(self.out.phi_1[0], self.out.metphi[0])) ) );
         self.out.pfmt_2[0]                     = math.sqrt( 2 * self.out.pt_2[0] * self.out.met[0] * ( 1 - math.cos(deltaPhi(self.out.phi_2[0], self.out.metphi[0])) ) );
         
@@ -343,42 +375,19 @@ class MuMuProducer(Module):
         
         
         # PZETA
-        leg1     = ROOT.TVector3(muon1.Px(), muon1.Py(), 0.)
-        leg2     = ROOT.TVector3(muon2.Px(), muon2.Py(), 0.)
-        met_tlv  = ROOT.TLorentzVector()
-        met_tlv.SetPxPyPzE(self.out.met[0]*math.cos(self.out.metphi[0]), self.out.met[0]*math.cos(self.out.metphi[0]), 0, self.out.met[0])
-        metleg   = met_tlv.Vect()
-        zetaAxis = ROOT.TVector3(leg1.Unit() + leg2.Unit()).Unit()
-        pzetaVis = leg1*zetaAxis + leg2*zetaAxis
-        pzetaMET = metleg*zetaAxis
-        self.out.pzetamiss[0]  = pzetaMET
-        self.out.pzetavis[0]   = pzetaVis
-        self.out.dzeta[0]      = pzetaMET - 0.85*pzetaVis
+        leg1                                   = ROOT.TVector3(muon1.Px(), muon1.Py(), 0.)
+        leg2                                   = ROOT.TVector3(muon2.Px(), muon2.Py(), 0.)
+        zetaAxis                               = ROOT.TVector3(leg1.Unit() + leg2.Unit()).Unit()
+        pzetaVis                               = leg1*zetaAxis + leg2*zetaAxis
+        pzetaMET                               = met.Vect()*zetaAxis
+        self.out.pzetamiss[0]                  = pzetaMET
+        self.out.pzetavis[0]                   = pzetaVis
+        self.out.dzeta[0]                      = pzetaMET - 0.85*pzetaVis
         
         
         # VETOS
         self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event, [dilepton.id1, dilepton.id2], [-1], self.channel)
         self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
-        
-        
-        # WEIGHTS
-        if not self.isData:
-          if self.doZpt:
-            zboson = getZPTMass(event)
-            self.out.m_genboson[0]    = zboson.M()
-            self.out.pt_genboson[0]   = zboson.Pt()
-            self.out.zptweight[0]     = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
-          if self.doTTpt:
-            toppt1, toppt2 = getTTPTMass(event)
-            self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
-          self.out.genweight[0]       = event.genWeight
-          self.out.puweight[0]        = self.puTool.getWeight(event.Pileup_nTrueInt)
-          self.out.trigweight[0]      = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.idisoweight_1[0]   = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.idisoweight_2[0]   = self.muSFs.getIdIsoSF(self.out.pt_2[0],self.out.eta_2[0])
-          self.out.btagweight[0]      = self.btagTool.getWeight(event,jetIds)
-          self.out.btagweight_deep[0] = self.btagTool_deep.getWeight(event,jetIds)
-          self.out.weight[0]          = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
         
         
         self.out.tree.Fill() 

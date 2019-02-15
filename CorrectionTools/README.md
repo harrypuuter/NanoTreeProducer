@@ -101,7 +101,16 @@ Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProd
 
 ## Recoil corrections
 
-`RecoilCorrectionTool.py` provides a class to calculate the Z boson four-vector, and get the reweighting of LO Drell-Yan events as a function of Z boson pT and mass. Weights are stored in [`Zpt`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
+`RecoilCorrectionTool.py` provides the tools for three different things:
+* **Z pT reweighting** of LO Drell-Yan events as a function of Z boson pT and mass:
+  * `getZBoson`: calculate the Z boson's four-vector from its daugher leptons,
+  * `RecoilCorrectionTool.getZptWeight`: weights are stored in [`Zpt`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
+* **Top pT reweighting** of ttbar events as a function of the pT of both top quarks:
+  * `getTTPt`: calculate the generator-level top pT's,
+  * `getTTptWeight`: get [SFs recommended by Top PAG](https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting).
+* `RecoilCorrectionTool` to apply [**recoil corrections** to the MET](https://github.com/CMS-HTT/RecoilCorrections/blob/master/instructions.txt) for W/Z/Higgs events:
+  * `getZBoson`: calculate the full and visible four-vector of the Z/W/H boson at generator-level [[recommendation](https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2016#Recoil_corrections)],
+  * `CorrectPFMETByMeanResolution`: apply the correction to a given MET four-vector.
 
 
 

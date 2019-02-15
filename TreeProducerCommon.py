@@ -1,5 +1,5 @@
 import ROOT
-import math 
+import re, math 
 import numpy as num 
 
 
@@ -24,10 +24,26 @@ def getvar(obj,var):
   return getattr(obj,var_dict[var])
   
 def getVLooseTauIso(year):
-  #if year==2016:
-  #  return lambda e,i: ord(e.Tau_idMVAoldDM[i])>0
-  #else:
+  """Return a method to check whether event passes the VLoose working
+  point of all available tau IDs. (For tau ID measurement.)"""
   return lambda e,i: ord(e.Tau_idMVAoldDM[i])>0 or ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v1[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0
+  
+def getMETFilters(year,isData):
+  """Return a method to check if an event passes the recommended MET filters."""
+  if year==2018:
+    if isData:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilterV2
+    else:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilterV2
+  else:
+    if isData:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilter
+    else:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilter
   
 def Tau_idIso(event,i):
   raw = event.Tau_rawIso[i]
@@ -35,9 +51,12 @@ def Tau_idIso(event,i):
     return 0 if raw>4.5 else 1 if raw>3.5 else 3 if raw>2.5 else 7 if raw>1.5 else 15 if raw>0.8 else 31 # VVLoose, VLoose, Loose, Medium, Tight
   return 0 if raw>4.5 else 1 if raw>3.5 else 3 # VVLoose, VLoose
   
-root_type = {
+root_dtype = {
   float: 'D',  int: 'I',  bool: 'O',
   'f':   'D',  'i': 'I',  '?':  'O',  'b': 'b'
+}
+num_dtype = {
+  'D':   'f',  'I': 'i',  'O':  '?',  'b': 'b'
 }
 
 class TreeProducerCommon(object):
@@ -69,6 +88,7 @@ class TreeProducerCommon(object):
         self.addBranch('npvs',                    int)
         self.addBranch('npvsGood',                int)
         self.addBranch('LHE_Njets',               int)
+        self.addBranch('metfilter',               bool)
         
         
         ##############
@@ -115,6 +135,8 @@ class TreeProducerCommon(object):
         
         self.addBranch('met',                     float)
         self.addBranch('metphi',                  float)
+        self.addBranch('met_uncorr',              float)
+        self.addBranch('metphi_uncorr',           float)
         self.addBranch('genmet',                  float)
         self.addBranch('genmetphi',               float)
         ###self.addBranch('puppimet',                float)
@@ -181,8 +203,8 @@ class TreeProducerCommon(object):
         self.genmet[0]          = -1
         self.genmetphi[0]       = -9
         
-        self.m_genboson[0]  = -1
-        self.pt_genboson[0] = -1
+        self.m_genboson[0]      = -1
+        self.pt_genboson[0]     = -1
         
     def addBranch(self, name, dtype=float):
         """Add branch with a given name, and create an array of the same name as address."""
@@ -190,7 +212,7 @@ class TreeProducerCommon(object):
           print "ERROR! TreeProducerCommon::addBranch: Branch of name '%s' already exists!"%(name)
           exit(1)
         setattr(self,name,num.zeros(1,dtype=dtype))
-        self.tree.Branch(name, getattr(self,name), '%s/%s'%(name,root_type[dtype]))
+        self.tree.Branch(name, getattr(self,name), '%s/%s'%(name,root_dtype[dtype]))
         
 
 
