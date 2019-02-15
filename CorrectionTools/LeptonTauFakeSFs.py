@@ -12,10 +12,10 @@ class LeptonTauFakeSFs:
     def __init__(self, antiMuWP, antiEleWP, year=2017):
         """Initialize WP-dependent SFs."""
         
-        assert(antiMuWP in ['loose', 'tight']),\
-               "You must choose a anti-muon discriminator WP from: loose or tight"
-        assert(antiEleWP in ['vloose', 'loose', 'medium', 'tight', 'vtight']),\
-               "You must choose a anti-electron discriminator WP from: vloose, loose, medium, tight, or vtight"
+        assert antiMuWP in ['loose', 'tight'],\
+               "LeptonTauFakeSFs: You must choose a anti-muon discriminator WP from: loose or tight"
+        assert antiEleWP in ['vloose', 'loose', 'medium', 'tight', 'vtight'],\
+               "LeptonTauFakeSFs: You must choose a anti-electron discriminator WP from: vloose, loose, medium, tight, or vtight"
         
         self.antiMuSFs  = [ ]
         self.antiEleSFs = [ ]

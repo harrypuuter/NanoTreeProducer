@@ -7,11 +7,11 @@ from ROOT import TFile #, TH2F, TGraphAsymmErrors, Double()
 def ensureTFile(filename,option='READ'):
   """Open TFile, checking if the file in the given path exists."""
   if not os.path.isfile(filename):
-    print '>>> ERROR! ScaleFactorTool::ensureTFile: File in path "%s" does not exist!!'%(filename)
+    print '>>> ERROR! ScaleFactorTool.ensureTFile: File in path "%s" does not exist!!'%(filename)
     exit(1)
   file = TFile(filename,option)
   if not file or file.IsZombie():
-    print '>>> ERROR! ScaleFactorTool::ensureTFile Could not open file by name "%s"'%(filename)
+    print '>>> ERROR! ScaleFactorTool.ensureTFile Could not open file by name "%s"'%(filename)
     exit(1)
   return file
   
@@ -20,14 +20,14 @@ def ensureTFile(filename,option='READ'):
 class ScaleFactor:
     
     def __init__(self, filename, histname, name="<noname>", ptvseta=True):
-        #print '>>> ScaleFactor::init("%s","%s",name="%s",ptvseta=%r)'%(filename,histname,name,ptvseta)
+        #print '>>> ScaleFactor.init("%s","%s",name="%s",ptvseta=%r)'%(filename,histname,name,ptvseta)
         self.name     = name
         self.ptvseta  = ptvseta
         self.filename = filename
         self.file     = ensureTFile(filename)
         self.hist     = self.file.Get(histname)
         if not self.hist:
-          print '>>> ScaleFactor(%s)::init: histogram "%s" does not exist in "%s"'%(self.name,histname,filename)
+          print '>>> ScaleFactor(%s).__init__: histogram "%s" does not exist in "%s"'%(self.name,histname,filename)
           exit(1)
         self.hist.SetDirectory(0)
         self.file.Close()
@@ -47,7 +47,7 @@ class ScaleFactor:
         if ybin==0: ybin = 1
         elif ybin>self.hist.GetYaxis().GetNbins(): ybin -= 1
         sf   = self.hist.GetBinContent(xbin,ybin)
-        #print "ScaleFactor(%s)::getSF_ptvseta: pt = %6.2f, eta = %6.3f, sf = %6.3f"%(self.name,pt,eta,sf)
+        #print "ScaleFactor(%s).getSF_ptvseta: pt = %6.2f, eta = %6.3f, sf = %6.3f"%(self.name,pt,eta,sf)
         return sf
         
     def getSF_etavspt(self, pt, eta):
@@ -59,7 +59,7 @@ class ScaleFactor:
         if ybin==0: ybin = 1
         elif ybin>self.hist.GetYaxis().GetNbins(): ybin -= 1
         sf   = self.hist.GetBinContent(xbin,ybin)
-        #print "ScaleFactor(%s)::getSF_etavspt: pt = %6.2f, eta = %6.3f, sf = %6.3f"%(self.name,pt,eta,sf)
+        #print "ScaleFactor(%s).getSF_etavspt: pt = %6.2f, eta = %6.3f, sf = %6.3f"%(self.name,pt,eta,sf)
         return sf
     
 
@@ -67,7 +67,7 @@ class ScaleFactor:
 class ScaleFactorHTT(ScaleFactor):
     
     def __init__(self, filename, graphname='ZMass', name="<noname>"):
-        #print '>>> ScaleFactor::init("%s","%s",name="%s")'%(filename,graphname,name)
+        #print '>>> ScaleFactor.init("%s","%s",name="%s")'%(filename,graphname,name)
         self.name      = name
         self.filename  = filename
         self.file      = ensureTFile(filename)
@@ -92,7 +92,7 @@ class ScaleFactorHTT(ScaleFactor):
           sf   = 1.0
         else:
           sf   = data/mc
-        #print "ScaleFactorHTT(%s)::getSF: pt = %6.2f, eta = %6.3f, data = %6.3f, mc = %6.3f, sf = %6.3f"%(self.name,pt,eta,data,mc,sf)
+        #print "ScaleFactorHTT(%s).getSF: pt = %6.2f, eta = %6.3f, data = %6.3f, mc = %6.3f, sf = %6.3f"%(self.name,pt,eta,data,mc,sf)
         return sf
     
 
@@ -104,7 +104,7 @@ class ScaleFactorProduct:
           self.name = scaleFactor1.name+'*'+scaleFactor2.name
         else:
           self.name = name
-        #print '>>> ScaleFactor(%s)::init'%(self.name)
+        #print '>>> ScaleFactor(%s).init'%(self.name)
         self.scaleFactor1 = scaleFactor1
         self.scaleFactor2 = scaleFactor2
         

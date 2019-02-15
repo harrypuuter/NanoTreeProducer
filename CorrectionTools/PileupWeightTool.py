@@ -44,6 +44,6 @@ class PileupWeightTool:
         mc   = self.mchist.GetBinContent(self.mchist.GetXaxis().FindBin(npu))
         if mc>0.:
           return data/mc
-        print ">>> Warning! PileupWeightTools::getWeight: Could not make pileup weight for npu=%s data=%s, mc=%s"%(npu,data,mc)  
+        print ">>> Warning! PileupWeightTools.getWeight: Could not make pileup weight for npu=%s data=%s, mc=%s"%(npu,data,mc)  
         return 1.
     

@@ -167,7 +167,7 @@ class Job:
           #  continue
         
           if "segmentation violation" in line.lower() or "file probably overwritten: stopping reporting error messages" in line:
-            #or "terminate called after throwing an instance of 'std::bad_alloc'" in line:
+            #or "terminate called after throwing an instance of 'std.bad_alloc'" in line:
             failed = True
             done = False
             break
@@ -217,7 +217,7 @@ def getJobID(filename):
   if match:
     return int(match.group(1)), int(match.group(2))
   else:
-    print ">>> Warning! Job::__init__: %s does not match to a job log file with a job and task ID!"
+    print ">>> Warning! Job.__init__: %s does not match to a job log file with a job and task ID!"
   return -1, -1
   
 

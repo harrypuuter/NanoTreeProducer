@@ -12,12 +12,12 @@ class ElectronSFs:
     def __init__(self, year=2017):
         """Load histograms from files."""
         
-        assert(year in [2016,2017,2018]), "You must choose a year from: 2016, 2017, or 2018."
+        assert year in [2016,2017,2018], "ElectronSFs: You must choose a year from: 2016, 2017, or 2018."
         
         if year==2016:
-          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016BtoH/Electron_Ele25_eta2p1_WPTight_eff.root",'ZMass','mu_trig')
+          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016BtoH/Spring15_Id/Electron_Ele25_eta2p1_WPTight_2016BtoH_eff.root",'ZMass','mu_trig')
           self.sftool_reco  = None
-          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016BtoH/Electron_IdIso_IsoLt0p1_eff.root",'ZMass','mu_idiso')
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016BtoH/Spring15_Id/Electron_IdIso_IsoLt0p1_2016BtoH_eff.root",'ZMass','mu_idiso')
         else:
           self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2017/Electron_Ele32orEle35.root",'ZMass','ele_trig')
           self.sftool_reco  = ScaleFactor(path+"egammaEffi.txt_EGM2D_runBCDEF_passingRECO.root","EGamma_SF2D",'ele_reco')

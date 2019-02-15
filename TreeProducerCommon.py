@@ -209,7 +209,7 @@ class TreeProducerCommon(object):
     def addBranch(self, name, dtype=float):
         """Add branch with a given name, and create an array of the same name as address."""
         if hasattr(self,name):
-          print "ERROR! TreeProducerCommon::addBranch: Branch of name '%s' already exists!"%(name)
+          print "ERROR! TreeProducerCommon.addBranch: Branch of name '%s' already exists!"%(name)
           exit(1)
         setattr(self,name,num.zeros(1,dtype=dtype))
         self.tree.Branch(name, getattr(self,name), '%s/%s'%(name,root_dtype[dtype]))
