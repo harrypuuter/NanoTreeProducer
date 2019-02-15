@@ -12,34 +12,28 @@ class MuonSFs:
     def __init__(self, year=2017):
         """Load histograms from files."""
         
-        assert(year in [2016,2017,2018]), "You must choose a year from: 2016, 2017, or 2018."
+        assert year in [2016,2017,2018], "MuonSFs: You must choose a year from: 2016, 2017, or 2018."
         
         if year==2016:
-          self.sftool_trig     = ScaleFactorHTT(pathHTT+"Run2016BtoH/Muon_IdIso_IsoLt0p15_2016BtoH_eff.root",'ZMass','mu_trig')
-          self.sftool_trig_HTT = self.sftool_trig
-          self.sftool_idiso    = ScaleFactorHTT(pathHTT+"Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root",'ZMass','mu_idiso')
+          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root",'ZMass','mu_idiso')
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016BtoH/Muon_IdIso_IsoLt0p15_2016BtoH_eff.root",'ZMass','mu_trig')
         elif year==2017:
-          self.sftool_trig     = ScaleFactor(path+"Run2017/EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/abseta_pt_ratio",'mu_trig')
-          self.sftool_trig_HTT = ScaleFactorHTT(pathHTT+"Run2017/Muon_IsoMu24orIsoMu27.root",'ZMass','mu_idiso')
-          #sftool_id            = ScaleFactor(path+"Run2017/RunBCDEF_SF_ID.root","NUM_MediumID_DEN_genTracks_pt_abseta",'mu_id',ptvseta=False)
-          #sftool_iso           = ScaleFactor(path+"Run2017/RunBCDEF_SF_ISO.root","NUM_TightRelIso_DEN_MediumID_pt_abseta",'mu_iso',ptvseta=False)
-          #self.sftool_idiso    = sftool_id*sftool_iso
-          self.sftool_idiso    = ScaleFactorHTT(pathHTT+"Run2017/Muon_IdIso_IsoLt0p15_eff_RerecoFall17.root",'ZMass','mu_idiso')
+          #self.sftool_trig  = ScaleFactor(path+"Run2017/EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/abseta_pt_ratio",'mu_trig')
+          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2017/Muon_IsoMu24orIsoMu27.root",'ZMass','mu_idiso')
+          #sftool_id         = ScaleFactor(path+"Run2017/RunBCDEF_SF_ID.root","NUM_MediumID_DEN_genTracks_pt_abseta",'mu_id',ptvseta=False)
+          #sftool_iso        = ScaleFactor(path+"Run2017/RunBCDEF_SF_ISO.root","NUM_TightRelIso_DEN_MediumID_pt_abseta",'mu_iso',ptvseta=False)
+          #self.sftool_idiso = sftool_id*sftool_iso
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2017/Muon_IdIso_IsoLt0p15_eff_RerecoFall17.root",'ZMass','mu_idiso')
         else:
-          self.sftool_trig     = ScaleFactor(path+"Run2017/EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/abseta_pt_ratio",'mu_trig')
-          self.sftool_trig_HTT = self.sftool_trig
-          sftool_id            = ScaleFactor(path+"Run2018/RunABCD_SF_ID.root","NUM_MediumID_DEN_genTracks_pt_abseta",'mu_id',ptvseta=False)
-          sftool_iso           = ScaleFactor(path+"Run2018/RunABCD_SF_ISO.root","NUM_TightRelIso_DEN_MediumID_pt_abseta",'mu_iso',ptvseta=False)
-          self.sftool_idiso    = sftool_id*sftool_iso
+          self.sftool_trig  = ScaleFactor(path+"Run2017/EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/abseta_pt_ratio",'mu_trig')
+          sftool_id         = ScaleFactor(path+"Run2018/RunABCD_SF_ID.root","NUM_MediumID_DEN_genTracks_pt_abseta",'mu_id',ptvseta=False)
+          sftool_iso        = ScaleFactor(path+"Run2018/RunABCD_SF_ISO.root","NUM_TightRelIso_DEN_MediumID_pt_abseta",'mu_iso',ptvseta=False)
+          self.sftool_idiso = sftool_id*sftool_iso
           #self.sftool_idiso    = ScaleFactorHTT(pathHTT+"Run2017/Muon_IdIso_IsoLt0p15_eff_RerecoFall17.root",'ZMass','mu_idiso')
         
     def getTriggerSF(self, pt, eta):
         """Get SF for single muon trigger."""
         return self.sftool_trig.getSF(pt,abs(eta))
-        
-    def getTriggerSF_HTT(self, pt, eta):
-        """Get SF for single muon trigger."""
-        return self.sftool_trig_HTT.getSF(pt,abs(eta))
         
     def getIdIsoSF(self, pt, eta):
         """Get SF for muon identification + isolation."""
