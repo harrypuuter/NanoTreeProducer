@@ -116,18 +116,23 @@ Usage:
 ```
     def analyze(self event):
         
+        met = ROOT.TLorentzVector()
+        met.SetPxPyPzE(event.MET_pt*math.cos(event.MET_phi),event.MET_pt*math.cos(event.MET_phi),0,event.MET_pt)
         if Z/W/Higgs event:
           boson, boson_vis = getBoson(event)
           self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,event.nJet)
+          event.MET_pt     = met.Pt()
+          event.MET_phi    = met.Phi()
         
         if Z event:
           zboson = getZBoson(event)
           zptweight = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
         
         if ttbar event:
-          toppt1, toppt2 = getTTPt(event)
-          ttptweight     = getTTptWeight(toppt1,toppt2)
+          toppt1, toppt2   = getTTPt(event)
+          ttptweight       = getTTptWeight(toppt1,toppt2)
 ```
+Note that `zboson` and `boson` are equivalent.
 
 
 ## Test SFs
