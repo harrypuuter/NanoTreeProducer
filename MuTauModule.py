@@ -7,7 +7,7 @@ from CorrectionTools.MuonSFs import *
 from CorrectionTools.PileupWeightTool import *
 from CorrectionTools.LeptonTauFakeSFs import *
 from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass, getTTPTMass
+from CorrectionTools.RecoilCorrectionTool import *
 
 
 class MuTauProducer(Module):
@@ -17,17 +17,19 @@ class MuTauProducer(Module):
         self.name            = name
         self.out             = TreeProducerMuTau(name)
         self.isData          = dataType=='data'
-        self.year            = kwargs.get('year',    2017 )
-        self.tes             = kwargs.get('tes',     1.0  )
-        self.doZpt           = kwargs.get('doZpt',   'DY' in name )
-        self.doTTpt          = kwargs.get('doTTpt',  'TT' in name )
-        self.doTight         = kwargs.get('doTight', self.tes!=1 )
+        self.year            = kwargs.get('year',     2017 )
+        self.tes             = kwargs.get('tes',      1.0  )
+        self.ltf             = kwargs.get('ltf',      1.0  )
+        self.doZpt           = kwargs.get('doZpt',    'DY' in name )
+        self.doRecoil        = kwargs.get('doRecoil', 'DY' in name or re.search(r"W.Jets",name))
+        self.doTTpt          = kwargs.get('doTTpt',   'TT' in name )
+        self.doTight         = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 )
         self.channel         = 'mutau'
         year, channel        = self.year, self.channel
         
         setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
-        #self.filter          = getMETFilters(year,isData)
+        self.filter          = getMETFilters(year,self.isData)
         if year==2016:
           self.trigger       = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
           self.muonCutPt     = lambda e: 23
@@ -45,14 +47,13 @@ class MuTauProducer(Module):
           self.ltfSFs        = LeptonTauFakeSFs('tight','vloose',year=year)
           self.btagTool      = BTagWeightTool('CSVv2','medium',channel=channel,year=year)
           self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
-          if self.doZpt or self.doTTpt:
-            self.recoilTool  = RecoilCorrectionTool(year=year)
+          if self.doZpt or self.doRecoil:
+            self.recoilTool  = RecoilCorrectionTool(year=year,doZpt=self.doZpt)
         self.csvv2_wp        = BTagWPs('CSVv2',year=year)
         self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
         self.Nocut = 0
         self.Trigger = 1
-        #self.METFilter = 2
         self.GoodMuons = 2
         self.GoodTaus = 3
         self.GoodDiLepton = 4
@@ -61,7 +62,6 @@ class MuTauProducer(Module):
         
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.Nocut,               "no cut"                 )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.Trigger,             "trigger"                )
-        #self.out.cutflow.GetXaxis().SetBinLabel(1+self.METFilter,           "METFilter"              )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.GoodMuons,           "muon object"            )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.GoodTaus,            "tau object"             )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.GoodDiLepton,        "mutau pair"             )
@@ -114,14 +114,6 @@ class MuTauProducer(Module):
         #####################################
         
         
-        #if not event.Flag_globalSuperTightHalo2016Filter:
-        #    return False
-        #
-        ######################################
-        #self.out.cutflow.Fill(self.METFilter)
-        ######################################
-        
-        
         idx_goodmuons = [ ]
         for imuon in range(event.nMuon):
             if event.Muon_pt[imuon] < self.muonCutPt(event): continue
@@ -142,9 +134,12 @@ class MuTauProducer(Module):
         
         idx_goodtaus = [ ]
         for itau in range(event.nTau):
-            if self.tes!=1.0 and event.Tau_genPartFlav[itau]==5:
+            if self.tes!=1.0 and ord(event.Tau_genPartFlav[itau])==5:
               event.Tau_pt[itau]   *= self.tes
               event.Tau_mass[itau] *= self.tes
+            elif self.ltf!=1.0 and 0<ord(event.Tau_genPartFlav[itau])<5:
+              event.Tau_pt[itau]   *= self.ltf
+              event.Tau_mass[itau] *= self.ltf
             if event.Tau_pt[itau] < self.tauCutPt: continue
             if abs(event.Tau_eta[itau]) > 2.3: continue
             if abs(event.Tau_dz[itau]) > 0.2: continue
@@ -223,13 +218,39 @@ class MuTauProducer(Module):
           self.btagTool_deep.fillEfficiencies(event,jetIds)
         
         #eventSum = ROOT.TLorentzVector()
-        #
         #for lep in muons :
         #    eventSum += lep.p4()
         #for lep in electrons :
         #    eventSum += lep.p4()
         #for j in filter(self.jetSel,jets):
-        #    eventSum += j.p4()   
+        #    eventSum += j.p4()
+        
+        
+        # EVENT
+        self.out.isData[0]                     = self.isData
+        self.out.run[0]                        = event.run
+        self.out.lumi[0]                       = event.luminosityBlock
+        self.out.event[0]                      = event.event & 0xffffffffffffffff
+        ###self.out.puppimet[0]                   = event.PuppiMET_pt
+        ###self.out.puppimetphi[0]                = event.PuppiMET_phi
+        ###self.out.metsignificance[0]            = event.MET_significance
+        ###self.out.metcovXX[0]                   = event.MET_covXX
+        ###self.out.metcovXY[0]                   = event.MET_covXY
+        ###self.out.metcovYY[0]                   = event.MET_covYY
+        ###self.out.fixedGridRhoFastjetAll[0]     = event.fixedGridRhoFastjetAll
+        self.out.npvs[0]                       = event.PV_npvs
+        self.out.npvsGood[0]                   = event.PV_npvsGood
+        self.out.metfilter[0]                  = self.filter(event)
+        
+        if not self.isData:
+          self.out.genmet[0]                   = event.GenMET_pt
+          self.out.genmetphi[0]                = event.GenMET_phi
+          self.out.nPU[0]                      = event.Pileup_nPU
+          self.out.nTrueInt[0]                 = event.Pileup_nTrueInt
+          try:
+            self.out.LHE_Njets[0]              = event.LHE_Njets
+          except RuntimeError:
+            self.out.LHE_Njets[0]              = -1
         
         
         # MUON
@@ -256,7 +277,6 @@ class MuTauProducer(Module):
         self.out.photonsOutsideSignalCone_2[0] = event.Tau_photonsOutsideSignalCone[ltau.id2]
         self.out.puCorr_2[0]                   = event.Tau_puCorr[ltau.id2]
         self.out.rawAntiEle_2[0]               = event.Tau_rawAntiEle[ltau.id2]
-        self.out.rawIso_2[0]                   = event.Tau_rawIso[ltau.id2]
         self.out.q_2[0]                        = event.Tau_charge[ltau.id2]
         self.out.decayMode_2[0]                = event.Tau_decayMode[ltau.id2]
         ###self.out.rawAntiEleCat_2[0]            = event.Tau_rawAntiEleCat[ltau.id2]
@@ -264,6 +284,7 @@ class MuTauProducer(Module):
         self.out.idAntiMu_2[0]                 = ord(event.Tau_idAntiMu[ltau.id2])
         self.out.idDecayMode_2[0]              = event.Tau_idDecayMode[ltau.id2]
         self.out.idDecayModeNewDMs_2[0]        = event.Tau_idDecayModeNewDMs[ltau.id2]
+        self.out.rawIso_2[0]                   = event.Tau_rawIso[ltau.id2]
         self.out.rawMVAoldDM_2[0]              = event.Tau_rawMVAoldDM[ltau.id2]
         self.out.rawMVAoldDM2017v1_2[0]        = event.Tau_rawMVAoldDM2017v1[ltau.id2]
         self.out.rawMVAoldDM2017v2_2[0]        = event.Tau_rawMVAoldDM2017v2[ltau.id2]
@@ -272,6 +293,7 @@ class MuTauProducer(Module):
         self.out.idMVAoldDM2017v1_2[0]         = ord(event.Tau_idMVAoldDM2017v1[ltau.id2])
         self.out.idMVAoldDM2017v2_2[0]         = ord(event.Tau_idMVAoldDM2017v2[ltau.id2])
         self.out.idMVAnewDM2017v2_2[0]         = ord(event.Tau_idMVAnewDM2017v2[ltau.id2])
+        self.out.idIso_2[0]                    = Tau_idIso(event,ltau.id2)
         
         
         # GENERATOR
@@ -300,32 +322,38 @@ class MuTauProducer(Module):
           self.out.genvistauphi_2[0]           = genphi
         
         
-        # EVENT
-        self.out.isData[0]                     = self.isData
-        self.out.run[0]                        = event.run
-        self.out.lumi[0]                       = event.luminosityBlock
-        self.out.event[0]                      = event.event & 0xffffffffffffffff
-        self.out.met[0]                        = event.MET_pt
-        self.out.metphi[0]                     = event.MET_phi
-        ###self.out.puppimet[0]                  = event.PuppiMET_pt
-        ###self.out.puppimetphi[0]               = event.PuppiMET_phi
-        ###self.out.metsignificance[0]           = event.MET_significance
-        ###self.out.metcovXX[0]                  = event.MET_covXX
-        ###self.out.metcovXY[0]                  = event.MET_covXY
-        ###self.out.metcovYY[0]                  = event.MET_covYY
-        ###self.out.fixedGridRhoFastjetAll[0]    = event.fixedGridRhoFastjetAll
-        self.out.npvs[0]                       = event.PV_npvs
-        self.out.npvsGood[0]                   = event.PV_npvsGood
-        
+        # WEIGHTS
+        met = ROOT.TLorentzVector()
+        met.SetPxPyPzE(event.MET_pt*math.cos(event.MET_phi),event.MET_pt*math.cos(event.MET_phi),0,event.MET_pt)
+        self.out.met_uncorr[0]                 = event.MET_pt
+        self.out.metphi_uncorr[0]              = event.MET_phi
         if not self.isData:
-          self.out.genmet[0]                   = event.GenMET_pt
-          self.out.genmetphi[0]                = event.GenMET_phi
-          self.out.nPU[0]                      = event.Pileup_nPU
-          self.out.nTrueInt[0]                 = event.Pileup_nTrueInt
-          try:
-            self.out.LHE_Njets[0]              = event.LHE_Njets
-          except RuntimeError:
-            self.out.LHE_Njets[0]              = -1
+          if self.doRecoil:
+            boson, boson_vis = getBoson(event)
+            self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,event.nJet)
+            event.MET_pt                       = met.Pt()
+            event.MET_phi                      = met.Phi()
+            self.out.m_genboson[0]             = boson.M()
+            self.out.pt_genboson[0]            = boson.Pt()
+            if self.doZpt:
+              self.out.zptweight[0]            = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
+          elif self.doZpt:
+            zboson = getZBoson(event)         
+            self.out.m_genboson[0]             = zboson.M()
+            self.out.pt_genboson[0]            = zboson.Pt()
+            self.out.zptweight[0]              = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+          elif self.doTTpt:
+            toppt1, toppt2                     = getTTPt(event)
+            self.out.ttptweight[0]             = getTTptWeight(toppt1,toppt2)
+          self.out.genweight[0]                = event.genWeight
+          self.out.puweight[0]                 = self.puTool.getWeight(event.Pileup_nTrueInt)
+          self.out.trigweight[0]               = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
+          self.out.trigweight_HTT[0]           = self.out.trigweight[0]
+          self.out.idisoweight_1[0]            = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
+          self.out.idisoweight_2[0]            = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
+          self.out.btagweight[0]               = self.btagTool.getWeight(event,jetIds)
+          self.out.btagweight_deep[0]          = self.btagTool_deep.getWeight(event,jetIds)
+          self.out.weight[0]                   = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
         
         
         # JETS
@@ -375,8 +403,10 @@ class MuTauProducer(Module):
           self.out.bpt_2[0]                    = -9.
           self.out.beta_2[0]                   = -9.
         
-        self.out.pfmt_1[0]                     = math.sqrt( 2 * self.out.pt_1[0] * self.out.met[0] * ( 1 - math.cos(deltaPhi(self.out.phi_1[0], self.out.metphi[0])) ) )
-        self.out.pfmt_2[0]                     = math.sqrt( 2 * self.out.pt_2[0] * self.out.met[0] * ( 1 - math.cos(deltaPhi(self.out.phi_2[0], self.out.metphi[0])) ) )
+        self.out.met[0]                        = event.MET_pt
+        self.out.metphi[0]                     = event.MET_phi
+        self.out.pfmt_1[0]                     = math.sqrt( 2 * self.out.pt_1[0] * event.MET_pt * ( 1 - math.cos(deltaPhi(self.out.phi_1[0], event.MET_phi)) ) )
+        self.out.pfmt_2[0]                     = math.sqrt( 2 * self.out.pt_2[0] * event.MET_pt * ( 1 - math.cos(deltaPhi(self.out.phi_2[0], event.MET_phi)) ) )
         
         self.out.m_vis[0]                      = (muon + tau).M()
         self.out.pt_ll[0]                      = (muon + tau).Pt()
@@ -385,39 +415,14 @@ class MuTauProducer(Module):
         
         
         # PZETA
-        leg1     = ROOT.TVector3(muon.Px(), muon.Py(), 0.)
-        leg2     = ROOT.TVector3(tau.Px(),  tau.Py(),  0.)
-        met_tlv  = ROOT.TLorentzVector()
-        met_tlv.SetPxPyPzE(self.out.met[0]*math.cos(self.out.metphi[0]), self.out.met[0]*math.cos(self.out.metphi[0]), 0, self.out.met[0])
-        metleg   = met_tlv.Vect()
-        zetaAxis = ROOT.TVector3(leg1.Unit() + leg2.Unit()).Unit()
-        pzetaVis = leg1*zetaAxis + leg2*zetaAxis
-        pzetaMET = metleg*zetaAxis
-        self.out.pzetamiss[0]  = pzetaMET
-        self.out.pzetavis[0]   = pzetaVis
-        self.out.dzeta[0]      = pzetaMET - 0.85*pzetaVis
-        
-        
-        # WEIGHTS
-        if not self.isData:
-          if self.doZpt:
-            zboson = getZPTMass(event)
-            self.out.m_genboson[0]    = zboson.M()
-            self.out.pt_genboson[0]   = zboson.Pt()
-            self.out.zptweight[0]     = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
-          if self.doTTpt:
-            toppt1, toppt2 = getTTPTMass(event)
-            self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
-          self.out.genweight[0]       = event.genWeight
-          self.out.puweight[0]        = self.puTool.getWeight(event.Pileup_nTrueInt)
-          self.out.trigweight[0]      = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.trigweight_HTT[0]  = self.muSFs.getTriggerSF_HTT(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.idisoweight_1[0]   = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.idisoweight_2[0]   = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
-          self.out.btagweight[0]      = self.btagTool.getWeight(event,jetIds)
-          self.out.btagweight_deep[0] = self.btagTool_deep.getWeight(event,jetIds)
-          self.out.weight[0]          = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
-        
+        leg1                                   = ROOT.TVector3(muon.Px(), muon.Py(), 0.)
+        leg2                                   = ROOT.TVector3(tau.Px(),  tau.Py(),  0.)
+        zetaAxis                               = ROOT.TVector3(leg1.Unit() + leg2.Unit()).Unit()
+        pzetaVis                               = leg1*zetaAxis + leg2*zetaAxis
+        pzetaMET                               = met.Vect()*zetaAxis
+        self.out.pzetamiss[0]                  = pzetaMET
+        self.out.pzetavis[0]                   = pzetaVis
+        self.out.dzeta[0]                      = pzetaMET - 0.85*pzetaVis
         
         self.out.tree.Fill()
         return True
