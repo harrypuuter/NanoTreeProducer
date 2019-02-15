@@ -14,7 +14,6 @@ SCRATCHNEW="/scratch/ineuteli/analysis/LQ_$YEAR"
 
 if [ "$YEAR" == "2016" ]; then
   SAMPLES="
-    DY/DY3JetsToLL_M-50
     DY/DY4JetsToLL_M-50
   "
 else
