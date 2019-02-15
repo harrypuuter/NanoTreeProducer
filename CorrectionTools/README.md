@@ -5,7 +5,7 @@ Several tools to get corrections, efficiencies, scale factors (SFs), event weigh
 
 ## Pileup reweighting
 
-`PileupWeightTool.py` provides the pileup event weight based on the data and MC profiles in [`pileup`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/pileup).
+`PileupWeightTool.py` provides the pileup event weight based on the data and MC profiles in [`pileup/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/pileup).
 
 The data profile can be computed with the `brilcalc` tool on `lxplus`.
 The MC profile can be taken from the distribution of the `Pileup_nTrueInt` variable in nanoAOD, for each MC event:
@@ -73,7 +73,7 @@ class MuTauProducer(Module):
         
 ```
 
-`BTagWeightTool` calculates b-tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/btag).
+`BTagWeightTool` calculates b-tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/btag).
 The event weight is calculated according to [this method](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagSFMethods#1a_Event_reweighting_using_scale).
 
 The efficiencies in MC can be calculated for your particular analys by filling histograms with `fillEfficiencies` for each selected event, after removing overlap with other selected objects, e.g. the muon and tau object in [`MuTauModule.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/MuTauModule.py):
@@ -103,13 +103,13 @@ Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProd
 
 `RecoilCorrectionTool.py` provides the tools for three different things:
 * **Z pT reweighting** of LO Drell-Yan events as a function of Z boson pT and mass:
-  * `getZBoson`: calculate the Z boson's four-vector from its daugher leptons,
-  * `RecoilCorrectionTool.getZptWeight`: get weights are stored in [`Zpt`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
+  * `getZBoson`: compute the Z boson's four-vector from its daugher leptons,
+  * `RecoilCorrectionTool.getZptWeight`: get weights are stored in [`Zpt/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
 * **Top pT reweighting** of ttbar events as a function of the pT of both top quarks:
-  * `getTTPt`: calculate the generator-level top pT's,
+  * `getTTPt`: compute the generator-level top pT's,
   * `getTTptWeight`: get [SFs recommended by Top PAG](https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting).
 * `RecoilCorrectionTool` provides [**recoil corrections** to the MET](https://github.com/CMS-HTT/RecoilCorrections/blob/master/instructions.txt) for W/Z/Higgs events (see HTT's [AN-2016/355](http://cms.cern.ch/iCMS/user/noteinfo?cmsnoteid=CMS%20AN-2016/355)):
-  * `getZBoson`: calculate the full and visible four-vector of the Z/W/H boson at generator-level [[recommendation](https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2016#Recoil_corrections)],
+  * `getBoson`: compute the full and visible four-vector of the Z/W/Higgs boson at generator-level [[recommendation](https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2016#Recoil_corrections)],
   * `CorrectPFMETByMeanResolution`: apply the correction to a given MET four-vector.
 
 
