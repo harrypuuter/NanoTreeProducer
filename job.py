@@ -15,6 +15,7 @@ parser.add_argument('-c', '--channel', dest='channel', action='store', choices=[
 parser.add_argument('-t', '--type',    dest='type', action='store', choices=['data','mc'], default='mc')
 parser.add_argument('-y', '--year',    dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
 parser.add_argument('-T', '--tes',     dest='tes', action='store', type=float, default=1.0)
+parser.add_argument('-L', '--ltf',     dest='ltf', action='store', type=float, default=1.0)
 args = parser.parse_args()
 
 channel  = args.channel
@@ -25,9 +26,11 @@ outfile  = args.outfile
 nchunck  = args.nchunck
 year     = args.year
 tes      = args.tes
+ltf      = args.ltf
 kwargs   = {
   'year':  year,
   'tes':   tes,
+  'ltf':   ltf,
 }
 
 if isinstance(infiles,str):
@@ -52,6 +55,7 @@ else:
 
 tag = ""
 if tes!=1: tag +="_TES%.3f"%(tes)
+if ltf!=1: tag +="_LTF%.3f"%(ltf)
 outfile = "%s_%s_%s%s.root"%(outfile,nchunck,channel,tag.replace('.','p'))
 postfix = "%s/%s"%(outdir,outfile)
 
@@ -64,6 +68,7 @@ print "%-12s = %s"%('channel',channel)
 print "%-12s = %s"%('dataType',dataType)
 print "%-12s = %s"%('year',kwargs['year'])
 print "%-12s = %s"%('tes',kwargs['tes'])
+print "%-12s = %s"%('ltf',kwargs['ltf'])
 print '-'*80
 
 module2run = None
@@ -87,7 +92,7 @@ elif channel=='elemu':
     from EleMuModule import *
     module2run = lambda : EleMuProducer(postfix, dataType)
 else:
-    print 'Unkonwn channel !!!'
+    print 'Unkown channel !!!'
     sys.exit(0)
 
 if dataType=='data':
