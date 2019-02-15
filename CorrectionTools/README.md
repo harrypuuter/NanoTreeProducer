@@ -100,9 +100,9 @@ Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProd
 * **Top pT reweighting** of ttbar events as a function of the pT of both top quarks:
   * `getTTPt`: compute the generator-level top pT's,
   * `getTTptWeight`: get [SFs recommended by Top PAG](https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting).
-* `RecoilCorrectionTool` provides [**recoil corrections** to the MET](https://github.com/CMS-HTT/RecoilCorrections/blob/master/instructions.txt) for W/Z/Higgs events (see HTT's [AN-2016/355](http://cms.cern.ch/iCMS/user/noteinfo?cmsnoteid=CMS%20AN-2016/355)):
+* [**Recoil corrections** to the MET](https://github.com/CMS-HTT/RecoilCorrections/blob/master/instructions.txt) for W/Z/Higgs events (see HTT's [AN-2016/355](http://cms.cern.ch/iCMS/user/noteinfo?cmsnoteid=CMS%20AN-2016/355)):
   * `getBoson`: compute the full and visible four-vector of the Z/W/Higgs boson at generator-level [[recommendation](https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2016#Recoil_corrections)],
-  * `CorrectPFMETByMeanResolution`: apply the correction to a given MET four-vector.
+  * `RecoilCorrectionTool.CorrectPFMETByMeanResolution`: apply the correction to a given MET four-vector.
 
 Usage:
 ```
