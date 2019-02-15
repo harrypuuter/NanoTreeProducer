@@ -103,7 +103,7 @@ Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProd
 
 `RecoilCorrectionTool.py` provides the tools for three different things:
 * **Z pT reweighting** of LO Drell-Yan events as a function of Z boson pT and mass:
-  * `getZBoson`: compute the Z boson's four-vector from its daugher leptons,
+  * `getZBoson`: compute the (full) Z boson's four-vector from its daugher leptons,
   * `RecoilCorrectionTool.getZptWeight`: get weights are stored in [`Zpt/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
 * **Top pT reweighting** of ttbar events as a function of the pT of both top quarks:
   * `getTTPt`: compute the generator-level top pT's,
@@ -112,6 +112,22 @@ Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProd
   * `getBoson`: compute the full and visible four-vector of the Z/W/Higgs boson at generator-level [[recommendation](https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2016#Recoil_corrections)],
   * `CorrectPFMETByMeanResolution`: apply the correction to a given MET four-vector.
 
+Usage:
+```
+    def analyze(self event):
+        
+        if Z/W/Higgs event:
+          boson, boson_vis = getBoson(event)
+          self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,event.nJet)
+        
+        if Z event:
+          zboson = getZBoson(event)
+          zptweight = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
+        
+        if ttbar events
+          toppt1, toppt2 = getTTPt(event)
+          ttptweight     = getTTptWeight(toppt1,toppt2)
+```
 
 
 ## Test SFs
