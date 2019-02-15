@@ -77,7 +77,7 @@ class MuTauProducer(Module):
 The event weight is calculated according to [this method](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagSFMethods#1a_Event_reweighting_using_scale).
 
 The efficiencies in MC can be calculated for your particular analys by filling histograms with `fillEfficiencies` for each selected event, after removing overlap with other selected objects, e.g. the muon and tau object in [`MuTauModule.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/MuTauModule.py):
-```
+<pre>
     def analyze(self event):
     
         # select isolated muon and tau
@@ -86,15 +86,15 @@ The efficiencies in MC can be calculated for your particular analys by filling h
         for ijet in range(event.nJet):
             if event.Jet_pt[ijet] < 30: continue
             if abs(event.Jet_eta[ijet]) > 4.7: continue
-            if muon.DeltaR(jets[ijet].p4()) < 0.5: continue
-            if tau.DeltaR(jets[ijet].p4()) < 0.5: continue
+            <b>if muon.DeltaR(jets[ijet].p4()) < 0.5: continue
+            if tau.DeltaR(jets[ijet].p4()) < 0.5: continue</b>
             jetIds.append(ijet)
         
         if not self.isData:
           self.btagTool.fillEfficiencies(event,jetIds)
         
         ...
-```
+</pre>
 Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/btag/getBTagEfficiencies.py) to extract all histograms from MC output and compute the efficiencies. Examples for the mutau analysis in 2017 are shown [here](https://ineuteli.web.cern.ch/ineuteli/btag/2017/).
 
 
