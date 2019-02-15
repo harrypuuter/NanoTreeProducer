@@ -39,7 +39,7 @@ git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
 ## B-tagging tools
 
 `BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b-tagging weights. These can be called during the initialization of you analysis module, e.g. in [`MuTauModule.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/MuTauModule.py):
-<pre>
+```
 class MuTauProducer(Module):
     
     def __init__(self, ... ):
@@ -47,8 +47,8 @@ class MuTauProducer(Module):
         ...
         
         if not self.isData:
-          <b>self.btagTool = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
-        self.deepcsv_wp = BTagWPs('DeepCSV',year=year)</b>
+          self.btagTool = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
+        self.deepcsv_wp = BTagWPs('DeepCSV',year=year)
         
     
     def analyze(self, event):
@@ -58,13 +58,12 @@ class MuTauProducer(Module):
         for ijet in range(event.nJet):
             ...
             jetIds.append(ijet)
-            <b>if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.medium:
-              nbtag += 1</b>
+            if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.medium:
+              nbtag += 1
         
         if not self.isData:
-          <b>self.out.btagweight[0] = self.btagTool.getWeight(event,jetIds)</b>
-        
-</pre>
+          self.out.btagweight[0] = self.btagTool.getWeight(event,jetIds)
+```
 
 `BTagWeightTool` calculates b-tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/btag).
 The event weight is calculated according to [this method](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagSFMethods#1a_Event_reweighting_using_scale).
