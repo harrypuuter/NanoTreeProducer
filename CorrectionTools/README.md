@@ -124,7 +124,7 @@ Usage:
           zboson = getZBoson(event)
           zptweight = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
         
-        if ttbar events
+        if ttbar event:
           toppt1, toppt2 = getTTPt(event)
           ttptweight     = getTTptWeight(toppt1,toppt2)
 ```
