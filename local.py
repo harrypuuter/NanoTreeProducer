@@ -5,14 +5,15 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument('-i', '--infiles', dest='infiles', action='store', type=str, default=[ ])
-parser.add_argument('-c', '--channel', dest='channel', action='store', choices=['tautau','mutau','eletau','elemu','mumu'], type=str, default='tautau')
-parser.add_argument('-t', '--type',    dest='type', action='store', choices=['data','mc'], default='mc')
-parser.add_argument('-y', '--year',    dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
-parser.add_argument('-T', '--tes',     dest='tes', action='store', type=float, default=1.0)
-parser.add_argument('-L', '--ltf',     dest='ltf', action='store', type=float, default=1.0)
-parser.add_argument('-l', '--tag',     dest='tag', action='store', type=str, default="")
-parser.add_argument('-Z', '--doZpt',   dest='doZpt', action='store_true', default=False)
+parser.add_argument('-i', '--infiles',  dest='infiles', action='store', type=str, default=[ ])
+parser.add_argument('-c', '--channel',  dest='channel', action='store', choices=['tautau','mutau','eletau','elemu','mumu'], type=str, default='tautau')
+parser.add_argument('-t', '--type',     dest='type', action='store', choices=['data','mc'], default='mc')
+parser.add_argument('-y', '--year',     dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
+parser.add_argument('-T', '--tes',      dest='tes', action='store', type=float, default=1.0)
+parser.add_argument('-L', '--ltf',      dest='ltf', action='store', type=float, default=1.0)
+parser.add_argument('-l', '--tag',      dest='tag', action='store', type=str, default="")
+parser.add_argument('-Z', '--doZpt',    dest='doZpt', action='store_true', default=False)
+parser.add_argument('-R', '--doRecoil', dest='doRecoil', action='store_true', default=False)
 args = parser.parse_args()
 
 channel  = args.channel
@@ -22,10 +23,11 @@ infiles  = args.infiles
 if args.tag and args.tag[0]!='_': args.tag = '_'+args.tag
 postfix  = channel + args.tag + '.root'
 kwargs = {
-  'year':  args.year,
-  'tes':   args.tes,
-  'ltf':   args.ltf,
-  'doZpt': args.doZpt,
+  'year':     args.year,
+  'tes':      args.tes,
+  'ltf':      args.ltf,
+  'doZpt':    args.doZpt,
+  'doRecoil': args.doRecoil,
 }
 
 if isinstance(infiles,str):
@@ -103,8 +105,8 @@ else:
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/20000/44917CDB-2842-E811-852C-001E6739AD61.root', # 976374
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/20000/042667FA-1542-E811-B81A-001E673D23F9.root', # 998736
           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/100000/00E4EFFB-F496-E811-AC18-A4BF0112BD2A.root', #  4599
-          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/FABEEF78-34A1-E811-A538-EC0D9A0B3360.root',  #  5843
-          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/18961888-34A1-E811-A230-00266CFFBED8.root',  # 29068
+          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/FABEEF78-34A1-E811-A538-EC0D9A0B3360.root',  #  5843
+          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/18961888-34A1-E811-A230-00266CFFBED8.root',  # 29068
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M500/nanoAOD/v1/nanoAOD_LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M500_1602.root'
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000/nanoAOD/v1/nanoAOD_VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000_1036.root',
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000/nanoAOD/v1/nanoAOD_VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000_105.root',
@@ -146,7 +148,7 @@ elif channel=='eletau':
 elif channel=='mumu':
     from MuMuModule import *
     module2run = lambda : MuMuProducer(postfix, dataType, **kwargs)
-elif channel=='EleMu':
+elif channel=='elemu':
     from EleMuModule import *
     module2run = lambda : EleMuProducer(postfix, dataType, **kwargs)
 else:
