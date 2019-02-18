@@ -1,6 +1,8 @@
-import ROOT
-import re, math 
+import re, math
+from math import sqrt, sin, cos, pi
 import numpy as num 
+import ROOT
+from ROOT import TLorentzVector, TVector3
 
 
 var_dict = {
@@ -127,7 +129,7 @@ class TreeProducerCommon(object):
         self.addBranch('jphi_2',                  float)
         self.addBranch('jcsvv2_2',                float)
         self.addBranch('jdeepb_2',                float)
-         
+        
         self.addBranch('bpt_1',                   float)
         self.addBranch('beta_1',                  float)
         self.addBranch('bpt_2',                   float)
@@ -266,19 +268,19 @@ def deltaR2( e1, p1, e2, p2):
     de = e1 - e2
     dp = deltaPhi(p1, p2)
     return de*de + dp*dp
-
+    
 
 def deltaR( *args ):
-    return math.sqrt( deltaR2(*args) )
-
+    return sqrt( deltaR2(*args) )
+    
 
 def deltaPhi( p1, p2):
     """Computes delta phi, handling periodic limit conditions."""
     res = p1 - p2
-    while res > math.pi:
-      res -= 2*math.pi
-    while res < -math.pi:
-      res += 2*math.pi
+    while res > pi:
+      res -= 2*pi
+    while res < -pi:
+      res += 2*pi
     return res
     
 

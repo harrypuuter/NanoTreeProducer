@@ -3,11 +3,11 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from TreeProducerTauTau import *
-from CorrectionTools.TauTauSFs import TauTauSFs
-from CorrectionTools.PileupWeightTool import PileupWeightTool
-from CorrectionTools.LeptonTauFakeSFs import LeptonTauFakeSFs
+from CorrectionTools.TauTauSFs import *
+from CorrectionTools.PileupWeightTool import *
+from CorrectionTools.LeptonTauFakeSFs import *
+from CorrectionTools.RecoilCorrectionTool import *
 from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.RecoilCorrectionTool import RecoilCorrectionTool, getZPTMass, getTTPTMass
 
 
 class TauTauProducer(Module):
@@ -17,11 +17,13 @@ class TauTauProducer(Module):
         self.name            = name
         self.out             = TreeProducerTauTau(name)
         self.isData          = dataType=='data'
-        self.year            = kwargs.get('year',    2017 )
-        self.tes             = kwargs.get('tes',     1.0  )
-        self.doZpt           = kwargs.get('doZpt',   'DY' in name )
-        self.doTTpt          = kwargs.get('doTTpt',  'TT' in name )
-        self.doTight         = kwargs.get('doTight', self.tes!=1 )
+        self.year            = kwargs.get('year',     2017 )
+        self.tes             = kwargs.get('tes',      1.0  )
+        self.ltf             = kwargs.get('ltf',      1.0  )
+        self.doZpt           = kwargs.get('doZpt',    'DY' in name )
+        self.doRecoil        = kwargs.get('doRecoil', 'DY' in name or re.search(r"W\d?Jets",name))
+        self.doTTpt          = kwargs.get('doTTpt',   'TT' in name )
+        self.doTight         = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 )
         self.channel         = 'tautau'
         year, channel        = self.year, self.channel
         
@@ -48,10 +50,10 @@ class TauTauProducer(Module):
           self.tauSFsVT      = TauTauSFs('vtight',year=year)
           self.ltfSFs        = LeptonTauFakeSFs('loose','vloose',year=year)
           self.puTool        = PileupWeightTool(year=year)
-          self.btagTool      = BTagWeightTool('CSVv2','medium',channel=channel,year=year)
-          self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
-          if self.doZpt or self.doTTpt:
-            self.recoilTool  = RecoilCorrectionTool(year=year)
+          self.btagTool      = BTagWeightTool('CSVv2','medium',channel='mutau',year=year)
+          self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel='mutau',year=year)
+          if self.doZpt or self.doRecoil:
+            self.recoilTool  = RecoilCorrectionTool(year=year,doZpt=self.doZpt)
         self.csvv2_wp        = BTagWPs('CSVv2',year=year)
         self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
@@ -248,6 +250,11 @@ class TauTauProducer(Module):
         #####################################
         
         
+        # VETOS
+        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0]  = extraLeptonVetos(event, [-1], [-1], self.name)
+        self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
+        
+        
         jetIds  = [ ]
         bjetIds = [ ]
         jets    = Collection(event, 'Jet')
@@ -275,7 +282,7 @@ class TauTauProducer(Module):
           self.btagTool.fillEfficiencies(event,jetIds)
           self.btagTool_deep.fillEfficiencies(event,jetIds)
         
-        #eventSum = ROOT.TLorentzVector()
+        #eventSum = TLorentzVector()
         #
         #for lep in muons :
         #    eventSum += lep.p4()
@@ -283,6 +290,44 @@ class TauTauProducer(Module):
         #    eventSum += lep.p4()
         #for j in filter(self.jetSel,jets):
         #    eventSum += j.p4()
+        
+        
+        # EVENT
+        self.out.isData[0]                     = self.isData
+        self.out.run[0]                        = event.run
+        self.out.lumi[0]                       = event.luminosityBlock
+        #print 'event =', event.event & 0xffffffffffffffff, 'original = ', event.event
+        self.out.event[0]                      = event.event & 0xffffffffffffffff
+        ###self.out.puppimetpt[0]                = event.PuppiMET_pt
+        ###self.out.puppimetphi[0]               = event.PuppiMET_phi
+        ###self.out.metsignificance[0]           = event.MET_significance
+        ###self.out.metcovXX[0]                  = event.MET_covXX
+        ###self.out.metcovXY[0]                  = event.MET_covXY
+        ###self.out.metcovYY[0]                  = event.MET_covYY
+        ###self.out.fixedGridRhoFastjetAll[0]    = event.fixedGridRhoFastjetAll
+        self.out.npvs[0]                       = event.PV_npvs
+        self.out.npvsGood[0]                   = event.PV_npvsGood
+        
+        if not self.isData:
+          self.out.ngentauhads[0]              = ngentauhads
+          self.out.ngentaus[0]                 = ngentaus
+          self.out.genmet[0]                   = event.GenMET_pt
+          self.out.genmetphi[0]                = event.GenMET_phi
+          self.out.nPU[0]                      = event.Pileup_nPU
+          self.out.nTrueInt[0]                 = event.Pileup_nTrueInt
+          try:
+            self.out.LHE_Njets[0]              = event.LHE_Njets
+          except RuntimeError:
+            self.out.LHE_Njets[0]              = -1
+        #print 'check (LO)', event.LHE_NpLO, type(event.LHE_NpLO)
+        #print 'check (NLO)', event.LHE_NpNLO, type(event.LHE_NpNLO)        
+        #self.out.LHE_NpLO[0]                   = event.LHE_NpLO
+        #self.out.LHE_NpNLO[0]                  = event.LHE_NpNLO
+        #print self.out.LHE_Njets[0], event.LHE_Njets 
+        #print self.out.event[0], event.event, (event.event & 0xffffffffffffffff)
+        #print self.out.LHE_Njets[0], event.LHE_Njets, int(event.LHE_Njets)
+        #print event.LHE_NpNLO
+        #print self.out.Pileup_nPU, event.Pileup_nPU
         
         
         # TAU 1
@@ -372,7 +417,7 @@ class TauTauProducer(Module):
         
         # GENERATOR 2
         if not self.isData:
-          self.out.genPartFlav_2[0]            = ord(event.Tau_genPartFlav[ditau.id2])
+          self.out.genPartFlav_2[0]     = ord(event.Tau_genPartFlav[ditau.id2])
           genvistau = Collection(event, 'GenVisTau')
           dRmax  = 1000
           gendm  = -1
@@ -388,150 +433,117 @@ class TauTauProducer(Module):
               geneta = event.GenVisTau_eta[igvt]
               genphi = event.GenVisTau_phi[igvt]
           
-          self.out.gendecayMode_2[0]           = gendm
-          self.out.genvistaupt_2[0]            = genpt
-          self.out.genvistaueta_2[0]           = geneta
-          self.out.genvistauphi_2[0]           = genphi
-        
-        
-        # EVENT
-        self.out.isData[0]                     = self.isData
-        self.out.run[0]                        = event.run
-        self.out.out.lumi[0]                   = event.luminosityBlock
-        #print 'event =', event.event & 0xffffffffffffffff, 'original = ', event.event
-        self.out.event[0]                      = event.event & 0xffffffffffffffff
-        self.out.met[0]                        = event.MET_pt
-        self.out.metphi[0]                     = event.MET_phi
-        ###self.out.puppimetpt[0]                = event.PuppiMET_pt
-        ###self.out.puppimetphi[0]               = event.PuppiMET_phi
-        ###self.out.metsignificance[0]           = event.MET_significance
-        ###self.out.metcovXX[0]                  = event.MET_covXX
-        ###self.out.metcovXY[0]                  = event.MET_covXY
-        ###self.out.metcovYY[0]                  = event.MET_covYY
-        ###self.out.fixedGridRhoFastjetAll[0]    = event.fixedGridRhoFastjetAll
-        self.out.npvs[0]                       = event.PV_npvs
-        self.out.npvsGood[0]                   = event.PV_npvsGood
-        
-        if not self.isData:
-          self.out.ngentauhads[0]              = ngentauhads
-          self.out.ngentaus[0]                 = ngentaus
-          self.out.genmet[0]                   = event.GenMET_pt
-          self.out.genmetphi[0]                = event.GenMET_phi
-          self.out.nPU[0]                      = event.Pileup_nPU
-          self.out.nTrueInt[0]                 = event.Pileup_nTrueInt
-          try:
-            self.out.LHE_Njets[0]              = event.LHE_Njets
-          except RuntimeError:
-            self.out.LHE_Njets[0]              = -1
-        #print 'check (LO)', event.LHE_NpLO, type(event.LHE_NpLO)
-        #print 'check (NLO)', event.LHE_NpNLO, type(event.LHE_NpNLO)        
-        #self.out.LHE_NpLO[0]                   = event.LHE_NpLO
-        #self.out.LHE_NpNLO[0]                  = event.LHE_NpNLO
-        #print self.out.LHE_Njets[0], event.LHE_Njets 
-        #print self.out.event[0], event.event, (event.event & 0xffffffffffffffff)
-        #print self.out.LHE_Njets[0], event.LHE_Njets, int(event.LHE_Njets)
-        #print event.LHE_NpNLO
-        #print self.out.Pileup_nPU, event.Pileup_nPU
-        
-        
-        # JETS
-        self.out.njets[0]                      = len(jetIds)
-        self.out.njets50[0]                    = len([j for j in jetIds if event.Jet_pt[j]>50])
-        self.out.nfjets[0]                     = nfjets
-        self.out.ncjets[0]                     = ncjets
-        self.out.nbtag[0]                      = nbtag
-        
-        if len(jetIds)>0:
-          self.out.jpt_1[0]                    = event.Jet_pt[jetIds[0]]
-          self.out.jeta_1[0]                   = event.Jet_eta[jetIds[0]]
-          self.out.jphi_1[0]                   = event.Jet_phi[jetIds[0]]
-          self.out.jcsvv2_1[0]                 = event.Jet_btagCSVV2[jetIds[0]]
-          self.out.jdeepb_1[0]                 = event.Jet_btagDeepB[jetIds[0]]
-        else:
-          self.out.jpt_1[0]                    = -9.
-          self.out.jeta_1[0]                   = -9.
-          self.out.jphi_1[0]                   = -9.
-          self.out.jcsvv2_1[0]                 = -9.
-          self.out.jdeepb_1[0]                 = -9.
-        
-        if len(jetIds)>1:  
-          self.out.jpt_2[0]                    = event.Jet_pt[jetIds[1]]
-          self.out.jeta_2[0]                   = event.Jet_eta[jetIds[1]]
-          self.out.jphi_2[0]                   = event.Jet_phi[jetIds[1]]
-          self.out.jcsvv2_2[0]                 = event.Jet_btagCSVV2[jetIds[1]]
-          self.out.jdeepb_2[0]                 = event.Jet_btagDeepB[jetIds[1]]
-        else:
-          self.out.jpt_2[0]                    = -9.
-          self.out.jeta_2[0]                   = -9.
-          self.out.jphi_2[0]                   = -9.
-          self.out.jcsvv2_2[0]                 = -9.
-          self.out.jdeepb_2[0]                 = -9.
-        
-        if len(bjetIds)>0:
-          self.out.bpt_1[0]                    = event.Jet_pt[bjetIds[0]]
-          self.out.beta_1[0]                   = event.Jet_eta[bjetIds[0]]
-        else:
-          self.out.bpt_1[0]                    = -9.
-          self.out.beta_1[0]                   = -9.
-        
-        if len(bjetIds)>1:
-          self.out.bpt_2[0]                    = event.Jet_pt[bjetIds[1]]
-          self.out.beta_2[0]                   = event.Jet_eta[bjetIds[1]]
-        else:
-          self.out.bpt_2[0]                    = -9.
-          self.out.beta_2[0]                   = -9.
-        
-        self.out.pfmt_1[0]                     = math.sqrt( 2 * self.out.pt_1[0] * self.out.met[0] * ( 1 - math.cos(deltaPhi(self.out.phi_1[0], self.out.metphi[0])) ) );
-        self.out.pfmt_2[0]                     = math.sqrt( 2 * self.out.pt_2[0] * self.out.met[0] * ( 1 - math.cos(deltaPhi(self.out.phi_2[0], self.out.metphi[0])) ) );
-        
-        self.out.m_vis[0]                      = (tau1 + tau2).M()
-        self.out.pt_ll[0]                      = (tau1 + tau2).Pt()
-        self.out.dR_ll[0]                      = tau1.DeltaR(tau2)
-        self.out.dphi_ll[0]                    = deltaPhi(self.out.phi_1[0], self.out.phi_2[0])
-        
-        
-        # PZETA
-        leg1     = ROOT.TVector3(tau1.Px(), tau1.Py(), 0.)
-        leg2     = ROOT.TVector3(tau2.Px(), tau2.Py(), 0.)
-        met_tlv  = ROOT.TLorentzVector()
-        met_tlv.SetPxPyPzE(self.out.met[0]*math.cos(self.out.metphi[0]), self.out.met[0]*math.cos(self.out.metphi[0]), 0, self.out.met[0])
-        metleg   = met_tlv.Vect()
-        zetaAxis = ROOT.TVector3(leg1.Unit() + leg2.Unit()).Unit()
-        pzetaVis = leg1*zetaAxis + leg2*zetaAxis
-        pzetaMET = metleg*zetaAxis
-        self.out.pzetamiss[0]  = pzetaMET
-        self.out.pzetavis[0]   = pzetaVis
-        self.out.dzeta[0]      = pzetaMET - 0.85*pzetaVis
-        
-        
-        # VETOS
-        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0]  = extraLeptonVetos(event, [-1], [-1], self.name)
-        self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
+          self.out.gendecayMode_2[0]    = gendm
+          self.out.genvistaupt_2[0]     = genpt
+          self.out.genvistaueta_2[0]    = geneta
+          self.out.genvistauphi_2[0]    = genphi
         
         
         # WEIGHTS
+        met = TLorentzVector()
+        met.SetPxPyPzE(event.MET_pt*sin(event.MET_phi),event.MET_pt*cos(event.MET_phi),0,event.MET_pt)
+        self.out.met_uncorr[0]          = event.MET_pt
+        self.out.metphi_uncorr[0]       = event.MET_phi
         if not self.isData:
-          if self.doZpt:
-            zboson = getZPTMass(event)
-            self.out.m_genboson[0]    = zboson.M()
-            self.out.pt_genboson[0]   = zboson.Pt()
-            self.out.zptweight[0]     = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
-          if self.doTTpt:
-            toppt1, toppt2 = getTTPTMass(event)
-            self.out.ttptweight[0]    = self.recoilTool.getTTptWeight(toppt1,toppt2)
-          diTauLeg1SF                 = self.tauSFs.getTriggerSF(   self.out.pt_1, self.out.eta_1, self.out.phi_1 )
-          diTauLeg2SF                 = self.tauSFs.getTriggerSF(   self.out.pt_2, self.out.eta_2, self.out.phi_2 )
-          diTauLeg1SFVT               = self.tauSFsVT.getTriggerSF( self.out.pt_1, self.out.eta_1, self.out.phi_1 )
-          diTauLeg2SFVT               = self.tauSFsVT.getTriggerSF( self.out.pt_2, self.out.eta_2, self.out.phi_2 )
-          self.out.genweight[0]       = event.genWeight
-          self.out.trigweight[0]      = diTauLeg1SF*diTauLeg2SF
-          self.out.trigweightVT[0]    = diTauLeg1SFVT*diTauLeg2SFVT
-          self.out.puweight[0]        = self.puTool.getWeight(event.Pileup_nTrueInt)
-          self.out.idisoweight_1[0]   = self.ltfSFs.getSF(self.out.genPartFlav_1[0],self.out.eta_1[0])
-          self.out.idisoweight_2[0]   = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
-          self.out.btagweight[0]      = self.btagTool.getWeight(event,jetIds)
-          self.out.btagweight_deep[0] = self.btagTool_deep.getWeight(event,jetIds)
-          self.out.weight[0]          = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
+          if self.doRecoil:
+            boson, boson_vis            = getBoson(event)
+            self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,len(jetIds))
+            event.MET_pt                = met.Pt()
+            event.MET_phi               = met.Phi()
+            self.out.m_genboson[0]      = boson.M()
+            self.out.pt_genboson[0]     = boson.Pt()
+            if self.doZpt:
+              self.out.zptweight[0]     = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
+          elif self.doZpt:
+            zboson = getZBoson(event) 
+            self.out.m_genboson[0]      = zboson.M()
+            self.out.pt_genboson[0]     = zboson.Pt()
+            self.out.zptweight[0]       = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+          elif self.doTTpt:
+            toppt1, toppt2              = getTTPt(event)
+            self.out.ttptweight[0]      = getTTptWeight(toppt1,toppt2)
+          diTauLeg1SF                   = self.tauSFs.getTriggerSF(   self.out.pt_1, self.out.eta_1, self.out.phi_1 )
+          diTauLeg2SF                   = self.tauSFs.getTriggerSF(   self.out.pt_2, self.out.eta_2, self.out.phi_2 )
+          diTauLeg1SFVT                 = self.tauSFsVT.getTriggerSF( self.out.pt_1, self.out.eta_1, self.out.phi_1 )
+          diTauLeg2SFVT                 = self.tauSFsVT.getTriggerSF( self.out.pt_2, self.out.eta_2, self.out.phi_2 )
+          self.out.genweight[0]         = event.genWeight
+          self.out.trigweight[0]        = diTauLeg1SF*diTauLeg2SF
+          self.out.trigweightVT[0]      = diTauLeg1SFVT*diTauLeg2SFVT
+          self.out.puweight[0]          = self.puTool.getWeight(event.Pileup_nTrueInt)
+          self.out.idisoweight_1[0]     = self.ltfSFs.getSF(self.out.genPartFlav_1[0],self.out.eta_1[0])
+          self.out.idisoweight_2[0]     = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
+          self.out.btagweight[0]        = self.btagTool.getWeight(event,jetIds)
+          self.out.btagweight_deep[0]   = self.btagTool_deep.getWeight(event,jetIds)
+          self.out.weight[0]            = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
+        
+        
+        # JETS
+        self.out.njets[0]               = len(jetIds)
+        self.out.njets50[0]             = len([j for j in jetIds if event.Jet_pt[j]>50])
+        self.out.nfjets[0]              = nfjets
+        self.out.ncjets[0]              = ncjets
+        self.out.nbtag[0]               = nbtag
+        
+        if len(jetIds)>0:  
+          self.out.jpt_1[0]             = event.Jet_pt[jetIds[0]]
+          self.out.jeta_1[0]            = event.Jet_eta[jetIds[0]]
+          self.out.jphi_1[0]            = event.Jet_phi[jetIds[0]]
+          self.out.jcsvv2_1[0]          = event.Jet_btagCSVV2[jetIds[0]]
+          self.out.jdeepb_1[0]          = event.Jet_btagDeepB[jetIds[0]]
+        else:  
+          self.out.jpt_1[0]             = -9.
+          self.out.jeta_1[0]            = -9.
+          self.out.jphi_1[0]            = -9.
+          self.out.jcsvv2_1[0]          = -9.
+          self.out.jdeepb_1[0]          = -9.
+        
+        if len(jetIds)>1:    
+          self.out.jpt_2[0]             = event.Jet_pt[jetIds[1]]
+          self.out.jeta_2[0]            = event.Jet_eta[jetIds[1]]
+          self.out.jphi_2[0]            = event.Jet_phi[jetIds[1]]
+          self.out.jcsvv2_2[0]          = event.Jet_btagCSVV2[jetIds[1]]
+          self.out.jdeepb_2[0]          = event.Jet_btagDeepB[jetIds[1]]
+        else:  
+          self.out.jpt_2[0]             = -9.
+          self.out.jeta_2[0]            = -9.
+          self.out.jphi_2[0]            = -9.
+          self.out.jcsvv2_2[0]          = -9.
+          self.out.jdeepb_2[0]          = -9.
+        
+        if len(bjetIds)>0:  
+          self.out.bpt_1[0]             = event.Jet_pt[bjetIds[0]]
+          self.out.beta_1[0]            = event.Jet_eta[bjetIds[0]]
+        else:  
+          self.out.bpt_1[0]             = -9.
+          self.out.beta_1[0]            = -9.
+        
+        if len(bjetIds)>1:  
+          self.out.bpt_2[0]             = event.Jet_pt[bjetIds[1]]
+          self.out.beta_2[0]            = event.Jet_eta[bjetIds[1]]
+        else:  
+          self.out.bpt_2[0]             = -9.
+          self.out.beta_2[0]            = -9.
+        
+        self.out.met[0]                 = event.MET_pt
+        self.out.metphi[0]              = event.MET_phi
+        self.out.pfmt_1[0]              = sqrt( 2 * self.out.pt_1[0] * self.out.met[0] * ( 1 - cos(deltaPhi(self.out.phi_1[0], self.out.metphi[0])) ) );
+        self.out.pfmt_2[0]              = sqrt( 2 * self.out.pt_2[0] * self.out.met[0] * ( 1 - cos(deltaPhi(self.out.phi_2[0], self.out.metphi[0])) ) );
+        
+        self.out.m_vis[0]               = (tau1 + tau2).M()
+        self.out.pt_ll[0]               = (tau1 + tau2).Pt()
+        self.out.dR_ll[0]               = tau1.DeltaR(tau2)
+        self.out.dphi_ll[0]             = deltaPhi(self.out.phi_1[0], self.out.phi_2[0])
+        
+        
+        # PZETA  
+        leg1                            = TVector3(tau1.Px(), tau1.Py(), 0.)
+        leg2                            = TVector3(tau2.Px(), tau2.Py(), 0.)
+        zetaAxis                        = TVector3(leg1.Unit() + leg2.Unit()).Unit()
+        pzetaVis                        = leg1*zetaAxis + leg2*zetaAxis
+        pzetaMET                        = met.Vect()*zetaAxis
+        self.out.pzetamiss[0]           = pzetaMET
+        self.out.pzetavis[0]            = pzetaVis
+        self.out.dzeta[0]               = pzetaMET - 0.85*pzetaVis
         
         
         self.out.tree.Fill() 
