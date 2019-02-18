@@ -5,7 +5,7 @@ from commands import getoutput
 from argparse import ArgumentParser
 import submit, checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header
-from submit import args, bcolors, createJobs, getFileListPNFS, getFileListDAS, submitJobs, split_seq
+from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getFileListLocal, getFileListPNFS, getFileListDAS, submitJobs, split_seq
 import itertools
 import subprocess
 from ROOT import TFile, Double
@@ -27,7 +27,9 @@ parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, acti
                                        help="tau energy scale" )
 parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
                                        help="lepton to tau fake energy scale" )
-parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=4,
+parser.add_argument('-d', '--das',     dest='useDAS', action='store_true', default=False,
+                                       help="get file list from DAS" )
+parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=-1,
                                        help="number of files per job" )
 parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
                                        help="select queue for submission" )
@@ -83,27 +85,44 @@ def main():
             nFilesPerJob = args.nFilesPerJob
             jobName      = getSampleShortName(directory)[1]
             jobName     += "_%s_%s"%(channel,year)+tag
-            if not outfilelist: continue
+            if not outfilelist: continue            
             
-            # GET INPUT FILES
-            if 'LQ' in directory:
-              print directory
-              infiles = getFileListPNFS('/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'+directory)
-            else:
-              infiles = getFileListDAS('/'+directory)
+            # FILE LIST
+            infiles = [ ]
+            if not args.useDAS:
+                infiles = getFileListLocal(directory)
+            if not infiles:
+              if not args.useDAS:
+                print "Getting file list from DAS..."
+              if 'LQ3' in directory:
+                infiles = getFileListPNFS('/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'+directory)
+              else:
+                infiles = getFileListDAS('/'+directory)
+              if infiles:
+                saveFileListLocal(directory,infiles)
+            if not infiles:
+              print bcolors.BOLD + bcolors.WARNING + "Warning!!! FILELIST empty" + bcolors.ENDC
+              continue
+            elif args.verbose:
+              print "FILELIST = "+infiles[0]
+              for file in infiles[1:]:
+                print "           "+file
             
-            # NFILESPERJOBS CHECKS
-            # Diboson (WW, WZ, ZZ) have very large files and acceptance,
-            # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
-            if nFilesPerJob>1 and any(s in jobName[:len(s)+3] for s in [ 'WW', 'WZ', 'ZZ', 'DY', 'WJ', 'W1J', 'W2J', 'W3J', 'W4J', 'Single', 'Tau', 'TT_' ]):
-              print bcolors.BOLD + bcolors.WARNING + "[WN] setting number of files per job from %s to 1 for %s"%(nFilesPerJob,jobName) + bcolors.ENDC
-              nFilesPerJob = 1
-            
+            # NFILESPERJOBS
+            nFilesPerJob = args.nFilesPerJob
+            if nFilesPerJob<1:
+              for default, patterns in nFilesPerJob_defaults:
+                if matchSampleToPattern(jobName,patterns):
+                  nFilesPerJob = default
+                  break
+              else:
+                nFilesPerJob = 4
             infilelists = list(split_seq(infiles,nFilesPerJob))
             
+            # JOB LIST
             badchunks   = [ ]
             misschunks  = range(0,len(infilelists))
-            jobList = 'joblist/joblist%s_%s_retry.txt'%(directory, channel)
+            jobList = 'joblist/joblist_%s_%s_retry.txt'%(directory, channel)
             with open(jobList, 'w') as jobslog:
               for filename in outfilelist:
                   match = chunkpattern.search(filename)

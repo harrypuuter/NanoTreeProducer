@@ -26,7 +26,9 @@ if __name__ == "__main__":
                                          help="tau energy scale" )
   parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
                                          help="lepton to tau fake energy scale" )
-  parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=4,
+  parser.add_argument('-d', '--das',     dest='useDAS', action='store_true', default=False,
+                                         help="get file list from DAS" )
+  parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=-1,
                                          help="number of files per job" )
   parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
                                          help="select queue for submission" )
@@ -48,9 +50,11 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    
+
+# Diboson (WW, WZ, ZZ) have very large files and acceptance,
+# and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
 nFilesPerJob_defaults = [
-  ( 1, ['DY','W*J','WW','WZ','ZZ','TT_','Single','Tau','ST_t-channel_top*2016']),
+  ( 1, ['DY','W*J','WW','WZ','ZZ','TT_','Single','Tau','ST_t-channel_top*TuneCUETP8M1']),
   (10, ['LQ3']),
 ]
 
@@ -79,9 +83,30 @@ def split_seq(iterable, size):
         item = list(itertools.islice(it, size))
     
 
+def getFileListLocal(dataset):
+    """Get list of files from local directory."""
+    filename = "filelist/filelist_%s.txt"%dataset.lstrip('/').replace('/','__')
+    filelist = [ ]
+    if os.path.exists(filename):
+      with open(filename,'r') as file:
+        for line in file:
+          if '#' not in line:
+            filelist.append(line.rstrip('\n'))
+    return filelist
+    
+
+def saveFileListLocal(dataset,filelist):
+    """Save a list of files to a local directory."""
+    filename = "filelist/filelist_%s.txt"%dataset.replace('/','__')
+    with open(filename,'w') as file:
+      for line in filelist:
+        file.write(line)
+    return filename
+    
+
 def getFileListDAS(dataset):
     """Get list of files from DAS."""
-    dataset  = dataset.replace('__', '/')
+    dataset  = dataset.replace('__','/')
     instance = 'prod/global'
     if 'USER' in dataset:
         instance = 'prod/phys03'
@@ -89,30 +114,30 @@ def getFileListDAS(dataset):
     cmd = 'das_client --limit=0 --query="file dataset=%s instance=%s status=*"'%(dataset,instance)
     if args.verbose:
       print "Executing ",cmd
-    cmd_out = getoutput( cmd )
-    tmpList = cmd_out.split(os.linesep)
-    files   = [ ]
+    cmd_out  = getoutput( cmd )
+    tmpList  = cmd_out.split(os.linesep)
+    filelist = [ ]
     for line in tmpList:
       if '.root' in line:
         #files.append("root://cms-xrd-global.cern.ch/"+line)   
-        files.append("root://xrootd-cms.infn.it/"+line)    
-    return files 
+        filelist.append("root://xrootd-cms.infn.it/"+line)    
+    return filelist 
     
 
 def getFileListPNFS(dataset):
     """Get list of files from PSI T3's SE."""
-    dataset = dataset.replace('__', '/')
-    user    = 'ytakahas'
-    cmd     = 'ls %s'%(dataset)
+    dataset  = dataset.replace('__','/')
+    user     = 'ytakahas'
+    cmd      = 'ls %s'%(dataset)
     if args.verbose:
       print "Executing ",cmd
-    cmd_out = getoutput( cmd )
-    tmpList = cmd_out.split(os.linesep)
-    files   = [ ]
+    cmd_out  = getoutput( cmd )
+    tmpList  = cmd_out.split(os.linesep)
+    filelist = [ ]
     for line in tmpList:
       if '.root' in line:
-        files.append("dcap://t3se01.psi.ch:22125/"+dataset+'/'+line.rstrip())
-    return files
+        filelist.append("dcap://t3se01.psi.ch:22125/"+dataset+'/'+line.rstrip())
+    return filelist
     
 
 def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs):
@@ -167,8 +192,9 @@ def main():
       # READ SAMPLES
       directories = [ ]
       samplelist  = "samples_%s.cfg"%(year)
-      for line in open(samplelist, 'r'):
-          line = line.rstrip().lstrip().split(' ')[0]
+      with open(samplelist, 'r') as file:
+        for line in file:
+          line = line.rstrip().lstrip().split(' ')[0].rstrip('/')
           if line[:2].count('#')>0: continue
           if line=='': continue
           if args.samples and not matchSampleToPattern(line,args.samples): continue
@@ -194,16 +220,21 @@ def main():
             if 'LQ3' in directory[:5] and channel not in ['mutau','eletau','tautau']: continue
             
             print bcolors.BOLD + bcolors.OKGREEN + directory + bcolors.ENDC
-            files = None
-            name  = None
             
-            if 'pnfs' in directory:
-              files = getFileListPNFS(directory)
-              name  = directory.split('/')[8].replace('/','') + '__' + directory.split('/')[9].replace('/','') + '__' + directory.split('/')[10].replace('/','')
-            else:
-              files = getFileListDAS(directory)
-              name  = directory.split('/')[1].replace('/','') + '__' + directory.split('/')[2].replace('/','') + '__' + directory.split('/')[3].replace('/','')
-            
+            # FILE LIST
+            files = [ ]
+            name  = directory.split('/')[-3].replace('/','') + '__' + directory.split('/')[-2].replace('/','') + '__' + directory.split('/')[-1].replace('/','')
+            if not args.useDAS:
+                files = getFileListLocal(directory)
+            if not files:
+              if not args.useDAS:
+                print "Getting file list from DAS..."
+              if 'pnfs' in directory:
+                files = getFileListPNFS(directory)
+              else:
+                files = getFileListDAS(directory)
+              if files:
+                saveFileListLocal(name,files)
             if not files:
               print bcolors.BOLD + bcolors.WARNING + "Warning!!! FILELIST empty" + bcolors.ENDC
               continue
@@ -212,26 +243,27 @@ def main():
               for file in files[1:]:
                 print "           "+file
             
-            # JOBLIST
+            # JOB LIST
             ensureDirectory('joblist')
-            jobList      = 'joblist/joblist%s_%s%s.txt'%(name,channel,tag)
+            jobList      = 'joblist/joblist_%s_%s%s.txt'%(name,channel,tag)
             print "Creating job file %s..."%(jobList)
             jobName      = getSampleShortName(directory)[1]
             jobName     += "_%s_%s"%(channel,year)+tag
             jobs         = open(jobList,'w')
-            nFilesPerJob = args.nFilesPerJob
             outdir       = ensureDirectory("output_%s/%s"%(year,name))
             ensureDirectory(outdir+'/logs/')
             
-            # NFILESPERJOBS CHECKS
-            # Diboson (WW, WZ, ZZ) have very large files and acceptance,
-            # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
-            if nFilesPerJob>1 and any(s in jobName[:len(s)+3] for s in [ 'WW', 'WZ', 'ZZ', 'DY', 'WJ', 'W1J', 'W2J', 'W3J', 'W4J', 'Single', 'Tau', 'TT_' ]):
-              print bcolors.BOLD + bcolors.WARNING + "[WN] setting number of files per job from %s to 1 for %s"%(nFilesPerJob,jobName) + bcolors.ENDC
-              nFilesPerJob = 1
-            #for default, patterns in nFilesPerJob_defaults:
-            #  if matchSampleToPattern(jobName,patterns):
-            #    nFilesPerJob = default
+            # NFILESPERJOBS
+            nFilesPerJob = args.nFilesPerJob
+            if nFilesPerJob<1:
+              for default, patterns in nFilesPerJob_defaults:
+                if matchSampleToPattern(directory,patterns):
+                  nFilesPerJob = default
+                  break
+              else:
+                nFilesPerJob = 4
+            if args.verbose or True:
+              print "nFilesPerJob = %s"%nFilesPerJob
             
             # CREATE JOBS
             nChunks = 0
