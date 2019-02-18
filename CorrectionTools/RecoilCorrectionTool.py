@@ -16,13 +16,10 @@ zptpath = "CorrectionTools/Zpt/"
 
 
 
-
 class RecoilCorrectionTool:
     
     def __init__( self, year=2017, doZpt=True ):
         """Load Z pT weights."""
-        print "Loading RecoilCorrectionTool.."
-        
         assert year in [2016,2017,2018], "RecoilCorrectionTool: You must choose a year from: 2016, 2017, or 2018."        
         
         if year==2016:
@@ -35,6 +32,7 @@ class RecoilCorrectionTool:
           zpthistname    = "zptmass_weights"
         
         # RECOIL
+        print "Loading RecoilCorrectionTool(%s).."%filename
         CMSSW_BASE       = os.environ.get("CMSSW_BASE",None)
         recoil_h         = "%s/src/HTT-utilities/RecoilCorrections/interface/RecoilCorrector.h"%(CMSSW_BASE)
         assert CMSSW_BASE, "RecoilCorrectionTool: Did not find $CMSSW_BASE"
@@ -59,8 +57,10 @@ class RecoilCorrectionTool:
     def CorrectPFMETByMeanResolution(self, met, boson, boson_vis, njets):
         """Correct PF MET using the full and visibile boson Lorentz vector."""
         metpx_corr, metpy_corr = c_float(), c_float()
+        print "before: met pt = %4.1f, phi = %4.1f, px = %4.1f, py = %4.1f; boson px = %4.1f, py = %4.1f; vis. boson px = %4.1f, py = %4.1f; njets = %d"%(met.Pt(),met.Phi(),met.Px(),met.Py(),boson.Px(),boson.Py(),boson_vis.Px(),boson_vis.Py(),njets)
         self.corrector.CorrectByMeanResolution(met.Px(),met.Py(),boson.Px(),boson.Py(),boson_vis.Px(),boson_vis.Py(),njets,metpx_corr,metpy_corr)
-        met.SetPxPyPzE(metpx_corr.value,metpy_corr.value,0,sqrt(metpx_corr.value**2+metpy_corr.value**2))
+        met.SetPxPyPzE(metpx_corr.value,metpy_corr.value,0.,sqrt(metpx_corr.value**2+metpy_corr.value**2))
+        print "after:  met pt = %4.1f, phi = %4.1f, px = %4.1f, py = %4.1f, metpx_corr.value = %.1f, metpy_corr.value = %.1f"%(met.Pt(),met.Phi(),met.Px(),met.Py(),metpx_corr.value,metpy_corr.value)
         return met
         
     def getZptWeight(self,Zpt,Zmass):
@@ -102,7 +102,7 @@ def getBoson(event):
     """Calculate Z/W/H boson full and visible pT and mass, for recoil corrections."""
     #print '-'*80
     particles  = Collection(event,'GenPart')
-    boson_real = TLorentzVector()
+    #boson_real = TLorentzVector()
     boson_full = TLorentzVector()
     boson_vis  = TLorentzVector()
     for id in range(event.nGenPart):
@@ -147,7 +147,9 @@ def getTTPt(event):
     
 
 def hasBit(value,bit):
+  """Check if i'th bit is set to 1, i.e. binary of 2^(i-1),
+  from the right to the left, starting from position i=0."""
   #return bin(value)[-bit-1]=='1'
-  #return format(value,'b').zfill(bit-1)[-bit-1]=='1'
+  #return format(value,'b').zfill(bit+1)[-bit-1]=='1'
   return (value & (1 << bit))>0
   
