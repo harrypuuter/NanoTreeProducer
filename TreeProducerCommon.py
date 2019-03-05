@@ -2,7 +2,9 @@ import re, math
 from math import sqrt, sin, cos, pi
 import numpy as num 
 import ROOT
-from ROOT import TLorentzVector, TVector3
+from ROOT import TTree, TH1D, TH2D, TLorentzVector, TVector3
+from CorrectionTools.RecoilCorrectionTool import hasBit
+from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 
 
 var_dict = {
@@ -69,11 +71,39 @@ class TreeProducerCommon(object):
         
         # TREE
         self.outputfile = ROOT.TFile(name, 'RECREATE')
-        self.tree = ROOT.TTree('tree','tree')
+        self.tree = TTree('tree','tree')
         
         # HISTOGRAM
-        self.cutflow = ROOT.TH1F('cutflow', 'cutflow',  25, 0,  25)
-        self.pileup  = ROOT.TH1F('pileup',  'pileup',  100, 0, 100)
+        self.cutflow = TH1D('cutflow', 'cutflow',  25, 0,  25)
+        self.pileup  = TH1D('pileup',  'pileup',  100, 0, 100)
+        
+        ## CHECK genPartFlav
+        #self.flags_LTF_DM1 = TH1D('flags_LTF_DM1', "flags for l #rightarrow #tau_{h}, DM1", 18, 0, 18)
+        #self.flags_LTF_DM0 = TH1D('flags_LTF_DM0', "flags for l #rightarrow #tau_{h}, DM0", 18, 0, 18)
+        #self.flags_LTF_mis = TH1D('flags_LTF_mis', "flags for l #rightarrow #tau_{h}, DM1, wrong genPartFlav", 18, 0, 18)
+        #self.flags_LTF_DM1_sn1 = TH1D('flags_LTF_DM1_sn1', "flags for l #rightarrow #tau_{h}, DM1 (status!=1)", 18, 0, 18)
+        #self.flags_LTF_DM0_sn1 = TH1D('flags_LTF_DM0_sn1', "flags for l #rightarrow #tau_{h}, DM0 (status!=1)", 18, 0, 18)
+        #self.flags_LTF_mis_sn1 = TH1D('flags_LTF_mis_sn1', "flags for l #rightarrow #tau_{h}, DM1, wrong genPartFlav (status!=1)", 18, 0, 18)
+        #for hist in [self.flags_LTF_DM1, self.flags_LTF_DM0, self.flags_LTF_mis, self.flags_LTF_DM0_sn1, self.flags_LTF_DM1_sn1, self.flags_LTF_mis_sn1]:
+        #  hist.GetXaxis().SetBinLabel( 1,  "isPrompt"                            )
+        #  hist.GetXaxis().SetBinLabel( 2,  "isDirectPromptTauDecayProduct"       )
+        #  hist.GetXaxis().SetBinLabel( 3,  "isHardProcess"                       )
+        #  hist.GetXaxis().SetBinLabel( 4,  "fromHardProcess"                     )
+        #  hist.GetXaxis().SetBinLabel( 5,  "isDirectHardProcessTauDecayProduct"  )
+        #  hist.GetXaxis().SetBinLabel( 6,  "fromHardProcessBeforeFSR"            )
+        #  hist.GetXaxis().SetBinLabel( 7,  "isFirstCopy"                         )
+        #  hist.GetXaxis().SetBinLabel( 8,  "isLastCopy"                          )
+        #  hist.GetXaxis().SetBinLabel( 9,  "isLastCopyBeforeFSR"                 )
+        #  hist.GetXaxis().SetBinLabel(10,  "status==1"                           )
+        #  hist.GetXaxis().SetBinLabel(11,  "status==23"                          )
+        #  hist.GetXaxis().SetBinLabel(12,  "status==44"                          )
+        #  hist.GetXaxis().SetBinLabel(13,  "status==51"                          )
+        #  hist.GetXaxis().SetBinLabel(14,  "status==52"                          )
+        #  hist.GetXaxis().SetBinLabel(15,  "other status"                        )
+        #  hist.GetXaxis().SetLabelSize(0.041)
+        #self.genmatch_corr     = TH2D("genmatch_corr","correlation between Tau_genPartFlav and genmatch",6,0,6,6,0,6)
+        #self.genmatch_corr_DM0 = TH2D("genmatch_corr_DM0","correlation between Tau_genPartFlav and genmatch for DM0",6,0,6,6,0,6)
+        #self.genmatch_corr_DM1 = TH2D("genmatch_corr_DM1","correlation between Tau_genPartFlav and genmatch for DM1",6,0,6,6,0,6)
         
         
         #############
@@ -137,8 +167,8 @@ class TreeProducerCommon(object):
         
         self.addBranch('met',                     float)
         self.addBranch('metphi',                  float)
-        self.addBranch('met_uncorr',              float)
-        self.addBranch('metphi_uncorr',           float)
+        self.addBranch('met_corr',                float)
+        self.addBranch('metphi_corr',             float)
         self.addBranch('genmet',                  float)
         self.addBranch('genmetphi',               float)
         ###self.addBranch('puppimet',                float)
@@ -155,6 +185,7 @@ class TreeProducerCommon(object):
         #############
         
         self.addBranch('pfmt_1',                  float)
+        self.addBranch('pfmt_1_corr',             float)
         self.addBranch('pfmt_2',                  float)
         self.addBranch('m_vis',                   float)
         self.addBranch('pt_ll',                   float)
@@ -164,6 +195,8 @@ class TreeProducerCommon(object):
         self.addBranch('pzetamiss',               float)
         self.addBranch('pzetavis',                float)
         self.addBranch('dzeta',                   float)
+        self.addBranch('pzetamiss_corr',          float)
+        self.addBranch('dzeta_corr',              float)
         
         self.addBranch('dilepton_veto',           bool)
         self.addBranch('extraelec_veto',          bool)
@@ -264,25 +297,164 @@ def bestDiLepton(diLeptons):
     return sorted(diLeptons, reverse=True)[0]
     
 
-def deltaR2( e1, p1, e2, p2):
-    de = e1 - e2
-    dp = deltaPhi(p1, p2)
-    return de*de + dp*dp
+def deltaR(eta1, phi1, eta2, phi2):
+    """Compute DeltaR."""
+    deta = eta1 - eta2
+    dphi = deltaPhi(phi1, phi2)
+    return sqrt( deta*deta + dphi*dphi )
     
-
-def deltaR( *args ):
-    return sqrt( deltaR2(*args) )
-    
-
-def deltaPhi( p1, p2):
-    """Computes delta phi, handling periodic limit conditions."""
-    res = p1 - p2
+def deltaPhi(phi1, phi2):
+    """Computes Delta phi, handling periodic limit conditions."""
+    res = phi1 - phi2
     while res > pi:
       res -= 2*pi
     while res < -pi:
       res += 2*pi
     return res
     
+
+
+def genmatch(event,index,out=None):
+    """Match reco tau to gen particles, as there is a bug in the nanoAOD matching
+    for lepton to tau fakes of taus reconstructed as DM1."""
+    genmatch  = 0
+    dR_min    = 0.2
+    particles = Collection(event,'GenPart')
+    eta_reco  = event.Tau_eta[index]
+    phi_reco  = event.Tau_phi[index]
+    
+    # lepton -> tau fakes
+    for id in range(event.nGenPart):
+      particle = particles[id]
+      PID = abs(particle.pdgId)
+      if (particle.status!=1 and PID!=13) or particle.pt<8: continue
+      dR = deltaR(eta_reco,phi_reco,particle.eta,particle.phi)
+      if dR<dR_min:
+        if hasBit(particle.statusFlags,0): # isPrompt
+          if   PID==11: genmatch = 1; dR_min = dR
+          elif PID==13: genmatch = 2; dR_min = dR
+        elif hasBit(particle.statusFlags,5): # isDirectPromptTauDecayProduct
+          if   PID==11: genmatch = 3; dR_min = dR
+          elif PID==13: genmatch = 4; dR_min = dR
+    
+    # real tau leptons
+    for id in range(event.nGenVisTau):
+      dR = deltaR(eta_reco,phi_reco,event.GenVisTau_eta[id],event.GenVisTau_phi[id])
+      if dR<dR_min:
+        dR_min = dR
+        genmatch = 5
+    
+    return genmatch
+    
+
+
+def genmatchCheck(event,index,out):
+    """Match reco tau to gen particles, as there is a bug in the nanoAOD matching
+    for lepton to tau fakes of taus reconstructed as DM1."""
+    #print '-'*80
+    genmatch  = 0
+    #partmatch_s1 = None
+    #partmatch_sn1 = None # status != 1
+    dR_min    = 1.0
+    particles = Collection(event,'GenPart')
+    eta_reco  = event.Tau_eta[index]
+    phi_reco  = event.Tau_phi[index]
+    
+    # lepton -> tau fakes
+    for id in range(event.nGenPart):
+      particle = particles[id]
+      PID = abs(particle.pdgId)
+      if particle.status!=1 or particle.pt<8: continue
+      #if (particle.status!=1 and PID!=13) or particle.pt<8: continue
+      dR = deltaR(eta_reco,phi_reco,particle.eta,particle.phi)
+      if dR<dR_min:
+        if hasBit(particle.statusFlags,0): # isPrompt
+          if   PID==11:
+            genmatch = 1; dR_min = dR
+            #if particle.status==1: partmatch_s1 = particle
+            #else:                  partmatch_sn1 = particle
+          elif PID==13:
+            genmatch = 2; dR_min = dR
+            #if particle.status==1: partmatch_s1 = particle
+            #else:                  partmatch_sn1 = particle
+        elif hasBit(particle.statusFlags,5): # isDirectPromptTauDecayProduct
+          if   PID==11:
+            genmatch = 3; dR_min = dR
+            #if particle.status==1: partmatch_s1 = particle
+            #else:                  partmatch_sn1 = particle
+          elif PID==13:
+            genmatch = 4; dR_min = dR
+            #if particle.status==1: partmatch_s1 = particle
+            #else:                  partmatch_sn1 = particle
+        #if particle.status!=1 and particle.status!=23:
+        # mother = abs(particles[particle.genPartIdxMother].pdgId) if hasattr(particle,'genPartIdxMother') and particle.genPartIdxMother>0 else 0
+        # print "%3d: PID=%3d, mass=%3.1f, pt=%4.1f, status=%2d, mother=%2d, statusFlags=%5d (%16s), isPrompt=%d, isDirectPromptTauDecayProduct=%d, fromHardProcess=%1d, isHardProcessTauDecayProduct=%1d, isDirectHardProcessTauDecayProduct=%1d"%\
+        # (id,particle.pdgId,particle.mass,particle.pt,particle.status,mother,particle.statusFlags,bin(particle.statusFlags),hasBit(particle.statusFlags,0),hasBit(particle.statusFlags,5),hasBit(particle.statusFlags,8),hasBit(particle.statusFlags,9),hasBit(particle.statusFlags,10))
+    
+    # real tau leptons
+    for id in range(event.nGenVisTau):
+      dR = deltaR(eta_reco,phi_reco,event.GenVisTau_eta[id],event.GenVisTau_phi[id])
+      if dR<dR_min:
+        dR_min = dR
+        genmatch = 5
+    
+    ## CHECKS
+    #if genmatch!=ord(event.Tau_genPartFlav[index]):
+    # #mother = abs(particles[partmatch_s1.genPartIdxMother].pdgId) if hasattr(partmatch_s1,'genPartIdxMother') else 0
+    # #print "gen mismatch: Tau_genPartFlav = %s, genmatch = %s, Tau_decayMode = %2s, mother = %s"%(ord(event.Tau_genPartFlav[index]),genmatch,event.Tau_decayMode[index],mother)
+    # if genmatch>0 and genmatch<5 and event.Tau_decayMode[index]==1:
+    #   if partmatch_s1:
+    #     fillFlagHistogram(out.flags_LTF_mis,partmatch_s1)
+    #   elif partmatch_sn1:
+    #     fillFlagHistogram(out.flags_LTF_mis_sn1,partmatch_sn1)
+    #
+    ## CHECK status and flags
+    #if genmatch>0 and genmatch<5:
+    # if event.Tau_decayMode[index]==0:
+    #   if partmatch_s1:
+    #     fillFlagHistogram(out.flags_LTF_DM0,partmatch_s1)       
+    #   elif partmatch_sn1:
+    #     fillFlagHistogram(out.flags_LTF_DM0_sn1,partmatch_sn1)
+    # elif event.Tau_decayMode[index]==1:
+    #   if partmatch_s1:
+    #     fillFlagHistogram(out.flags_LTF_DM1,partmatch_s1)
+    #   elif partmatch_sn1:
+    #     fillFlagHistogram(out.flags_LTF_DM1_sn1,partmatch_sn1)
+    #     #if partmatch_sn1.status not in [23,44,52]:
+    #     #  print partmatch_sn1.status
+    #
+    ## CHECK correlation
+    #out.genmatch_corr.Fill(ord(event.Tau_genPartFlav[index]),genmatch)
+    #if event.Tau_decayMode[index]==0:
+    # out.genmatch_corr_DM0.Fill(ord(event.Tau_genPartFlav[index]),genmatch)
+    #if event.Tau_decayMode[index]==1:
+    # out.genmatch_corr_DM1.Fill(ord(event.Tau_genPartFlav[index]),genmatch)
+    
+    return genmatch
+
+
+
+
+
+def fillFlagHistogram(hist,particle):
+  """Fill histograms with status flags for genPartFlav check."""
+  if hasBit(particle.statusFlags, 0): hist.Fill( 0) # isPrompt
+  if hasBit(particle.statusFlags, 5): hist.Fill( 1) # isDirectPromptTauDecayProduct
+  if hasBit(particle.statusFlags, 7): hist.Fill( 2) # isHardProcess
+  if hasBit(particle.statusFlags, 8): hist.Fill( 3) # fromHardProcess
+  if hasBit(particle.statusFlags,10): hist.Fill( 4) # isDirectHardProcessTauDecayProduct
+  if hasBit(particle.statusFlags,11): hist.Fill( 5) # fromHardProcessBeforeFSR
+  if hasBit(particle.statusFlags,12): hist.Fill( 6) # isFirstCopy
+  if hasBit(particle.statusFlags,13): hist.Fill( 7) # isLastCop
+  if hasBit(particle.statusFlags,14): hist.Fill( 8) # isLastCopyBeforeFSR
+  if   particle.status==1:            hist.Fill( 9) # status==1
+  elif particle.status==23:           hist.Fill(10) # status==23
+  elif particle.status==44:           hist.Fill(11) # status==44
+  elif particle.status==51:           hist.Fill(12) # status==51
+  elif particle.status==52:           hist.Fill(13) # status==52
+  else:                               hist.Fill(14) # other status
+
+
 
 def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
     
@@ -299,7 +471,7 @@ def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
         if event.Muon_pfRelIso04_all[imuon] > 0.3: continue
         if event.Muon_mediumId[imuon] > 0.5 and (imuon not in muon_idxs):
             extramuon_veto = True
-        if event.Muon_pt[imuon] > 15 and event.Muon_isPFcand[imuon] > 0.5:
+        if event.Muon_pt[imuon] > 15 and event.Muon_isPFcand[imuon]: #Muon_isGlobal[imuon] and Muon_isTracker[imuon]
             LooseMuons.append(imuon)
     
     LooseElectrons = [ ]

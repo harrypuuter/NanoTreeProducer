@@ -1,5 +1,6 @@
+import sys
 import ROOT
-from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection 
+from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from TreeProducerMuTau import *
@@ -11,7 +12,7 @@ from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
 
 
 class MuTauProducer(Module):
-
+    
     def __init__(self, name, dataType, **kwargs):
         
         self.name            = name
@@ -20,10 +21,11 @@ class MuTauProducer(Module):
         self.year            = kwargs.get('year',     2017 )
         self.tes             = kwargs.get('tes',      1.0  )
         self.ltf             = kwargs.get('ltf',      1.0  )
+        self.jtf             = kwargs.get('jtf',      1.0  )
         self.doZpt           = kwargs.get('doZpt',    'DY' in name )
         self.doRecoil        = kwargs.get('doRecoil', 'DY' in name or re.search(r"W\d?Jets",name))
         self.doTTpt          = kwargs.get('doTTpt',   'TT' in name )
-        self.doTight         = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 )
+        self.doTight         = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 or self.jtf!=1)
         self.channel         = 'mutau'
         year, channel        = self.year, self.channel
         
@@ -80,13 +82,23 @@ class MuTauProducer(Module):
         self.out.outputfile.Close()
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        pass
+        sys.stdout.flush()
+        #inputTree.SetBranchStatus('*',0)
+        #branches = [
+        #  'run', 'luminosityBlock', 'event', 'PV_*', 'Pileup_*', 'Flag_*', 'HLT_*',
+        #  'LHE_*', 'nGenPart', 'GenPart_*', 'GenMET_*', 'nGenVisTau', 'GenVisTau_*', 'genWeight',
+        #  'nElectron', 'Electron_*', 'nMuon', 'Muon_*', 'nTau', 'Tau_*',
+        #  'nJet', 'Jet_*', 'MET_*',
+        #]
+        #for branchname in branches:
+        #  inputTree.SetBranchStatus(branchname,1)
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):        
         pass
         
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
+        sys.stdout.flush()
         
         #####################################
         self.out.cutflow.Fill(self.Nocut)
@@ -132,22 +144,29 @@ class MuTauProducer(Module):
         #####################################
         
         
+        Tau_genmatch = { } # bug in Tau_genPartFlav
         idx_goodtaus = [ ]
         for itau in range(event.nTau):
-            if self.tes!=1.0 and ord(event.Tau_genPartFlav[itau])==5:
-              event.Tau_pt[itau]   *= self.tes
-              event.Tau_mass[itau] *= self.tes
-            elif self.ltf!=1.0 and 0<ord(event.Tau_genPartFlav[itau])<5:
-              event.Tau_pt[itau]   *= self.ltf
-              event.Tau_mass[itau] *= self.ltf
-            if event.Tau_pt[itau] < self.tauCutPt: continue
+            if not self.vlooseIso(event,itau): continue
             if abs(event.Tau_eta[itau]) > 2.3: continue
             if abs(event.Tau_dz[itau]) > 0.2: continue
             if event.Tau_decayMode[itau] not in [0,1,10]: continue
             if abs(event.Tau_charge[itau])!=1: continue
+            if not self.isData:
+              Tau_genmatch[itau] = genmatch(event,itau,self.out)
+              if self.tes!=1.0 and Tau_genmatch[itau]==5:
+                event.Tau_pt[itau]   *= self.tes
+                event.Tau_mass[itau] *= self.tes
+              elif self.ltf!=1.0 and 0<Tau_genmatch[itau]<5:
+                event.Tau_pt[itau]   *= self.ltf
+                event.Tau_mass[itau] *= self.ltf
+              elif self.jtf!=1.0 and Tau_genmatch[itau]==0:
+                event.Tau_pt[itau]   *= self.jtf
+                event.Tau_mass[itau] *= self.jtf
+            if event.Tau_pt[itau] < self.tauCutPt: continue
             ###if ord(event.Tau_idAntiEle[itau])<1: continue
             ###if ord(event.Tau_idAntiMu[itau])<1: continue
-            if not self.vlooseIso(event,itau): continue
+            
             idx_goodtaus.append(itau)
         
         if len(idx_goodtaus)==0:
@@ -299,7 +318,7 @@ class MuTauProducer(Module):
         # GENERATOR
         if not self.isData:
           self.out.genPartFlav_1[0]     = ord(event.Muon_genPartFlav[ltau.id1])
-          self.out.genPartFlav_2[0]     = ord(event.Tau_genPartFlav[ltau.id2])
+          self.out.genPartFlav_2[0]     = Tau_genmatch[ltau.id2] # ord(event.Tau_genPartFlav[ltau.id2])
           
           genvistau = Collection(event, 'GenVisTau')
           dRmax  = 1000
@@ -323,17 +342,16 @@ class MuTauProducer(Module):
         
         
         # WEIGHTS
-        print '-'*80
-        met = TLorentzVector()
-        met.SetPxPyPzE(event.MET_pt*sin(event.MET_phi),event.MET_pt*cos(event.MET_phi),0,event.MET_pt)
-        self.out.met_uncorr[0]          = event.MET_pt
-        self.out.metphi_uncorr[0]       = event.MET_phi
+        met      = TLorentzVector()
+        met_corr = TLorentzVector()
+        met.SetPxPyPzE(event.MET_pt*cos(event.MET_phi),event.MET_pt*sin(event.MET_phi),0,event.MET_pt)
+        met_corr.SetPxPyPzE(event.MET_pt*cos(event.MET_phi),event.MET_pt*sin(event.MET_phi),0,event.MET_pt)
         if not self.isData:
           if self.doRecoil:
             boson, boson_vis            = getBoson(event)
-            self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,len(jetIds))
-            event.MET_pt                = met.Pt()
-            event.MET_phi               = met.Phi()
+            self.recoilTool.CorrectPFMETByMeanResolution(met_corr,boson,boson_vis,len(jetIds))
+            #event.MET_pt                = met.Pt()
+            #event.MET_phi               = met.Phi()
             self.out.m_genboson[0]      = boson.M()
             self.out.pt_genboson[0]     = boson.Pt()
             if self.doZpt:
@@ -349,7 +367,6 @@ class MuTauProducer(Module):
           self.out.genweight[0]         = event.genWeight
           self.out.puweight[0]          = self.puTool.getWeight(event.Pileup_nTrueInt)
           self.out.trigweight[0]        = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.trigweight_HTT[0]    = self.out.trigweight[0]
           self.out.idisoweight_1[0]     = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
           self.out.idisoweight_2[0]     = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
           self.out.btagweight[0]        = self.btagTool.getWeight(event,jetIds)
@@ -406,8 +423,11 @@ class MuTauProducer(Module):
         
         self.out.met[0]                 = event.MET_pt
         self.out.metphi[0]              = event.MET_phi
-        self.out.pfmt_1[0]              = sqrt( 2 * self.out.pt_1[0] * event.MET_pt * ( 1 - cos(deltaPhi(self.out.phi_1[0], event.MET_phi)) ) )
-        self.out.pfmt_2[0]              = sqrt( 2 * self.out.pt_2[0] * event.MET_pt * ( 1 - cos(deltaPhi(self.out.phi_2[0], event.MET_phi)) ) )
+        self.out.met_corr[0]            = met_corr.Pt()
+        self.out.metphi_corr[0]         = met_corr.Phi()
+        self.out.pfmt_1[0]              = sqrt( 2 * self.out.pt_1[0] * event.MET_pt  * ( 1 - cos(deltaPhi(self.out.phi_1[0], event.MET_phi))  ))
+        self.out.pfmt_1_corr[0]         = sqrt( 2 * self.out.pt_1[0] * met_corr.Pt() * ( 1 - cos(deltaPhi(self.out.phi_1[0], met_corr.Phi())) ))
+        self.out.pfmt_2[0]              = sqrt( 2 * self.out.pt_2[0] * event.MET_pt  * ( 1 - cos(deltaPhi(self.out.phi_2[0], event.MET_phi))  ))
         
         self.out.m_vis[0]               = (muon + tau).M()
         self.out.pt_ll[0]               = (muon + tau).Pt()
@@ -419,11 +439,14 @@ class MuTauProducer(Module):
         leg1                            = TVector3(muon.Px(), muon.Py(), 0.)
         leg2                            = TVector3(tau.Px(),  tau.Py(),  0.)
         zetaAxis                        = TVector3(leg1.Unit() + leg2.Unit()).Unit()
-        pzetaVis                        = leg1*zetaAxis + leg2*zetaAxis
-        pzetaMET                        = met.Vect()*zetaAxis
-        self.out.pzetamiss[0]           = pzetaMET
-        self.out.pzetavis[0]            = pzetaVis
-        self.out.dzeta[0]               = pzetaMET - 0.85*pzetaVis
+        pzeta_vis                       = leg1*zetaAxis + leg2*zetaAxis
+        pzeta_miss                      = met.Vect()*zetaAxis
+        self.out.pzetamiss[0]           = pzeta_miss
+        self.out.pzetavis[0]            = pzeta_vis
+        self.out.dzeta[0]               = pzeta_miss - 0.85*pzeta_vis
+        pzeta_miss_corr                 = met_corr.Vect()*zetaAxis
+        self.out.pzetamiss_corr[0]      = pzeta_miss_corr
+        self.out.dzeta_corr[0]          = pzeta_miss_corr - 0.85*pzeta_vis
         
         
         self.out.tree.Fill()

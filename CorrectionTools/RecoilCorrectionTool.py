@@ -26,8 +26,12 @@ class RecoilCorrectionTool:
           filename       = path+"TypeI-PFMet_Run2016BtoH.root"
           zptfilename    = zptpath+"Zpt_weights_2016_Cecile.root"
           zpthistname    = "zptmass_histo"
-        else:
+        elif year==2017:
           filename       = path+"Type1_PFMET_2017.root"
+          zptfilename    = zptpath+"Zpt_weights_2017_Izaak.root"
+          zpthistname    = "zptmass_weights"
+        else:
+          filename       = path+"TypeI-PFMet_Run2018.root"
           zptfilename    = zptpath+"Zpt_weights_2017_Izaak.root"
           zpthistname    = "zptmass_weights"
         
@@ -57,10 +61,10 @@ class RecoilCorrectionTool:
     def CorrectPFMETByMeanResolution(self, met, boson, boson_vis, njets):
         """Correct PF MET using the full and visibile boson Lorentz vector."""
         metpx_corr, metpy_corr = c_float(), c_float()
-        print "before: met pt = %4.1f, phi = %4.1f, px = %4.1f, py = %4.1f; boson px = %4.1f, py = %4.1f; vis. boson px = %4.1f, py = %4.1f; njets = %d"%(met.Pt(),met.Phi(),met.Px(),met.Py(),boson.Px(),boson.Py(),boson_vis.Px(),boson_vis.Py(),njets)
+        #print "before: met pt = %4.1f, phi = %4.1f, px = %4.1f, py = %4.1f; boson px = %4.1f, py = %4.1f; vis. boson px = %4.1f, py = %4.1f; njets = %d"%(met.Pt(),met.Phi(),met.Px(),met.Py(),boson.Px(),boson.Py(),boson_vis.Px(),boson_vis.Py(),njets)
         self.corrector.CorrectByMeanResolution(met.Px(),met.Py(),boson.Px(),boson.Py(),boson_vis.Px(),boson_vis.Py(),njets,metpx_corr,metpy_corr)
         met.SetPxPyPzE(metpx_corr.value,metpy_corr.value,0.,sqrt(metpx_corr.value**2+metpy_corr.value**2))
-        print "after:  met pt = %4.1f, phi = %4.1f, px = %4.1f, py = %4.1f, metpx_corr.value = %.1f, metpy_corr.value = %.1f"%(met.Pt(),met.Phi(),met.Px(),met.Py(),metpx_corr.value,metpy_corr.value)
+        #print "after:  met pt = %4.1f, phi = %4.1f, px = %4.1f, py = %4.1f, metpx_corr.value = %.1f, metpy_corr.value = %.1f"%(met.Pt(),met.Phi(),met.Px(),met.Py(),metpx_corr.value,metpy_corr.value)
         return met
         
     def getZptWeight(self,Zpt,Zmass):

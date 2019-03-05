@@ -24,7 +24,6 @@ class TreeProducerMuTau(TreeProducerCommon):
         self.addBranch('q_1',                        int)
         self.addBranch('pfRelIso04_all_1',           float)
         self.addBranch('genPartFlav_1',              int)
-        self.addBranch('trigweight_HTT',             float)
         
         
         ###########
@@ -66,7 +65,6 @@ class TreeProducerMuTau(TreeProducerCommon):
         self.addBranch('genvistaueta_2',             float)
         self.addBranch('genvistauphi_2',             float)
         
-        self.trigweight_HTT[0] = -1
         self.genPartFlav_1[0]  = -1
         self.genPartFlav_2[0]  = -1
         self.gendecayMode_2[0] = -1
