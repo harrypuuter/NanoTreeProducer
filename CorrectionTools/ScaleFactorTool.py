@@ -112,24 +112,6 @@ class ScaleFactorProduct:
         return self.scaleFactor1.getSF(pt,eta)*self.scaleFactor2.getSF(pt,eta)
     
 
-##etaLt = re.compile(r"EtaLt(\dp\d+)")
-##etaTo = re.compile(r"Eta(\dp\d+to\dp\d+)")
-##etaGt = re.compile(r"EtaGt(\dp\d+)")
-#def getEtaRangeFromString(eta):
-#    """Get eta range from string."""
-#    etainf = 7.0
-#    match  = re.match(r"EtaLt(\dp\d+)",eta)
-#    if match:
-#      return (0,float(match.group(1).replace('p','.')))
-#    match = re.match(r"Eta(\dp\d+)to(\dp\d+)",eta)
-#    if match:
-#      return (float(match.group(1).replace('p','.')),float(match.group(2).replace('p','.')))
-#    match = re.match(r"EtaGt(\dp\d+)",eta)
-#    if match:
-#      return (float(match.group(1).replace('p','.')),etainf)
-#    print "ERROR! getEtaRange: Could not find a eta range pattern for the string '%s'"%(eta)
-#    return None
-
 #def getBinsFromTGraph(graph):
 #    """Get xbins from TGraph."""
 #    x, y  = Double(), Double()
