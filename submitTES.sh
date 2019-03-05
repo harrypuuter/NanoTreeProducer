@@ -1,6 +1,6 @@
 #! /bin/bash
 
-YEARS="2016"
+YEARS="2016 2017 2018"
 CHANNELS='mutau'
 SAMPLES="DY"
 OPTIONS=""
@@ -8,24 +8,26 @@ CHECKDAS=0
 RESUBMIT=0
 REMOVE=0
 VARFLAG="--tes"
-TES_FIRST=0.97
-TES_LAST=1.03
+TES_FIRST=0.972
+TES_LAST=1.028
 STEP_SIZE=0.002
-VARIATIONS="0.970 1.030" #`seq $TES_FIRST $STEP_SIZE $TES_LAST`
-while getopts "aCc:dcfLmRrs:vx:y:" option; do case "${option}" in
+VARIATIONS=`seq $TES_FIRST $STEP_SIZE $TES_LAST`
+while getopts "aCc:dcfJLmRrs:Tvx:y:" option; do case "${option}" in
   a) OPTIONS+=" -a"; CHECKDAS=1;;
   C) CHECKDAS=1;;
   c) CHANNELS="${OPTARG}";;
   d) OPTIONS+=" -d"; CHECKDAS=1;;
   f) OPTIONS+=" -f";;
+  J) VARFLAG="--jtf"; VARIATIONS="0.900 1.100"; SAMPLES="DY W*J";;
   L) VARFLAG="--ltf"; VARIATIONS="0.970 1.030";;
   m) OPTIONS+=" -m";;
   R) RESUBMIT=1;;
   r) OPTIONS+=" -r"; REMOVE=1;;
   s) SAMPLES="${OPTARG}";;
+  T) VARFLAG="--tes"; VARIATIONS="0.970 1.030";;
   v) OPTIONS+=" -v";;
   x) OPTIONS+=" -x ${OPTARG}";;
-  y) YEARS="${OPTARG}";;
+  y) YEARS=${OPTARG//,/ };;
 esac done
 OPTIONS="-s ${SAMPLES}${OPTIONS}"
 function peval { echo ">>> $@"; eval "$@"; }
@@ -35,22 +37,21 @@ for year in $YEARS; do
   for channel in $CHANNELS; do
     [[ $channel = '#'* ]] && continue
     for var in $VARIATIONS; do
-      [[ $tes = 1.000 ]] && continue
-      for samplename in $SAMPLES; do
-        [[ $samplename = '#'* ]] && continue
-        
-        if [ $CHECKDAS -gt 0 ]; then
-          peval "./checkFiles.py -c $channel -y $year $VARFLAG $var $OPTIONS"
-        elif [ $RESUBMIT -gt 0 ]; then
-          peval "./resubmit.py -c $channel -y $year $VARFLAG $var $OPTIONS"
-        elif [ $REMOVE -gt 0 ]; then
-          peval "rm output_${year}/${SAMPLES}*/*${channel}_TES${var/./p}*"
-          peval "rm output_${year}/${SAMPLES}*/logs/*${channel}_${year}_TES${var/./p}*"
-        else
-          peval "./submit.py -c $channel -y $year $VARFLAG $var $OPTIONS"
-        fi
-        
-      done
+      [[ $var = 1.000 ]] && continue
+      
+      if [ $CHECKDAS -gt 0 ]; then
+        peval "./checkFiles.py -c $channel -y $year $VARFLAG $var $OPTIONS"
+      elif [ $RESUBMIT -gt 0 ]; then
+        peval "./resubmit.py -c $channel -y $year $VARFLAG $var $OPTIONS"
+      elif [ $REMOVE -gt 0 ]; then
+        for samplename in $SAMPLES; do
+          peval "rm output_${year}/${samplename}*/*${channel}_TES${var/./p}*"
+          peval "rm output_${year}/${samplename}*/logs/*${channel}_${year}_TES${var/./p}*"
+        done
+      else
+        peval "./submit.py -c $channel -y $year $VARFLAG $var $OPTIONS"
+      fi
+      
     done
   done
 done
