@@ -1,17 +1,16 @@
-#! /bin/zsh
+#! /bin/bash
 ## make sure the right shell will be used
-#$ -S /bin/zsh
-#######################################################
+#$ -S /bin/bash
 ## Black list nodes
+##$ -l h=t3wn43.psi.ch
 ##$ -l h=!t3wn34.psi.ch
 ##$ -l h=!(t3wn34.psi.ch|t3wn5*.psi.ch)
-#######################################################
 ## the cpu time for this job
-#$ -l h_rt=03:59:00
+#$ -l h_rt=04:20:00
 ## the maximum memory usage of this job
 #$ -l h_vmem=5900M
 ## Job Name
-#$ -N NANO
+#$ -N test
 ## stderr and stdout are merged together to stdout
 #$ -j y
 ## transfer env var from submission host
@@ -20,17 +19,17 @@
 #$ -cwd
 
 echo job start at `date`
-echo "Running job on machine " `uname -a`
+echo "Running job on machine $((uname -a))"
 
-TaskID=$((SGE_TASK_ID))
-echo "SGE_TASK_ID: " $TaskID
-
-JobList=$1
-TaskCmd=$(cat $JobList | sed ''$TaskID'q;d')
+TASKID=$((SGE_TASK_ID))
+JOBLIST=$1
+echo "SGE_TASK_ID=$TASKID"
+echo "JOBLIST=$JOBLIST"
+TASKCMD=$(cat $JOBLIST | sed "${TASKID}q;d")
 
 #eval $(scramv1 runtime -sh);
+echo "Going to execute"
+echo "  $TASKCMD"
+eval $TASKCMD
 
-echo "Going to execute" $TaskCmd
-eval $TaskCmd
-
-echo "Complete at " `date`
+echo "Complete at $((date))"
