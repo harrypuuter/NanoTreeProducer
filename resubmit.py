@@ -27,6 +27,8 @@ parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, acti
                                        help="tau energy scale" )
 parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
                                        help="lepton to tau fake energy scale" )
+parser.add_argument('-J', '--jtf',     dest='jtf', type=float, default=1.0, action='store',
+                                       help="jet to tau fake energy scale" )
 parser.add_argument('-d', '--das',     dest='useDAS', action='store_true', default=False,
                                        help="get file list from DAS" )
 parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=-1,
@@ -47,6 +49,7 @@ def main():
     years        = args.years
     tes          = args.tes
     ltf          = args.ltf
+    jtf          = args.jtf
     batchSystem  = 'psibatch_runner.sh'    
     chunkpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?\.root")
     tag          = ""
@@ -55,6 +58,8 @@ def main():
       tag += "_TES%.3f"%(tes)
     if ltf!=1.:
       tag += "_LTF%.3f"%(ltf)
+    if jtf!=1.:
+      tag += "_JTF%.3f"%(jtf)
     tag = tag.replace('.','p')
     
     for year in years:
@@ -112,17 +117,19 @@ def main():
             nFilesPerJob = args.nFilesPerJob
             if nFilesPerJob<1:
               for default, patterns in nFilesPerJob_defaults:
-                if matchSampleToPattern(jobName,patterns):
+                if matchSampleToPattern(directory,patterns):
                   nFilesPerJob = default
                   break
               else:
                 nFilesPerJob = 4
+            if args.verbose:
+              print "nFilesPerJob = %s"%nFilesPerJob
             infilelists = list(split_seq(infiles,nFilesPerJob))
             
             # JOB LIST
             badchunks   = [ ]
             misschunks  = range(0,len(infilelists))
-            jobList = 'joblist/joblist_%s_%s_retry.txt'%(directory, channel)
+            jobList = 'joblist/joblist_%s_%s%s_retry.txt'%(directory,channel,tag)
             with open(jobList, 'w') as jobslog:
               for filename in outfilelist:
                   match = chunkpattern.search(filename)
@@ -134,14 +141,14 @@ def main():
                   if chunk in misschunks:
                     misschunks.remove(chunk)
                   elif chunk >= len(infilelists):
-                    print bcolors.BOLD + bcolors.FAIL + '[WN] %s: found chunk %s >= total number of chunks %s ! Please make sure you have chosen the correct number of files per job (-n=%s) !'%(filename,chunk,len(infilelists),nFilesPerJob) + bcolors.ENDC
+                    print bcolors.BOLD + bcolors.FAIL + '[WN] %s: found chunk %s >= total number of chunks %s ! Please make sure you have chosen the correct number of files per job (-n=%s), check DAS, or resubmit everything!'%(filename,chunk,len(infilelists),nFilesPerJob) + bcolors.ENDC
                   else:
                     print bcolors.BOLD + bcolors.FAIL + '[WN] %s: found weird chunk %s ! Please check if there is any overcounting !'%(filename,chunk,len(infilelists)) + bcolors.ENDC
                   file = TFile(filename,'READ')
                   if not file.IsZombie() and file.GetListOfKeys().Contains('tree') and file.GetListOfKeys().Contains('cutflow'):
                     continue
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf)
+                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf)
                   badchunks.append(chunk)
               
               # BAD CHUNKS
@@ -156,7 +163,7 @@ def main():
                 print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files ! Resubmitting %s..."%(directory,len(misschunks),len(outfilelist),chunktext) + bcolors.ENDC
                 for chunk in misschunks:
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf)
+                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf)
             
             # RESUBMIT
             nChunks = len(badchunks)+len(misschunks)

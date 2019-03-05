@@ -26,6 +26,8 @@ if __name__ == "__main__":
                                          help="tau energy scale" )
   parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
                                          help="lepton to tau fake energy scale" )
+  parser.add_argument('-J', '--jtf',     dest='jtf', type=float, default=1.0, action='store',
+                                         help="jet to tau fake energy scale" )
   parser.add_argument('-d', '--das',     dest='useDAS', action='store_true', default=False,
                                          help="get file list from DAS" )
   parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=-1,
@@ -100,7 +102,7 @@ def saveFileListLocal(dataset,filelist):
     filename = "filelist/filelist_%s.txt"%dataset.replace('/','__')
     with open(filename,'w') as file:
       for line in filelist:
-        file.write(line)
+        file.write(line+'\n')
     return filename
     
 
@@ -144,11 +146,14 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
     """Create file with commands to execute per job."""
     tes     = kwargs.get('tes', 1.)
     ltf     = kwargs.get('ltf', 1.)
+    jtf     = kwargs.get('jtf', 1.)
     cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
     if tes!=1.:
       cmd += " --tes %.3f"%(tes)
     if ltf!=1.:
       cmd += " --ltf %.3f"%(ltf)
+    if jtf!=1.:
+      cmd += " --jtf %.3f"%(jtf)
     if args.verbose:
       print cmd
     jobsfile.write(cmd+'\n')
@@ -178,6 +183,7 @@ def main():
     years       = args.years
     tes         = args.tes
     ltf         = args.ltf
+    jtf         = args.jtf
     batchSystem = 'psibatch_runner.sh'
     tag         = ""
     
@@ -185,6 +191,8 @@ def main():
       tag += "_TES%.3f"%(tes)
     if ltf!=1.:
       tag += "_LTF%.3f"%(ltf)
+    if jtf!=1.:
+      tag += "_JTF%.3f"%(jtf)
     tag = tag.replace('.','p')
     
     for year in years:
@@ -261,18 +269,18 @@ def main():
                   nFilesPerJob = default
                   break
               else:
-                nFilesPerJob = 4
-            if args.verbose or True:
+                nFilesPerJob = 4 # default
+            if args.verbose:
               print "nFilesPerJob = %s"%nFilesPerJob
+            filelists = list(split_seq(files,nFilesPerJob))
             
             # CREATE JOBS
             nChunks = 0
-            filelists = list(split_seq(files,nFilesPerJob))
             checkExistingFiles(outdir,channel,len(filelists))
             #filelists = list(split_seq(files,1))
             for file in filelists:
             #print "FILES = ",f
-                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes,ltf=ltf)
+                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf)
                 nChunks = nChunks+1
             jobs.close()
             

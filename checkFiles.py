@@ -38,6 +38,8 @@ if __name__ == '__main__':
                                             help="overwrite existing hadd'ed files" )
     parser.add_argument('-r', '--clean',    dest='cleanup', default=False, action='store_true',
                                             help="remove all output files after hadd" )
+    parser.add_argument('-R', '--rm-bad',   dest='removeBadFiles', default=False, action='store_true',
+                                            help="remove files that are bad" )
     parser.add_argument('-o', '--outdir',   dest='outdir', type=str, default=None, action='store' )
     parser.add_argument('-s', '--sample',   dest='samples', type=str, nargs='+', default=[ ], action='store',
                                             help="samples to run over, glob patterns (wildcards * and ?) are allowed." )
@@ -49,6 +51,8 @@ if __name__ == '__main__':
                                             help="tau energy scale" )
     parser.add_argument('-L', '--ltf',      dest='ltf', type=float, default=1.0, action='store',
                                             help="lepton to tau fake energy scale" )
+    parser.add_argument('-J', '--jtf',      dest='jtf', type=float, default=1.0, action='store',
+                                            help="jet to tau fake energy scale" )
     parser.add_argument('-l', '--tag',      dest='tag', type=str, default="", action='store',
                                             help="add a tag to the output file" )
     parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
@@ -134,6 +138,7 @@ def main(args):
   intag      = ""
   tes        = args.tes
   ltf        = args.ltf
+  jtf        = args.jtf
   #submitted  = getSubmittedJobs()
   
   if outtag and '_' not in outtag[0]:
@@ -142,6 +147,8 @@ def main(args):
     intag += "_TES%.3f"%(tes)
   if ltf!=1.:
     intag += "_LTF%.3f"%(ltf)
+  if jtf!=1.:
+    intag += "_JTF%.3f"%(jtf)
   intag  = intag.replace('.','p')
   outtag = intag+outtag
   
@@ -306,6 +313,7 @@ def main(args):
             else:
               print bcolors.BOLD + bcolors.WARNING + "[WN] no files to hadd!" + bcolors.ENDC
             print
+    
     os.chdir('..')
      
 
@@ -319,7 +327,7 @@ def isValidSample(pattern):
 
 
 indexpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?\.root")
-def checkFiles(filelist,directory):
+def checkFiles(filelist,directory,clean=False):
     if args.verbose:
       print "checkFiles: %s, %s"%(filelist,directory)
     if isinstance(filelist,str):
@@ -352,7 +360,10 @@ def checkFiles(filelist,directory):
       if match: ifound.append(int(match.group(1)))
     
     if len(badfiles)>0:
-      print bcolors.BOLD + bcolors.FAIL + "[NG] %s:   %d out of %d files have no tree!"%(directory,len(badfiles),len(filelist)) + bcolors.ENDC
+      print bcolors.BOLD + bcolors.FAIL + "[NG] %s:   %d out of %d files %s no tree!"%(directory,len(badfiles),len(filelist),"have" if len(badfiles)>1 else "has") + bcolors.ENDC
+      if clean:
+        for filename in badfiles:
+          os.remove(filename)
       return False
     
     # TODO: check all chunks (those>imax)
