@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import os, sys
 from importlib import import_module
-from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
+#from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
+from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
@@ -11,6 +12,7 @@ parser.add_argument('-t', '--type',     dest='type', action='store', choices=['d
 parser.add_argument('-y', '--year',     dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
 parser.add_argument('-T', '--tes',      dest='tes', action='store', type=float, default=1.0)
 parser.add_argument('-L', '--ltf',      dest='ltf', action='store', type=float, default=1.0)
+parser.add_argument('-J', '--jtf',      dest='jtf', action='store', type=float, default=1.0)
 parser.add_argument('-l', '--tag',      dest='tag', action='store', type=str, default="")
 parser.add_argument('-Z', '--doZpt',    dest='doZpt', action='store_true', default=False)
 parser.add_argument('-R', '--doRecoil', dest='doRecoil', action='store_true', default=False)
@@ -26,6 +28,7 @@ kwargs = {
   'year':     args.year,
   'tes':      args.tes,
   'ltf':      args.ltf,
+  'jtf':      args.jtf,
   'doZpt':    args.doZpt,
   'doRecoil': args.doRecoil,
 }
@@ -70,7 +73,7 @@ else:
         infiles = [
           'root://xrootd-cms.infn.it//store/data/Run2017B/Tau/NANOAOD/31Mar2018-v1/10000/04463969-D044-E811-8DC1-0242AC130002.root'
         ]
-    elif year==2018: 
+    elif year==2018:
         infiles = [
           'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/SingleMuon/Run2018A-from_17Sep2018_ver2-NanoAODv4Priv/181216_124906/0000/myNanoRunData2018ABC_NANO_352.root',
           ###'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/SingleMuon/Run2018B-from_17Sep2018_ver1-NanoAODv4Priv/181216_124922/0000/myNanoRunData2018ABC_NANO_212.root',
@@ -79,6 +82,9 @@ else:
   else:
     if year==2016:
         infiles = [
+#           '/shome/ytakahas/nanoAOD_tauPOG.root',
+#           '/shome/ytakahas/nanoAOD_tauPOG_v2.root',
+#           '/t3home/ytakahas/work/prod/nanoAOD/2016/CMSSW_10_2_9/src/nanoAOD.root',
           'root://xrootd-cms.infn.it//store/mc/RunIISummer16NanoAODv4/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/NANOAODSIM/PUMoriond17_Nano14Dec2018_102X_mcRun2_asymptotic_v6_ext1-v1/80000/47560595-D7E2-DD4D-989A-39EB01F213FA.root', #  522739
           #'root://xrootd-cms.infn.it//store/mc/RunIISummer16NanoAODv4/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/NANOAODSIM/PUMoriond17_Nano14Dec2018_102X_mcRun2_asymptotic_v6_ext1-v1/80000/BEF8D775-B527-634D-8049-4CE5F091D665.root', #  760101
           #'root://xrootd-cms.infn.it//store/mc/RunIISummer16NanoAODv4/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/NANOAODSIM/PUMoriond17_Nano14Dec2018_102X_mcRun2_asymptotic_v6_ext1-v1/80000/023EF5F4-AFB1-564F-AA15-675AC8E3CDD0.root', # 1103428
@@ -92,6 +98,17 @@ else:
         ]
     elif year==2017:
         infiles = [
+          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/20000/16F5B835-C646-E811-825E-E0071B749CA0.root',  #   69733
+          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/20000/D81B7BA0-3247-E811-8609-B499BAAC0270.root',  #   83843
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/90000/54362765-8948-E811-9E4A-001F29085CDE.root',  #   84396
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/70000/B28E4243-3245-E811-B18F-001E67E71BAA.root',  #  117636
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/20000/A456953E-4246-E811-8230-484D7E8DF051.root',  #  165260
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/70000/F208E03B-3245-E811-9B91-484D7E8DF09F.root',  #  165609
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/910000/5CA08B3B-F647-E811-BE22-001E67CBE45A.root', #  167960
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/90000/1CEBB44E-4548-E811-8798-A4BF0115951C.root',  #  212400
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/20000/E4D51829-5745-E811-92DD-E0071B74AC00.root',  #  712312
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/70000/6040CB3C-3245-E811-A47A-E0071B73B6E0.root',  #  906109
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/20000/144713F3-8745-E811-8458-001E67E71BDC.root',  # 1013072
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/20000/16F5B835-C646-E811-825E-E0071B749CA0.root', #  69733
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/20000/D81B7BA0-3247-E811-8609-B499BAAC0270.root', #  83843
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/70000/B28E4243-3245-E811-B18F-001E67E71BAA.root', # 117636
@@ -104,9 +121,9 @@ else:
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/20000/82C67179-0942-E811-9BA7-001E67FA3920.root', # 953382
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/20000/44917CDB-2842-E811-852C-001E6739AD61.root', # 976374
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/20000/042667FA-1542-E811-B81A-001E673D23F9.root', # 998736
-          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/100000/00E4EFFB-F496-E811-AC18-A4BF0112BD2A.root', #  4599
-          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/FABEEF78-34A1-E811-A538-EC0D9A0B3360.root',  #  5843
-          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/18961888-34A1-E811-A230-00266CFFBED8.root',  # 29068
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/100000/00E4EFFB-F496-E811-AC18-A4BF0112BD2A.root', #  4599
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/FABEEF78-34A1-E811-A538-EC0D9A0B3360.root',  #  5843
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAOD/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/40000/18961888-34A1-E811-A230-00266CFFBED8.root',  # 29068
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M500/nanoAOD/v1/nanoAOD_LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M500_1602.root'
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000/nanoAOD/v1/nanoAOD_VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000_1036.root',
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000/nanoAOD/v1/nanoAOD_VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M1000_105.root',
@@ -117,11 +134,19 @@ else:
         ]
     elif year==2018:
       infiles = [
+#       '/t3home/ytakahas/work/prod/nanoAOD/2018/CMSSW_10_2_9/src/nanoAOD.root',
         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_731.root', #  18103
-        #'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_132.root', # 136514
-        #'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_176.root', # 136590
-        #'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_513.root', # 136609
-        #'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_101.root', # 137004
+        'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_132.root', # 136514
+        'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_176.root', # 136590
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_513.root', # 136609
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_101.root', # 137004
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_590.root', # 137751
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_440.root', # 137752
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_18.root',  # 137766
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_525.root', # 137792
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_443.root', # 137795
+#         'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_568.root', # 137822
+        #'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver1/181216_125011/0000/myNanoRunMc2018_NANO_364.root', # 137869
         #'root://xrootd-cms.infn.it//store/group/phys_tau/ProdNanoAODv4Priv/16dec18/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv4Priv-from_102X_upgrade2018_realistic_v15_ver2/181216_125027/0000/myNanoRunMc2018_NANO_75.root',
         #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000_0.root',
         #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000_0.root',
@@ -134,6 +159,7 @@ print ">>> %-10s = %s"%('dataType',dataType)
 print ">>> %-10s = %s"%('year',kwargs['year'])
 print ">>> %-10s = %s"%('tes',kwargs['tes'])
 print ">>> %-10s = %s"%('ltf',kwargs['ltf'])
+print ">>> %-10s = %s"%('jtf',kwargs['jtf'])
 print ">>> %-10s = %s"%('postfix',postfix)
 
 if channel=='tautau':

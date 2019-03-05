@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import os,sys
+import PhysicsTools
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from argparse import ArgumentParser
 from checkFiles import ensureDirectory
@@ -16,6 +17,7 @@ parser.add_argument('-t', '--type',    dest='type', action='store', choices=['da
 parser.add_argument('-y', '--year',    dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
 parser.add_argument('-T', '--tes',     dest='tes', action='store', type=float, default=1.0)
 parser.add_argument('-L', '--ltf',     dest='ltf', action='store', type=float, default=1.0)
+parser.add_argument('-J', '--jtf',     dest='jtf', action='store', type=float, default=1.0)
 args = parser.parse_args()
 
 channel  = args.channel
@@ -27,10 +29,12 @@ nchunck  = args.nchunck
 year     = args.year
 tes      = args.tes
 ltf      = args.ltf
+jtf      = args.jtf
 kwargs   = {
   'year':  year,
   'tes':   tes,
   'ltf':   ltf,
+  'jtf':   jtf,
 }
 
 if isinstance(infiles,str):
@@ -56,6 +60,7 @@ else:
 tag = ""
 if tes!=1: tag +="_TES%.3f"%(tes)
 if ltf!=1: tag +="_LTF%.3f"%(ltf)
+if jtf!=1: tag +="_JTF%.3f"%(jtf)
 outfile = "%s_%s_%s%s.root"%(outfile,nchunck,channel,tag.replace('.','p'))
 postfix = "%s/%s"%(outdir,outfile)
 
@@ -69,6 +74,7 @@ print "%-12s = %s"%('dataType',dataType)
 print "%-12s = %s"%('year',kwargs['year'])
 print "%-12s = %s"%('tes',kwargs['tes'])
 print "%-12s = %s"%('ltf',kwargs['ltf'])
+print "%-12s = %s"%('jtf',kwargs['jtf'])
 print '-'*80
 
 module2run = None
@@ -95,6 +101,7 @@ else:
     print 'Unkown channel !!!'
     sys.exit(0)
 
+print "job.py: creating PostProcessor..."
 if dataType=='data':
     p = PostProcessor(outdir, infiles, None, "keep_and_drop.txt", noOut=True, 
                       modules=[module2run()], provenance=False, fwkJobReport=False,
@@ -103,5 +110,6 @@ else:
     p = PostProcessor(outdir, infiles, None, "keep_and_drop.txt", noOut=True,
                       modules=[module2run()], provenance=False, fwkJobReport=False, postfix=postfix)
 
+print "job.py: going to run PostProcessor..."
 p.run()
 print "DONE"
