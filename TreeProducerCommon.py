@@ -4,29 +4,36 @@ import numpy as num
 import ROOT
 from ROOT import TTree, TH1D, TH2D, TLorentzVector, TVector3
 from CorrectionTools.RecoilCorrectionTool import hasBit
-from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
+from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Event
 
 
-var_dict = {
-  'Electron_mvaFall17Iso':      'Electron_mvaFall17Iso',
-  'Electron_mvaFall17Iso_WPL':  'Electron_mvaFall17Iso_WPL',
-  'Electron_mvaFall17Iso_WP80': 'Electron_mvaFall17Iso_WP80',
-  'Electron_mvaFall17Iso_WP90': 'Electron_mvaFall17Iso_WP90',
-}
-
-def setYear(year):
-  """Help function to change the name of some variables that depend on the year."""
-  if year==2018 or year==2016:
-    print "setYear: setting var_dict to year %s"%(year)
-    var_dict['Electron_mvaFall17Iso']      = 'Electron_mvaFall17V2Iso'
-    var_dict['Electron_mvaFall17Iso_WPL']  = 'Electron_mvaFall17V2Iso_WPL'
-    var_dict['Electron_mvaFall17Iso_WP80'] = 'Electron_mvaFall17V2Iso_WP80'
-    var_dict['Electron_mvaFall17Iso_WP90'] = 'Electron_mvaFall17V2Iso_WP90'
+def checkBranches(tree):
+  """Redirect some branch names that depend on the nanoAOD version."""
+  branches = [
+    ('Electron_mvaFall17V2Iso',      'Electron_mvaFall17Iso'     ),
+    ('Electron_mvaFall17V2Iso_WPL',  'Electron_mvaFall17Iso_WPL' ),
+    ('Electron_mvaFall17V2Iso_WP80', 'Electron_mvaFall17Iso_WP80'),
+    ('Electron_mvaFall17V2Iso_WP90', 'Electron_mvaFall17Iso_WP90'),
+  ]
+  fullbranchlist = tree.GetListOfBranches()
+  for newbranch, oldbranch in branches:
+    if newbranch not in fullbranchlist:
+      print "checkBranches: directing '%s' -> '%s'"%(newbranch,oldbranch)
+      exec "setattr(Event,newbranch,property(lambda self: self._tree.readBranch('%s')))"%oldbranch
   
-def getvar(obj,var):
-  """Help function to get some variable's real name from the dictionary."""
-  return getattr(obj,var_dict[var])
+def setBranchStatuses(tree,otherbranches=[ ]):
+  """Activate or deactivate branch statuses."""
+  tree.SetBranchStatus('*',0)
+  branches = [
+   'run', 'luminosityBlock', 'event', 'PV_*', 'Pileup_*', 'Flag_*', 'HLT_*',
+   'LHE_*', 'nGenPart', 'GenPart_*', 'GenMET_*', 'nGenVisTau', 'GenVisTau_*', 'genWeight',
+   'nElectron', 'Electron_*', 'nMuon', 'Muon_*', 'nTau', 'Tau_*',
+   'nJet', 'Jet_*', 'MET_*',
+  ]
+  for branchname in branches+otherbranches:
+   tree.SetBranchStatus(branchname,1)
   
+
 def getVLooseTauIso(year):
   """Return a method to check whether event passes the VLoose working
   point of all available tau IDs. (For tau ID measurement.)"""
@@ -55,6 +62,7 @@ def Tau_idIso(event,i):
     return 0 if raw>4.5 else 1 if raw>3.5 else 3 if raw>2.5 else 7 if raw>1.5 else 15 if raw>0.8 else 31 # VVLoose, VLoose, Loose, Medium, Tight
   return 0 if raw>4.5 else 1 if raw>3.5 else 3 # VVLoose, VLoose
   
+
 root_dtype = {
   float: 'D',  int: 'I',  bool: 'O',
   'f':   'D',  'i': 'I',  '?':  'O',  'b': 'b'
@@ -248,6 +256,10 @@ class TreeProducerCommon(object):
           exit(1)
         setattr(self,name,num.zeros(1,dtype=dtype))
         self.tree.Branch(name, getattr(self,name), '%s/%s'%(name,root_dtype[dtype]))
+        
+    def endJob(self):
+        self.outputfile.Write()
+        self.outputfile.Close()
         
 
 
@@ -481,10 +493,9 @@ def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
         if abs(event.Electron_dz[ielectron]) > 0.2: continue
         if abs(event.Electron_dxy[ielectron]) > 0.045: continue
         if event.Electron_pfRelIso03_all[ielectron] > 0.3: continue
-        #if event.Electron_convVeto[ielectron] ==1 and ord(event.Electron_lostHits[ielectron]) <= 1 and event.Electron_mvaFall17Iso_WP90[ielectron] > 0.5 and (ielectron not in electron_idxs):
-        if event.Electron_convVeto[ielectron] ==1 and ord(event.Electron_lostHits[ielectron]) <= 1 and getvar(event,'Electron_mvaFall17Iso_WP90')[ielectron] > 0.5 and (ielectron not in electron_idxs):
+        if event.Electron_convVeto[ielectron] ==1 and ord(event.Electron_lostHits[ielectron]) <= 1 and event.Electron_mvaFall17V2Iso_WP90[ielectron] > 0.5 and (ielectron not in electron_idxs):
             extraelec_veto = True
-        if event.Electron_pt[ielectron] > 15 and getvar(event,'Electron_mvaFall17Iso_WPL')[ielectron] > 0.5:
+        if event.Electron_pt[ielectron] > 15 and event.Electron_mvaFall17V2Iso_WPL[ielectron] > 0.5:
             LooseElectrons.append(ielectron)
     
     if channel=='mutau':

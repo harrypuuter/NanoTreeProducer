@@ -1,3 +1,4 @@
+import sys
 import ROOT
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection 
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -27,7 +28,6 @@ class EleMuProducer(Module):
         self.channel         = 'elemu'
         year, channel        = self.year, self.channel
         
-        setYear(year)
         if year==2016:
           self.trigger       = lambda e: e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 #or e.HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1
           self.muonCutPt     = lambda e: 23
@@ -71,17 +71,21 @@ class EleMuProducer(Module):
         pass
         
     def endJob(self):
-        self.out.outputfile.Write()
-        self.out.outputfile.Close()
+        if not self.isData:
+          self.btagTool.setDirectory(self.out.outputfile,'btag')
+          self.btagTool_deep.setDirectory(self.out.outputfile,'btag')
+        self.out.endJob()
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        pass
+        sys.stdout.flush()
+        checkBranches(inputTree)
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):        
         pass
         
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
+        sys.stdout.flush()
         
         #####################################
         self.out.cutflow.Fill(self.Nocut)
@@ -134,7 +138,7 @@ class EleMuProducer(Module):
             if abs(event.Electron_dxy[ielectron]) > 0.045: continue
             if event.Electron_convVeto[ielectron] !=1: continue
             if ord(event.Electron_lostHits[ielectron]) > 1: continue
-            #if event.Electron_mvaFall17Iso_WP80[ielectron] < 0.5: continue
+            #if event.Electron_mvaFall17V2Iso_WP80[ielectron] < 0.5: continue
             idx_goodelectrons.append(ielectron)
         
         if len(idx_goodelectrons)==0:
@@ -241,10 +245,10 @@ class EleMuProducer(Module):
         self.out.q_1[0]                        = event.Electron_charge[dilepton.id1]
         self.out.pfRelIso03_all_1[0]           = event.Electron_pfRelIso03_all[dilepton.id1]
         self.out.cutBased_1[0]                 = event.Electron_cutBased[dilepton.id1]
-        self.out.mvaFall17Iso_1[0]             = getvar(event,'Electron_mvaFall17Iso')[dilepton.id1]
-        self.out.mvaFall17Iso_WPL_1[0]         = getvar(event,'Electron_mvaFall17Iso_WPL')[dilepton.id1]
-        self.out.mvaFall17Iso_WP80_1[0]        = getvar(event,'Electron_mvaFall17Iso_WP80')[dilepton.id1]
-        self.out.mvaFall17Iso_WP90_1[0]        = getvar(event,'Electron_mvaFall17Iso_WP90')[dilepton.id1]
+        self.out.mvaFall17Iso_1[0]             = event.Electron_mvaFall17V2Iso[dilepton.id1]
+        self.out.mvaFall17Iso_WPL_1[0]         = event.Electron_mvaFall17V2Iso_WPL[dilepton.id1]
+        self.out.mvaFall17Iso_WP80_1[0]        = event.Electron_mvaFall17V2Iso_WP80[dilepton.id1]
+        self.out.mvaFall17Iso_WP90_1[0]        = event.Electron_mvaFall17V2Iso_WP90[dilepton.id1]
         
         
         # MUON

@@ -1,3 +1,4 @@
+import sys
 import ROOT
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection 
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -27,7 +28,6 @@ class EleTauProducer(Module):
         self.channel         = 'eletau'
         year, channel        = self.year, self.channel
         
-        setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
         if year==2016:
           self.trigger       = lambda e: e.HLT_Ele25_eta2p1_WPTight_Gsf or e.HLT_Ele27_WPTight_Gsf #or e.HLT_Ele45_WPLoose_Gsf_L1JetTauSeeded #or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20_SingleL1 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau30
@@ -70,22 +70,23 @@ class EleTauProducer(Module):
     
     def beginJob(self):
         pass
-
+        
     def endJob(self):
         if not self.isData:
           self.btagTool.setDirectory(self.out.outputfile,'btag')
           self.btagTool_deep.setDirectory(self.out.outputfile,'btag')
-        self.out.outputfile.Write()
-        self.out.outputfile.Close()
-
+        self.out.endJob()
+        
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        pass
+        sys.stdout.flush()
+        checkBranches(inputTree)
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):        
         pass
         
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
+        sys.stdout.flush()
         
         #####################################
         self.out.cutflow.Fill(self.Nocut)
@@ -120,7 +121,7 @@ class EleTauProducer(Module):
             if abs(event.Electron_dxy[ielectron]) > 0.045: continue
             if event.Electron_convVeto[ielectron] !=1: continue
             if ord(event.Electron_lostHits[ielectron]) > 1: continue
-            if getvar(event,'Electron_mvaFall17Iso_WP80')[ielectron] < 0.5: continue
+            if event.Electron_mvaFall17V2Iso_WP80[ielectron] < 0.5: continue
             idx_goodelectrons.append(ielectron)
         
         if len(idx_goodelectrons)==0:
@@ -251,10 +252,10 @@ class EleTauProducer(Module):
         self.out.q_1[0]                        = event.Electron_charge[ltau.id1]
         self.out.pfRelIso03_all_1[0]           = event.Electron_pfRelIso03_all[ltau.id1]
         self.out.cutBased_1[0]                 = event.Electron_cutBased[ltau.id1]
-        self.out.mvaFall17Iso_1[0]             = getvar(event,'Electron_mvaFall17Iso')[ltau.id1]
-        self.out.mvaFall17Iso_WPL_1[0]         = getvar(event,'Electron_mvaFall17Iso_WPL')[ltau.id1]
-        self.out.mvaFall17Iso_WP80_1[0]        = getvar(event,'Electron_mvaFall17Iso_WP80')[ltau.id1]
-        self.out.mvaFall17Iso_WP90_1[0]        = getvar(event,'Electron_mvaFall17Iso_WP90')[ltau.id1]
+        self.out.mvaFall17Iso_1[0]             = event.Electron_mvaFall17V2Iso[ltau.id1]
+        self.out.mvaFall17Iso_WPL_1[0]         = event.Electron_mvaFall17V2Iso_WPL[ltau.id1]
+        self.out.mvaFall17Iso_WP80_1[0]        = event.Electron_mvaFall17V2Iso_WP80[ltau.id1]
+        self.out.mvaFall17Iso_WP90_1[0]        = event.Electron_mvaFall17V2Iso_WP90[ltau.id1]
         
         
         # TAU

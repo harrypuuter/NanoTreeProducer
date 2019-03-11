@@ -1,3 +1,4 @@
+import sys
 import ROOT
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -27,7 +28,6 @@ class TauTauProducer(Module):
         self.channel         = 'tautau'
         year, channel        = self.year, self.channel
         
-        setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
         if year==2016:
           if self.isData:
@@ -86,24 +86,21 @@ class TauTauProducer(Module):
         pass
         
     def endJob(self):
-        #check = self.out.outputfile.mkdir('check')
-        #self.pileup.SetDirectory(check)
         if not self.isData:
           self.btagTool.setDirectory(self.out.outputfile,'btag')
           self.btagTool_deep.setDirectory(self.out.outputfile,'btag')
-        self.out.outputfile.Write()
-        self.out.outputfile.Close()
+        self.out.endJob()
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        pass
+        sys.stdout.flush()
+        checkBranches(inputTree)
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):        
         pass
         
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
-        #electrons = Collection(event, "Electron")
-        #muons = Collection(event, "Muon")
+        sys.stdout.flush()
         
         ##print '-'*80
         ngentauhads = 0

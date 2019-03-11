@@ -29,7 +29,6 @@ class MuTauProducer(Module):
         self.channel         = 'mutau'
         year, channel        = self.year, self.channel
         
-        setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
         self.filter          = getMETFilters(year,self.isData)
         if year==2016:
@@ -78,22 +77,13 @@ class MuTauProducer(Module):
         if not self.isData:
           self.btagTool.setDirectory(self.out.outputfile,'btag')
           self.btagTool_deep.setDirectory(self.out.outputfile,'btag')
-        self.out.outputfile.Write()
-        self.out.outputfile.Close()
+        self.out.endJob()
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         sys.stdout.flush()
-        #inputTree.SetBranchStatus('*',0)
-        #branches = [
-        #  'run', 'luminosityBlock', 'event', 'PV_*', 'Pileup_*', 'Flag_*', 'HLT_*',
-        #  'LHE_*', 'nGenPart', 'GenPart_*', 'GenMET_*', 'nGenVisTau', 'GenVisTau_*', 'genWeight',
-        #  'nElectron', 'Electron_*', 'nMuon', 'Muon_*', 'nTau', 'Tau_*',
-        #  'nJet', 'Jet_*', 'MET_*',
-        #]
-        #for branchname in branches:
-        #  inputTree.SetBranchStatus(branchname,1)
+        checkBranches(inputTree)
         
-    def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):        
+    def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
         
     def analyze(self, event):

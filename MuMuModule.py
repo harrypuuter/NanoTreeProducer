@@ -1,3 +1,4 @@
+import sys
 import ROOT
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection 
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -16,17 +17,17 @@ class MuMuProducer(Module):
         self.name            = name
         self.out             = TreeProducerMuMu(name)
         self.isData          = dataType=='data'
-        self.year            = kwargs.get('year',     2017 )
-        self.tes             = kwargs.get('tes',      1.0  )
-        self.ltf             = kwargs.get('ltf',      1.0  )
-        self.doZpt           = kwargs.get('doZpt',    'DY' in name )
-        self.doRecoil        = kwargs.get('doRecoil', 'DY' in name or re.search(r"W\d?Jets",name))
-        self.doTTpt          = kwargs.get('doTTpt',   'TT' in name )
-        self.doTight         = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 )
+        self.year            = kwargs.get('year',        2017 )
+        self.tes             = kwargs.get('tes',         1.0  )
+        self.ltf             = kwargs.get('ltf',         1.0  )
+        self.inZmassWindow   = kwargs.get('ZmassWindow', True )
+        self.doZpt           = kwargs.get('doZpt',       'DY' in name )
+        self.doRecoil        = kwargs.get('doRecoil',    'DY' in name or re.search(r"W\d?Jets",name))
+        self.doTTpt          = kwargs.get('doTTpt',      'TT' in name )
+        self.doTight         = kwargs.get('doTight',     self.tes!=1 or self.ltf!=1 )
         self.channel         = 'mumu'
         year, channel        = self.year, self.channel
         
-        setYear(year)
         self.vlooseIso       = getVLooseTauIso(year)
         self.filter          = getMETFilters(year,self.isData)
         if year==2016:
@@ -71,17 +72,21 @@ class MuMuProducer(Module):
         pass
         
     def endJob(self):
-        self.out.outputfile.Write()
-        self.out.outputfile.Close()
+        if not self.isData:
+          self.btagTool.setDirectory(self.out.outputfile,'btag')
+          self.btagTool_deep.setDirectory(self.out.outputfile,'btag')
+        self.out.endJob()
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        pass
+        sys.stdout.flush()
+        checkBranches(inputTree)
         
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):        
         pass
         
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
+        sys.stdout.flush()
         
         #####################################
         self.out.cutflow.Fill(self.Nocut)
@@ -143,7 +148,7 @@ class MuMuProducer(Module):
               muon1 = muons[idx1].p4()
               muon2 = muons[idx2].p4()
               if muon1.DeltaR(muon2) < 0.5: continue
-              if not (70<(muon1+muon2).M()<110): continue # Z mass
+              if self.inZmassWindow and not (70<(muon1+muon2).M()<110): continue # Z mass
               dilepton = DiLeptonBasicClass(idx1, event.Muon_pt[idx1], event.Muon_pfRelIso04_all[idx1], 
                                             idx2, event.Muon_pt[idx2], event.Muon_pfRelIso04_all[idx2])
               dileptons.append(dilepton)
