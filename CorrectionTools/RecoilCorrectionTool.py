@@ -24,15 +24,15 @@ class RecoilCorrectionTool:
         
         if year==2016:
           filename       = path+"TypeI-PFMet_Run2016BtoH.root"
-          zptfilename    = zptpath+"Zpt_weights_2016_Cecile.root"
+          zptfilename    = zptpath+"Zpt_weights_2016.root"
           zpthistname    = "zptmass_histo"
         elif year==2017:
           filename       = path+"Type1_PFMET_2017.root"
-          zptfilename    = zptpath+"Zpt_weights_2017_Izaak.root"
+          zptfilename    = zptpath+"Zpt_weights_2017.root"
           zpthistname    = "zptmass_weights"
         else:
           filename       = path+"TypeI-PFMet_Run2018.root"
-          zptfilename    = zptpath+"Zpt_weights_2017_Izaak.root"
+          zptfilename    = zptpath+"Zpt_weights_2018.root"
           zpthistname    = "zptmass_weights"
         
         # RECOIL
