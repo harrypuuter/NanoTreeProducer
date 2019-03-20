@@ -2,8 +2,10 @@
 
 CHANNELS='mutau mumu tautau'
 YEAR="2018"
-while getopts "c:y:" option; do case "${option}" in
+TAG=""
+while getopts "c:t:y:" option; do case "${option}" in
   c) CHANNELS="${OPTARG}";;
+  t) TAG="${OPTARG}";;
   y) YEAR="${OPTARG}";;
 esac done
 
@@ -31,8 +33,8 @@ for channel in $CHANNELS; do
     [[ $samplename = '#'* ]] && continue
     echo $samplename
     
-    fileold="$SCRATCHOLD/${samplename}_${channel}.root"
-    filenew="$SCRATCHNEW/${samplename}_${channel}.root"  
+    fileold="$SCRATCHOLD/${samplename}_${channel}${TAG}.root"
+    filenew="$SCRATCHNEW/${samplename}_${channel}${TAG}.root"  
     [ ! -e $fileold ] && echo "Warning! $fileold does not exist!" && continue 
     
     echo "Copying $fileold to $filenew!"
