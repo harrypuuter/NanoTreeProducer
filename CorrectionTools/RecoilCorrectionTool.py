@@ -11,52 +11,69 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 from ScaleFactorTool import ensureTFile
 import ROOT
 from ROOT import TLorentzVector, gROOT, gSystem, gInterpreter, Double
-path    = "HTT-utilities/RecoilCorrections/data/"
+rcpath  = "HTT-utilities/RecoilCorrections/data/"
 zptpath = "CorrectionTools/Zpt/"
 
+
+
+class ZptCorrectionTool:
+    
+    def __init__( self, year=2017 ):
+        """Load Z pT weights."""
+        assert year in [2016,2017,2018], "ZptCorrectionTool: You must choose a year from: 2016, 2017, or 2018."        
+        
+        if year==2016:
+          filename = zptpath+"Zpt_weights_2016.root"
+        elif year==2017:
+          filename = zptpath+"Zpt_weights_2017.root"
+        else:
+          filename = zptpath+"Zpt_weights_2018.root"
+        
+        file    = ensureTFile(filename,'READ')
+        hist = file.Get('zptmass_weights')
+        hist.SetDirectory(0)
+        file.Close()
+        
+        self.hist      = hist
+        self.filename  = filename
+        
+    def getZptWeight(self,Zpt,Zmass):
+        """Get Z pT weight for a given Z boson pT and mass."""
+        xbin = self.hist.GetXaxis().FindBin(Zmass)
+        ybin = self.hist.GetYaxis().FindBin(Zpt)
+        if xbin==0: xbin = 1
+        elif xbin>self.hist.GetXaxis().GetNbins(): xbin -= 1
+        if ybin==0: ybin = 1
+        elif ybin>self.hist.GetYaxis().GetNbins(): ybin -= 1
+        weight = self.hist.GetBinContent(xbin,ybin)
+        return weight
+    
 
 
 class RecoilCorrectionTool:
     
     def __init__( self, year=2017, doZpt=True ):
-        """Load Z pT weights."""
+        """Load correction tool."""
         assert year in [2016,2017,2018], "RecoilCorrectionTool: You must choose a year from: 2016, 2017, or 2018."        
         
         if year==2016:
-          filename       = path+"TypeI-PFMet_Run2016BtoH.root"
-          zptfilename    = zptpath+"Zpt_weights_2016.root"
-          zpthistname    = "zptmass_histo"
+          filename = rcpath+"TypeI-PFMet_Run2016BtoH.root"
         elif year==2017:
-          filename       = path+"Type1_PFMET_2017.root"
-          zptfilename    = zptpath+"Zpt_weights_2017.root"
-          zpthistname    = "zptmass_weights"
+          filename = rcpath+"Type1_PFMET_2017.root"
         else:
-          filename       = path+"TypeI-PFMet_Run2018.root"
-          zptfilename    = zptpath+"Zpt_weights_2018.root"
-          zpthistname    = "zptmass_weights"
+          filename = rcpath+"TypeI-PFMet_Run2018.root"
         
-        # RECOIL
         print "Loading RecoilCorrectionTool(%s).."%filename
-        CMSSW_BASE       = os.environ.get("CMSSW_BASE",None)
-        recoil_h         = "%s/src/HTT-utilities/RecoilCorrections/interface/RecoilCorrector.h"%(CMSSW_BASE)
+        CMSSW_BASE = os.environ.get("CMSSW_BASE",None)
+        recoil_h   = "%s/src/HTT-utilities/RecoilCorrections/interface/RecoilCorrector.h"%(CMSSW_BASE)
         assert CMSSW_BASE, "RecoilCorrectionTool: Did not find $CMSSW_BASE"
         assert os.path.isfile(recoil_h), "RecoilCorrectionTool: Did not find RecoilCorrection header: %s"%recoil_h
         gROOT.ProcessLine('#include "%s"'%recoil_h)
         gSystem.Load("libHTT-utilitiesRecoilCorrections.so")
-        corrector        = ROOT.RecoilCorrector(filename)
+        corrector  = ROOT.RecoilCorrector(filename)
         
-        # Z pt
-        zpthist = None
-        if doZpt:
-          file             = ensureTFile(zptfilename,'READ')
-          zpthist          = file.Get(zpthistname)
-          zpthist.SetDirectory(0)
-          file.Close()
-        
-        self.corrector   = corrector
-        self.zpthist     = zpthist
-        self.filename    = filename
-        self.zptfilename = zptfilename
+        self.corrector = corrector
+        self.filename  = filename
         
     def CorrectPFMETByMeanResolution(self, met, boson, boson_vis, njets):
         """Correct PF MET using the full and visibile boson Lorentz vector."""
@@ -66,17 +83,6 @@ class RecoilCorrectionTool:
         met.SetPxPyPzE(metpx_corr.value,metpy_corr.value,0.,sqrt(metpx_corr.value**2+metpy_corr.value**2))
         #print "after:  met pt = %4.1f, phi = %4.1f, px = %4.1f, py = %4.1f, metpx_corr.value = %.1f, metpy_corr.value = %.1f"%(met.Pt(),met.Phi(),met.Px(),met.Py(),metpx_corr.value,metpy_corr.value)
         return met
-        
-    def getZptWeight(self,Zpt,Zmass):
-        """Get Z pT weight for a given Z boson pT and mass."""
-        xbin = self.zpthist.GetXaxis().FindBin(Zmass)
-        ybin = self.zpthist.GetYaxis().FindBin(Zpt)
-        if xbin==0: xbin = 1
-        elif xbin>self.zpthist.GetXaxis().GetNbins(): xbin -= 1
-        if ybin==0: ybin = 1
-        elif ybin>self.zpthist.GetYaxis().GetNbins(): ybin -= 1
-        weight = self.zpthist.GetBinContent(xbin,ybin)
-        return weight
     
 
 def getTTptWeight(toppt1,toppt2):

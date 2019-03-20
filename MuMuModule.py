@@ -22,7 +22,7 @@ class MuMuProducer(Module):
         self.ltf             = kwargs.get('ltf',         1.0  )
         self.inZmassWindow   = kwargs.get('ZmassWindow', True )
         self.doZpt           = kwargs.get('doZpt',       'DY' in name )
-        self.doRecoil        = kwargs.get('doRecoil',    'DY' in name or re.search(r"W\d?Jets",name))
+        self.doRecoil        = kwargs.get('doRecoil',    ('DY' in name or re.search(r"W\d?Jets",name)) and year>2016)
         self.doTTpt          = kwargs.get('doTTpt',      'TT' in name )
         self.doTight         = kwargs.get('doTight',     self.tes!=1 or self.ltf!=1 )
         self.channel         = 'mumu'
@@ -46,8 +46,10 @@ class MuMuProducer(Module):
           self.puTool        = PileupWeightTool(year=year)
           self.btagTool      = BTagWeightTool('CSVv2','medium',channel='mutau',year=year)
           self.btagTool_deep = BTagWeightTool('DeepCSV','medium',channel='mutau',year=year)
-          if self.doZpt or self.doRecoil:
-            self.recoilTool  = RecoilCorrectionTool(year=year,doZpt=self.doZpt)
+          if self.doZpt:
+            self.zptTool     = ZptCorrectionTool(year=year)
+          if self.doRecoil:
+            self.recoilTool  = RecoilCorrectionTool(year=year)
         self.csvv2_wp        = BTagWPs('CSVv2',year=year)
         self.deepcsv_wp      = BTagWPs('DeepCSV',year=year)
         
@@ -296,23 +298,23 @@ class MuMuProducer(Module):
         
         
         # WEIGHTS
-        met      = TLorentzVector()
-        met_corr = TLorentzVector()
+        met = TLorentzVector()
         met.SetPxPyPzE(event.MET_pt*cos(event.MET_phi),event.MET_pt*sin(event.MET_phi),0,event.MET_pt)
-        met_corr.SetPxPyPzE(event.MET_pt*cos(event.MET_phi),event.MET_pt*sin(event.MET_phi),0,event.MET_pt)
         if not self.isData:
           if self.doRecoil:
             boson, boson_vis            = getBoson(event)
-            self.recoilTool.CorrectPFMETByMeanResolution(met_corr,boson,boson_vis,len(jetIds))
+            self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,len(jetIds))
+            event.MET_pt                = met.Pt()
+            event.MET_phi               = met.Phi()
             self.out.m_genboson[0]      = boson.M()
             self.out.pt_genboson[0]     = boson.Pt()
             if self.doZpt:
-              self.out.zptweight[0]     = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
+              self.out.zptweight[0]     = self.zptTool.getZptWeight(boson.Pt(),boson.M())
           elif self.doZpt:
             zboson = getZBoson(event)
             self.out.m_genboson[0]      = zboson.M()
             self.out.pt_genboson[0]     = zboson.Pt()
-            self.out.zptweight[0]       = self.recoilTool.getZptWeight(zboson.Pt(),zboson.M())
+            self.out.zptweight[0]       = self.zptTool.getZptWeight(zboson.Pt(),zboson.M())
           elif self.doTTpt:
             toppt1, toppt2              = getTTPt(event)
             self.out.ttptweight[0]      = getTTptWeight(toppt1,toppt2)
@@ -375,11 +377,8 @@ class MuMuProducer(Module):
         
         self.out.met[0]                 = event.MET_pt
         self.out.metphi[0]              = event.MET_phi
-        self.out.met_corr[0]            = met_corr.Pt()
-        self.out.metphi_corr[0]         = met_corr.Phi()
-        self.out.pfmt_1[0]              = sqrt( 2 * self.out.pt_1[0] * event.MET_pt  * ( 1 - cos(deltaPhi(self.out.phi_1[0], event.MET_phi))  ));
-        self.out.pfmt_1_corr[0]         = sqrt( 2 * self.out.pt_1[0] * met_corr.Pt() * ( 1 - cos(deltaPhi(self.out.phi_1[0], met_corr.Phi())) ))
-        self.out.pfmt_2[0]              = sqrt( 2 * self.out.pt_2[0] * event.MET_pt  * ( 1 - cos(deltaPhi(self.out.phi_2[0], event.MET_phi))  ));
+        self.out.pfmt_1[0]              = sqrt( 2 * self.out.pt_1[0] * event.MET_pt * ( 1 - cos(deltaPhi(self.out.phi_1[0], event.MET_phi))  ));
+        self.out.pfmt_2[0]              = sqrt( 2 * self.out.pt_2[0] * event.MET_pt * ( 1 - cos(deltaPhi(self.out.phi_2[0], event.MET_phi))  ));
         
         self.out.m_vis[0]               = (muon1 + muon2).M()
         self.out.pt_ll[0]               = (muon1 + muon2).Pt()
@@ -390,16 +389,13 @@ class MuMuProducer(Module):
         # PZETA
         leg1                            = TVector3(muon1.Px(), muon1.Py(), 0.)
         leg2                            = TVector3(muon2.Px(), muon2.Py(), 0.)
-        zetaAxis                        = TVector3(leg1.Unit() + leg2.Unit()).Unit()
         pzeta_vis                       = leg1*zetaAxis + leg2*zetaAxis
         pzeta_miss                      = met.Vect()*zetaAxis
         self.out.pzetamiss[0]           = pzeta_miss
         self.out.pzetavis[0]            = pzeta_vis
         self.out.dzeta[0]               = pzeta_miss - 0.85*pzeta_vis
-        pzeta_miss_corr                 = met_corr.Vect()*zetaAxis
-        self.out.pzetamiss_corr[0]      = pzeta_miss_corr
-        self.out.dzeta_corr[0]          = pzeta_miss_corr - 0.85*pzeta_vis
         
         
         self.out.tree.Fill() 
         return True
+        

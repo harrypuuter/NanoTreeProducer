@@ -175,8 +175,6 @@ class TreeProducerCommon(object):
         
         self.addBranch('met',                     float)
         self.addBranch('metphi',                  float)
-        self.addBranch('met_corr',                float)
-        self.addBranch('metphi_corr',             float)
         self.addBranch('genmet',                  float)
         self.addBranch('genmetphi',               float)
         ###self.addBranch('puppimet',                float)
@@ -193,18 +191,16 @@ class TreeProducerCommon(object):
         #############
         
         self.addBranch('pfmt_1',                  float)
-        self.addBranch('pfmt_1_corr',             float)
         self.addBranch('pfmt_2',                  float)
         self.addBranch('m_vis',                   float)
         self.addBranch('pt_ll',                   float)
         self.addBranch('dR_ll',                   float)
         self.addBranch('dphi_ll',                 float)
+        #self.addBranch('deta_ll',                 float)
         
         self.addBranch('pzetamiss',               float)
         self.addBranch('pzetavis',                float)
         self.addBranch('dzeta',                   float)
-        self.addBranch('pzetamiss_corr',          float)
-        self.addBranch('dzeta_corr',              float)
         
         self.addBranch('dilepton_veto',           bool)
         self.addBranch('extraelec_veto',          bool)
