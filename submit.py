@@ -10,34 +10,36 @@ from checkFiles import getSampleShortName, matchSampleToPattern, header, ensureD
 
 if __name__ == "__main__":
   parser = ArgumentParser()
-  parser.add_argument('-f', '--force',   dest='force', action='store_true', default=False,
-                                         help="submit jobs without asking confirmation" )
-  parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
-                                         help="select year" )
-  parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau','tautau','mumu'], type=str, nargs='+', default=['mutau'], action='store',
-                                         help="channels to submit" )
-  parser.add_argument('-s', '--sample',  dest='samples', type=str, nargs='+', default=[ ], action='store',
-                                         help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
-  parser.add_argument('-x', '--veto',    dest='vetos', nargs='+', default=[ ], action='store',
-                                         help="veto this sample" )
-  parser.add_argument('-t', '--type',    dest='type', choices=['data','mc'], type=str, default=None, action='store',
-                                         help="filter data or MC to submit" )
-  parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, action='store',
-                                         help="tau energy scale" )
-  parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
-                                         help="lepton to tau fake energy scale" )
-  parser.add_argument('-J', '--jtf',     dest='jtf', type=float, default=1.0, action='store',
-                                         help="jet to tau fake energy scale" )
-  parser.add_argument('-d', '--das',     dest='useDAS', action='store_true', default=False,
-                                         help="get file list from DAS" )
-  parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=-1,
-                                         help="number of files per job" )
-  parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
-                                         help="select queue for submission" )
-  parser.add_argument('-m', '--mock',    dest='mock', action='store_true', default=False,
-                                         help="mock-submit jobs for debugging purposes" )
-  parser.add_argument('-v', '--verbose', dest='verbose', default=False, action='store_true',
-                                         help="set verbose" )
+  parser.add_argument('-f', '--force',     dest='force', action='store_true', default=False,
+                                           help="submit jobs without asking confirmation" )
+  parser.add_argument('-y', '--year',      dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
+                                           help="select year" )
+  parser.add_argument('-c', '--channel',   dest='channels', choices=['eletau','mutau','tautau','mumu'], type=str, nargs='+', default=['mutau'], action='store',
+                                           help="channels to submit" )
+  parser.add_argument('-s', '--sample',    dest='samples', type=str, nargs='+', default=[ ], action='store',
+                                           help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
+  parser.add_argument('-x', '--veto',      dest='vetos', nargs='+', default=[ ], action='store',
+                                           help="veto this sample" )
+  parser.add_argument('-t', '--type',      dest='type', choices=['data','mc'], type=str, default=None, action='store',
+                                           help="filter data or MC to submit" )
+  parser.add_argument('-T', '--tes',       dest='tes', type=float, default=1.0, action='store',
+                                           help="tau energy scale" )
+  parser.add_argument('-L', '--ltf',       dest='ltf', type=float, default=1.0, action='store',
+                                           help="lepton to tau fake energy scale" )
+  parser.add_argument('-J', '--jtf',       dest='jtf', type=float, default=1.0, action='store',
+                                           help="jet to tau fake energy scale" )
+  parser.add_argument('-M', '--Zmass',     dest='Zmass', action='store_true', default=False,
+                                           help="use Z mass window for dimuon spectrum" )
+  parser.add_argument('-d', '--das',       dest='useDAS', action='store_true', default=False,
+                                           help="get file list from DAS" )
+  parser.add_argument('-n', '--njob',      dest='nFilesPerJob', action='store', type=int, default=-1,
+                                           help="number of files per job" )
+  parser.add_argument('-q', '--queue',     dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
+                                           help="select queue for submission" )
+  parser.add_argument('-m', '--mock',      dest='mock', action='store_true', default=False,
+                                           help="mock-submit jobs for debugging purposes" )
+  parser.add_argument('-v', '--verbose',   dest='verbose', default=False, action='store_true',
+                                           help="set verbose" )
   args = parser.parse_args()
   checkFiles.args = args
 else:
@@ -100,7 +102,7 @@ def getFileListLocal(dataset):
 def saveFileListLocal(dataset,filelist):
     """Save a list of files to a local directory."""
     filename = "filelist/filelist_%s.txt"%dataset.replace('/','__')
-    with open(filename,'w') as file:
+    with open(filename,'w+') as file:
       for line in filelist:
         file.write(line+'\n')
     return filename
@@ -144,9 +146,10 @@ def getFileListPNFS(dataset):
 
 def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs):
     """Create file with commands to execute per job."""
-    tes     = kwargs.get('tes', 1.)
-    ltf     = kwargs.get('ltf', 1.)
-    jtf     = kwargs.get('jtf', 1.)
+    tes     = kwargs.get('tes',   1.)
+    ltf     = kwargs.get('ltf',   1.)
+    jtf     = kwargs.get('jtf',   1.)
+    Zmass   = kwargs.get('Zmass', False)
     cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
     if tes!=1.:
       cmd += " --tes %.3f"%(tes)
@@ -154,6 +157,8 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
       cmd += " --ltf %.3f"%(ltf)
     if jtf!=1.:
       cmd += " --jtf %.3f"%(jtf)
+    if Zmass and channel=='mumu':
+      cmd += " --Zmass"
     if args.verbose:
       print cmd
     jobsfile.write(cmd+'\n')
@@ -184,15 +189,14 @@ def main():
     tes         = args.tes
     ltf         = args.ltf
     jtf         = args.jtf
+    Zmass       = args.Zmass
     batchSystem = 'psibatch_runner.sh'
     tag         = ""
     
-    if tes!=1.:
-      tag += "_TES%.3f"%(tes)
-    if ltf!=1.:
-      tag += "_LTF%.3f"%(ltf)
-    if jtf!=1.:
-      tag += "_JTF%.3f"%(jtf)
+    if tes!=1.: tag += "_TES%.3f"%(tes)
+    if ltf!=1.: tag += "_LTF%.3f"%(ltf)
+    if jtf!=1.: tag += "_JTF%.3f"%(jtf)
+    if Zmass:   tag += "_Zmass"
     tag = tag.replace('.','p')
     
     for year in years:
@@ -280,7 +284,7 @@ def main():
             #filelists = list(split_seq(files,1))
             for file in filelists:
             #print "FILES = ",f
-                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf)
+                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
                 nChunks = nChunks+1
             jobs.close()
             

@@ -15,6 +15,7 @@ parser.add_argument('-n', '--nchunck', dest='nchunck', action='store', type=int,
 parser.add_argument('-c', '--channel', dest='channel', action='store', choices=['tautau','mutau','eletau','elemu','mumu'], type=str, default='tautau')
 parser.add_argument('-t', '--type',    dest='type', action='store', choices=['data','mc'], default='mc')
 parser.add_argument('-y', '--year',    dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
+parser.add_argument('-M', '--Zmass',   dest='Zmass', action='store_true', default=False)
 parser.add_argument('-T', '--tes',     dest='tes', action='store', type=float, default=1.0)
 parser.add_argument('-L', '--ltf',     dest='ltf', action='store', type=float, default=1.0)
 parser.add_argument('-J', '--jtf',     dest='jtf', action='store', type=float, default=1.0)
@@ -28,13 +29,12 @@ outfile  = args.outfile
 nchunck  = args.nchunck
 year     = args.year
 tes      = args.tes
-ltf      = args.ltf
-jtf      = args.jtf
 kwargs   = {
   'year':  year,
-  'tes':   tes,
-  'ltf':   ltf,
-  'jtf':   jtf,
+  'tes':   args.tes,
+  'ltf':   args.ltf,
+  'jtf':   args.jtf,
+  'ZmassWindow': args.Zmass,
 }
 
 if isinstance(infiles,str):
@@ -58,9 +58,10 @@ else:
   #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
 
 tag = ""
-if tes!=1: tag +="_TES%.3f"%(tes)
-if ltf!=1: tag +="_LTF%.3f"%(ltf)
-if jtf!=1: tag +="_JTF%.3f"%(jtf)
+if args.tes!=1: tag +="_TES%.3f"%(args.tes)
+if args.ltf!=1: tag +="_LTF%.3f"%(args.ltf)
+if args.jtf!=1: tag +="_JTF%.3f"%(args.jtf)
+if args.Zmass:  tag +="_Zmass"
 outfile = "%s_%s_%s%s.root"%(outfile,nchunck,channel,tag.replace('.','p'))
 postfix = "%s/%s"%(outdir,outfile)
 
@@ -72,9 +73,10 @@ print "%-12s = %s"%('chunck',nchunck)
 print "%-12s = %s"%('channel',channel)
 print "%-12s = %s"%('dataType',dataType)
 print "%-12s = %s"%('year',kwargs['year'])
-print "%-12s = %s"%('tes',kwargs['tes'])
-print "%-12s = %s"%('ltf',kwargs['ltf'])
-print "%-12s = %s"%('jtf',kwargs['jtf'])
+print "%-12s = %s"%('tes',args.tes)
+print "%-12s = %s"%('ltf',args.ltf)
+print "%-12s = %s"%('jtf',args.jtf)
+print "%-12s = %s"%('Zmass',args.Zmass)
 print '-'*80
 
 module2run = None

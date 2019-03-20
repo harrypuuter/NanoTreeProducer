@@ -53,6 +53,8 @@ if __name__ == '__main__':
                                             help="lepton to tau fake energy scale" )
     parser.add_argument('-J', '--jtf',      dest='jtf', type=float, default=1.0, action='store',
                                             help="jet to tau fake energy scale" )
+    parser.add_argument('-M', '--Zmass',    dest='Zmass', action='store_true', default=False,
+                                            help="use Z mass window for dimuon spectrum" )
     parser.add_argument('-l', '--tag',      dest='tag', type=str, default="", action='store',
                                             help="add a tag to the output file" )
     parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
@@ -68,10 +70,14 @@ sample_dict = [
    ('DY',             "DYJetsToLL_M-50_ext",              "DYJetsToLL_M-50_Tune*madgraph*pythia8/*ext1"              ), # ext before reg !
    ('DY',             "DYJetsToLL_M-50_reg",              "DYJetsToLL_M-50_Tune*madgraph*pythia8"                    ),
    ('DY',             "DY1JetsToLL_M-50",                 "DY1JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
+   ('DY',             "DY2JetsToLL_M-50_ext",             "DY2JetsToLL_M-50*/RunIIFall17*ext1"                       ), # ext before reg !
+   ('DY',             "DY2JetsToLL_M-50_reg",             "DY2JetsToLL_M-50*/RunIIFall17"                            ),
+   ('DY',             "DY3JetsToLL_M-50_ext",             "DY3JetsToLL_M-50*/RunIIFall17*ext1"                       ), # ext before reg !
+   ('DY',             "DY3JetsToLL_M-50_reg",             "DY3JetsToLL_M-50*/RunIIFall17"                            ),
    ('DY',             "DY2JetsToLL_M-50",                 "DY2JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('DY',             "DY3JetsToLL_M-50",                 "DY3JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('DY',             "DY4JetsToLL_M-50",                 "DY4JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
-   ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext"                    ), # ext before reg !
+   ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext1"                   ), # ext before reg !
    ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIISummer16"           ),
    ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIIFall17"             ),
    ('WJ',             "WJetsToLNu",                       "WJetsToLNu_Tune*madgraph*pythia8"                         ),
@@ -121,6 +127,8 @@ sample_dict = [(d,s,p.replace('*','.*').replace('$MASS','(\d+)').replace('$RUN',
 #sample_dict = { k: v.lstrip('/').replace('/','__') for k, v in sample_dict.iteritems() }
 haddsets = [
   ('DY',             "DYJetsToLL_M-50",      [ 'DYJetsToLL_M-50_*'    ]),
+  ('DY',             "DY2JetsToLL_M-50",     [ 'DY2JetsToLL_M-50_*'   ]),
+  ('DY',             "DY3JetsToLL_M-50",     [ 'DY3JetsToLL_M-50_*'   ]),
   ('WJ',             "WJetsToLNu",           [ 'WJetsToLNu_*'         ]),
   ('Tau',            "Tau_$RUN",             [ 'Tau_$RUN?'            ]),
   ('SingleMuon',     "SingleMuon_$RUN",      [ 'SingleMuon_$RUN?'     ]),
@@ -139,16 +147,15 @@ def main(args):
   tes        = args.tes
   ltf        = args.ltf
   jtf        = args.jtf
+  Zmass      = args.Zmass
   #submitted  = getSubmittedJobs()
   
   if outtag and '_' not in outtag[0]:
     outtag = '_'+outtag
-  if tes!=1.:
-    intag += "_TES%.3f"%(tes)
-  if ltf!=1.:
-    intag += "_LTF%.3f"%(ltf)
-  if jtf!=1.:
-    intag += "_JTF%.3f"%(jtf)
+  if tes!=1.: intag += "_TES%.3f"%(tes)
+  if ltf!=1.: intag += "_LTF%.3f"%(ltf)
+  if jtf!=1.: intag += "_JTF%.3f"%(jtf)
+  if Zmass:   intag += "_Zmass"
   intag  = intag.replace('.','p')
   outtag = intag+outtag
   
@@ -326,7 +333,7 @@ def isValidSample(pattern):
   return True
 
 
-indexpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?\.root")
+indexpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?(?:_Zmass)?\.root")
 def checkFiles(filelist,directory,clean=False):
     if args.verbose:
       print "checkFiles: %s, %s"%(filelist,directory)

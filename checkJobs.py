@@ -277,6 +277,36 @@ def getSubmittedJobs(running=False,count=False):
     if runningOnly:
       return running
     return jobs
+  
+
+
+def getFilesOfRunningJobs(filter=""):
+    jobs        = [ ]
+    files       = [ ]
+    running     = [ ]
+    waiting     = [ ]
+    command     = "qstat | grep %s" if filter else "qstat"
+    process     = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    (out,err)   = process.communicate()
+    status      = process.wait()
+    for line in out.split('\n'):
+      match = qstatpattern.match(line)
+      if match:
+        if '-' in match.group(3):
+          #match2 = re.search(r"(\d+)-(\d+)",match.group(3))
+          #cmin, cmax = match2.group(1), match2.group(2)
+          continue
+        else:
+          jobid, taskid = int(match.group(1)), int(match.group(3))
+          job = Job(jobid,taskid)
+          jobs.append(job)
+          if job.waiting:
+            running.append(job)
+          if job.running:
+            running.append(job)
+            files.append(outfile)
+    print files
+    return files
     
 
 
@@ -285,6 +315,9 @@ def main(args):
   years      = args.years
   channels   = args.channels
   njobs      = args.njobs
+  
+  getFilesOfRunningJobs()
+  exit(0)
   
   if args.running:
     getSubmittedJobs()

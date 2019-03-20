@@ -29,6 +29,8 @@ parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, acti
                                        help="lepton to tau fake energy scale" )
 parser.add_argument('-J', '--jtf',     dest='jtf', type=float, default=1.0, action='store',
                                        help="jet to tau fake energy scale" )
+parser.add_argument('-M', '--Zmass',   dest='Zmass', action='store_true', default=False,
+                                       help="use Z mass window for dimuon spectrum" )
 parser.add_argument('-d', '--das',     dest='useDAS', action='store_true', default=False,
                                        help="get file list from DAS" )
 parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=-1,
@@ -50,17 +52,16 @@ def main():
     tes          = args.tes
     ltf          = args.ltf
     jtf          = args.jtf
-    batchSystem  = 'psibatch_runner.sh'    
-    chunkpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?\.root")
+    Zmass        = args.Zmass
+    batchSystem  = 'psibatch_runner.sh'
     tag          = ""
     
-    if tes!=1.:
-      tag += "_TES%.3f"%(tes)
-    if ltf!=1.:
-      tag += "_LTF%.3f"%(ltf)
-    if jtf!=1.:
-      tag += "_JTF%.3f"%(jtf)
+    if tes!=1.: tag += "_TES%.3f"%(tes)
+    if ltf!=1.: tag += "_LTF%.3f"%(ltf)
+    if jtf!=1.: tag += "_JTF%.3f"%(jtf)
+    if Zmass:   tag += "_Zmass"
     tag = tag.replace('.','p')
+    chunkpattern = re.compile(r".*_(\d+)_[a-z]+%s\.root"%tag)
     
     for year in years:
       
@@ -148,22 +149,22 @@ def main():
                   if not file.IsZombie() and file.GetListOfKeys().Contains('tree') and file.GetListOfKeys().Contains('cutflow'):
                     continue
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf)
+                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
                   badchunks.append(chunk)
               
               # BAD CHUNKS
               if len(badchunks)>0:
                 badchunks.sort()
                 chunktext = ('chunks ' if len(badchunks)>1 else 'chunk ') + ', '.join(str(ch) for ch in badchunks)
-                print bcolors.BOLD + bcolors.WARNING + '[NG] %s, %d/%d failed! Resubmitting %s...'%(directory,len(badchunks),len(outfilelist),chunktext) + bcolors.ENDC
+                print bcolors.BOLD + bcolors.WARNING + '[NG] %s, %d/%d failed!\n     Resubmitting %s...'%(directory,len(badchunks),len(outfilelist),chunktext) + bcolors.ENDC
               
               # MISSING CHUNKS
               if len(misschunks)>0:
                 chunktext = ('chunks ' if len(misschunks)>1 else 'chunk ') + ', '.join(str(i) for i in misschunks)
-                print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files ! Resubmitting %s..."%(directory,len(misschunks),len(outfilelist),chunktext) + bcolors.ENDC
+                print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files !\n     Resubmitting %s..."%(directory,len(misschunks),len(outfilelist),chunktext) + bcolors.ENDC
                 for chunk in misschunks:
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf)
+                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
             
             # RESUBMIT
             nChunks = len(badchunks)+len(misschunks)
