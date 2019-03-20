@@ -18,7 +18,7 @@ while getopts "aCc:dcfJLmRrs:Tvx:y:" option; do case "${option}" in
   c) CHANNELS="${OPTARG}";;
   d) OPTIONS+=" -d"; CHECKDAS=1;;
   f) OPTIONS+=" -f";;
-  J) VARFLAG="--jtf"; VARIATIONS="0.900 1.100"; SAMPLES="DY W*J";;
+  J) VARFLAG="--jtf"; VARIATIONS="0.900 1.100"; SAMPLES="DY W*J TT";;
   L) VARFLAG="--ltf"; VARIATIONS="0.970 1.030";;
   m) OPTIONS+=" -m";;
   R) RESUBMIT=1;;
