@@ -38,7 +38,7 @@ git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
 
 ## B-tagging tools
 
-`BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b-tagging weights. These can be called during the initialization of you analysis module, e.g. in [`MuTauModule.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/MuTauModule.py):
+`BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b-tagging weights. These can be called during the initialization of you analysis module, e.g. in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
 ```
 class MuTauProducer(Module):
     
@@ -68,7 +68,7 @@ class MuTauProducer(Module):
 `BTagWeightTool` calculates b-tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/btag).
 The event weight is calculated according to [this method](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagSFMethods#1a_Event_reweighting_using_scale).
 
-The efficiencies in MC can be calculated for your particular analys by filling histograms with `fillEfficiencies` for each selected event, after removing overlap with other selected objects, e.g. the muon and tau object in [`MuTauModule.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/MuTauModule.py):
+The efficiencies in MC can be calculated for your particular analys by filling histograms with `fillEfficiencies` for each selected event, after removing overlap with other selected objects, e.g. the muon and tau object in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
 <pre>
     def analyze(self event):
     
@@ -96,7 +96,7 @@ Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProd
 `RecoilCorrectionTool.py` provides the tools for three different things:
 * **Z pT reweighting** of LO Drell-Yan events as a function of Z boson pT and mass:
   * `getZBoson`: compute the (full) Z boson's four-vector from its daugher leptons,
-  * `RecoilCorrectionTool.getZptWeight`: get weights are stored in [`Zpt/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
+  * `ZptCorrectionTool.getZptWeight`: get weights are stored in [`Zpt/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
 * **Top pT reweighting** of ttbar events as a function of the pT of both top quarks:
   * `getTTPt`: compute the generator-level top pT's,
   * `getTTptWeight`: get [SFs recommended by Top PAG](https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting).
@@ -118,7 +118,7 @@ Usage:
         
         if Z event:
           zboson = getZBoson(event)
-          zptweight = self.recoilTool.getZptWeight(boson.Pt(),boson.M())          
+          zptweight = self.zptTool.getZptWeight(boson.Pt(),boson.M())          
         
         if ttbar event:
           toppt1, toppt2   = getTTPt(event)

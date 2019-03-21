@@ -40,7 +40,7 @@ scram b
 You need to change the **analyse code** in the modules and **tree branches** for the analysis you want to perform.
 These are the examples for an analysis selecting for a muon and tau:
 ```
-MuTauModule.py
+ModuleMuTau.py
 TreeProducerMuTau.py
 TreeProducerCommon.py
 ```
@@ -94,9 +94,10 @@ More [notes](https://www.evernote.com/l/Ac8PKYGpaJxJArj4eng5ed95_wvpzwSNTgc).
 
 ### Samples
 
+[PPD Run II summary table](https://docs.google.com/presentation/d/1YTANRT_ZeL5VubnFq7lNGHKsiD7D3sDiOPNgXUYVI0I/edit#slide=id.g4dfd66f53d_1_7)
 * **2016**: [list](https://github.com/IzaakWN/NanoTreeProducer/blob/master/samples_2016.cfg), [DAS](https://cmsweb.cern.ch/das/request?view=plain&limit=50&instance=prod%2Fglobal&input=dataset%3D%2F*%2FRunIISummer16NanoAODv4-PUMoriond17_Nano14Dec2018_102X_mcRun2_asymptotic*%2FNANOAODSIM), [notes](https://www.evernote.com/l/Ac9nVeF2tcdJI7R-is1KPT2Ukv7A260zNX0)
 * **2017**: [list](https://github.com/IzaakWN/NanoTreeProducer/blob/master/samples_2017.cfg), [DAS](https://cmsweb.cern.ch/das/request?view=plain&limit=50&instance=prod%2Fglobal&input=dataset+dataset%3D%2F*%2F*94X*_realistic_v14*%2FNANOAOD*), [notes](https://www.evernote.com/l/Ac8WfL3Mzx1MrKdm1LfIOl-F-j7NeScPKxs)
-* **2018**: [list](https://github.com/IzaakWN/NanoTreeProducer/blob/master/samples_2018.cfg), [DAS](https://cmsweb.cern.ch/das/request?view=plain&limit=50&instance=prod%2Fglobal&input=dataset+dataset%3D%2F*%2F*102X_upgrade2018_realistic_v15*%2FNANOAOD*), [notes](https://www.evernote.com/l/Ac9yyi7wtg9LaYgxOIz11jFyzLV0ztkemtE)
+* **2018**: [list](https://github.com/IzaakWN/NanoTreeProducer/blob/master/samples_2018.cfg), [DAS](https://cmsweb.cern.ch/das/request?view=plain&limit=50&instance=prod%2Fglobal&input=%2F*%2FRunIIAutumn18NanoAODv4-Nano14Dec2018*%2FNANOAODSIM), [notes](https://www.evernote.com/l/Ac9yyi7wtg9LaYgxOIz11jFyzLV0ztkemtE)
 
 ### Integrated luminosity
 
