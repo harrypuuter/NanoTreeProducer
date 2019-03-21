@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 # Author: Izaak Neutelings (December 2018)
 # 2016: https://indico.cern.ch/event/566825/contributions/2398691/attachments/1385164/2107478/HIG-16-043-preapproval-rehearsal.pdf
 # 2017: https://indico.cern.ch/event/715039/timetable/#2-lepton-tau-fake-rates-update
 #       https://indico.cern.ch/event/719250/contributions/2971854/attachments/1635435/2609013/tauid_recommendations2017.pdf
 #       https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Muon%20to%20tau%20fake%20rate
-
+# 2018: https://indico.cern.ch/event/803792/contributions/3343111/attachments/1807741/2951086/TauPOG_11_03_2019.pdf
 
 
 class LeptonTauFakeSFs:
@@ -42,6 +41,18 @@ class LeptonTauFakeSFs:
           elif antiEleWP=='medium': self.antiEleSFs = ( 1.40,   1.21 )
           elif antiEleWP=='tight':  self.antiEleSFs = ( 1.80,   1.53 )
           elif antiEleWP=='vtight': self.antiEleSFs = ( 1.96,   1.66 )
+          
+#         else: # 2018
+#           #                               eta bins :  0.0 - 0.4 - 0.8 - 1.2 - 1.7 - 2.3
+#           if   antiMuWP=='loose':   self.antiMuSFs = (1.06,  0.96,  1.05,  1.23,  1.19)
+#           elif antiMuWP=='tight':   self.antiMuSFs = (1.28,  1.20,  1.08,  1.00,  2.30)
+#           
+#           #                                eta bins :  <1.460, >1.558
+#           if   antiEleWP=='vloose': self.antiEleSFs = ( 1.09,   1.19 )
+#           elif antiEleWP=='loose':  self.antiEleSFs = ( 1.17,   1.25 )
+#           elif antiEleWP=='medium': self.antiEleSFs = ( 1.40,   1.21 )
+#           elif antiEleWP=='tight':  self.antiEleSFs = ( 1.80,   1.53 )
+#           elif antiEleWP=='vtight': self.antiEleSFs = ( 1.96,   1.66 )
         
     
     def getSF(self, genmatch, eta):

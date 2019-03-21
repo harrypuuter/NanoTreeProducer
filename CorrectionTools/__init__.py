@@ -1,1 +1,3 @@
-# https://docs.python.org/3/tutorial/modules.html#packages 
+import os
+modulepath = os.path.dirname(__file__)
+print modulepath

@@ -4,6 +4,7 @@
 # https://twiki.cern.ch/twiki/bin/view/CMS/MSSMAHTauTauEarlyRun2#Top_quark_pT_reweighting
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopPtReweighting#MC_SFs_Reweighting
 # https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting
+from CorrectionTools import modulepath
 import os
 from math import sqrt, exp
 from ctypes import c_float
@@ -12,7 +13,7 @@ from ScaleFactorTool import ensureTFile
 import ROOT
 from ROOT import TLorentzVector, gROOT, gSystem, gInterpreter, Double
 rcpath  = "HTT-utilities/RecoilCorrections/data/"
-zptpath = "CorrectionTools/Zpt/"
+zptpath = modulepath+"/Zpt/"
 
 
 

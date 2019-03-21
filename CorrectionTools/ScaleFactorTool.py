@@ -1,5 +1,6 @@
 #! /bin/usr/env bash
 # Author: Izaak Neutelings (November 2018)
+from CorrectionTools import modulepath
 import os, re
 from ROOT import TFile #, TH2F, TGraphAsymmErrors, Double()
 

@@ -1,18 +1,11 @@
 #! /usr/bin/env python
+# Description: Class to get Tau Trigger SF based on 2017 Rereco data and MCv2 (re-miniaod).
+# Author: Tyler Ruggles (February 2018)
+# Edited: Izaak Neutelings (November 2018)
 # https://github.com/truggles/TauTriggerSFs2017/tree/tauTriggers2017_reMiniaod_test/
-'''
-Class to get Tau Trigger SF based on 2017 Rereco data
-and MCv2 (re-miniaod).
-T. Ruggles
-5 February, 2018
-Updated 12 August, 2018
-Edited by Izaak Neutelings (November 2018)
-'''
-
-from ROOT import TFile
 import os
-
-#base = os.environ['CMSSW_BASE']
+from CorrectionTools import modulepath
+from ROOT import TFile
 base = 'CorrectionTools/TauTriggerSFs2017/data'
 
 

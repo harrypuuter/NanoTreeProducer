@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import os,sys
+import os, sys
 import PhysicsTools
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from argparse import ArgumentParser
@@ -43,7 +43,7 @@ if isinstance(infiles,str):
 ensureDirectory(outdir)
 
 dataType = 'mc'
-if infiles[0].find("/SingleMuon/")>0 or infiles[0].find("/Tau/")>0 or infiles[0].find("/SingleElectron/")>0:
+if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in infiles[0] or 'EGamma' in infiles[0]:
   dataType = 'data'
 
 JSON = '/shome/ineuteli/analysis/LQ_legacy/NanoTreeProducer/json/'
@@ -81,24 +81,24 @@ print '-'*80
 
 module2run = None
 if channel=='tautau':
-    from TauTauModule import *
-    module2run = lambda : TauTauProducer(postfix, dataType, **kwargs)
+    from modules.ModuleTauTau import *
+    module2run = lambda: TauTauProducer(postfix, dataType, **kwargs)
 
 elif channel=='mutau':
-    from MuTauModule import *
-    module2run = lambda : MuTauProducer(postfix, dataType, **kwargs)
+    from modules.ModuleMuTau import *
+    module2run = lambda: MuTauProducer(postfix, dataType, **kwargs)
 
 elif channel=='eletau':
-    from EleTauModule import *
-    module2run = lambda : EleTauProducer(postfix, dataType, **kwargs)
+    from modules.ModuleEleTau import *
+    module2run = lambda: EleTauProducer(postfix, dataType, **kwargs)
 
 elif channel=='mumu':
-    from MuMuModule import *
-    module2run = lambda : MuMuProducer(postfix, dataType, **kwargs)
+    from modules.ModuleMuMu import *
+    module2run = lambda: MuMuProducer(postfix, dataType, **kwargs)
 
 elif channel=='elemu':
-    from EleMuModule import *
-    module2run = lambda : EleMuProducer(postfix, dataType)
+    from modules.ModuleEleMu import *
+    module2run = lambda: EleMuProducer(postfix, dataType)
 else:
     print 'Unkown channel !!!'
     sys.exit(0)

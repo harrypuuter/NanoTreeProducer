@@ -1,4 +1,3 @@
-#! /bin/usr/env python
 # Author: Izaak Neutelings (January 2019)
 # https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods
 # https://twiki.cern.ch/twiki/bin/view/CMSPublic/BTagCalibration
@@ -6,6 +5,7 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
+from CorrectionTools import modulepath
 from array import array
 from ScaleFactorTool import ensureTFile
 import ROOT
@@ -13,7 +13,7 @@ import ROOT
 from ROOT import TH2F, BTagCalibration, BTagCalibrationReader
 from ROOT.BTagEntry import OP_LOOSE, OP_MEDIUM, OP_TIGHT, OP_RESHAPING
 from ROOT.BTagEntry import FLAV_B, FLAV_C, FLAV_UDSG
-path = 'CorrectionTools/btag/'
+path = modulepath+"/btag/"
 
 
 class BTagWPs:

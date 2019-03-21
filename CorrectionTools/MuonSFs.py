@@ -1,11 +1,13 @@
-from ScaleFactorTool import ScaleFactor, ScaleFactorHTT
-
+# Author: Izaak Neutelings (December 2018)
 # /shome/ytakahas/work/Leptoquark/CMSSW_9_4_4/src/PhysicsTools/NanoAODTools/NanoTreeProducer/leptonSF
 # HTT: https://github.com/CMS-HTT/LeptonEfficiencies
 # https://twiki.cern.ch/twiki/bin/view/CMS/MuonReferenceEffs2017
 # https://twiki.cern.ch/twiki/bin/view/CMS/Egamma2017DataRecommendations#Efficiency_Scale_Factors
-path    = 'CorrectionTools/leptonEfficiencies/MuonPOG/'
-pathHTT = 'CorrectionTools/leptonEfficiencies/HTT/Muon/'
+from CorrectionTools import modulepath
+from ScaleFactorTool import ScaleFactor, ScaleFactorHTT
+path    = modulepath+"/leptonEfficiencies/MuonPOG/"
+pathHTT = modulepath+"/leptonEfficiencies/HTT/Muon/"
+
 
 class MuonSFs:
     

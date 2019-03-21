@@ -1,10 +1,11 @@
-from ROOT import TFile
-from ScaleFactorTool import ScaleFactor, ScaleFactorHTT
+# Author: Izaak Neutelings (November 2018)
 # https://twiki.cern.ch/twiki/bin/view/CMS/Egamma2017DataRecommendations#Efficiency_Scale_Factors
 # https://github.com/CMS-HTT/LeptonEfficiencies/tree/master/Electron/Run2017
-
-path    = 'CorrectionTools/leptonEfficiencies/'
-pathHTT = 'CorrectionTools/leptonEfficiencies/HTT/Electron/'
+from CorrectionTools import modulepath
+from ROOT import TFile
+from ScaleFactorTool import ScaleFactor, ScaleFactorHTT
+path    = modulepath+"/leptonEfficiencies/"
+pathHTT = modulepath+"/leptonEfficiencies/HTT/Electron/"
 
 
 class ElectronSFs:

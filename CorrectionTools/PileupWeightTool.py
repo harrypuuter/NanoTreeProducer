@@ -1,9 +1,9 @@
-#! /bin/usr/env python
 # Author: Izaak Neutelings (November 2018)
+from CorrectionTools import modulepath
 from ROOT import TFile
 from ScaleFactorTool import ensureTFile
+path = modulepath+"/pileup/"
 
-path = 'CorrectionTools/pileup/'
 
 class PileupWeightTool:
     
