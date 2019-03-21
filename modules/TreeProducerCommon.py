@@ -144,7 +144,6 @@ class TreeProducerCommon(object):
         self.addBranch('idisoweight_1',           float)
         self.addBranch('idisoweight_2',           float)
         self.addBranch('btagweight',              float)
-        self.addBranch('btagweight_deep',         float)
         
         
         ############
@@ -160,12 +159,10 @@ class TreeProducerCommon(object):
         self.addBranch('jpt_1',                   float)
         self.addBranch('jeta_1',                  float)
         self.addBranch('jphi_1',                  float)
-        self.addBranch('jcsvv2_1',                float)
         self.addBranch('jdeepb_1',                float)
         self.addBranch('jpt_2',                   float)
         self.addBranch('jeta_2',                  float)
         self.addBranch('jphi_2',                  float)
-        self.addBranch('jcsvv2_2',                float)
         self.addBranch('jdeepb_2',                float)
         
         self.addBranch('bpt_1',                   float)
@@ -196,7 +193,7 @@ class TreeProducerCommon(object):
         self.addBranch('pt_ll',                   float)
         self.addBranch('dR_ll',                   float)
         self.addBranch('dphi_ll',                 float)
-        #self.addBranch('deta_ll',                 float)
+        self.addBranch('deta_ll',                 float)
         
         self.addBranch('pzetamiss',               float)
         self.addBranch('pzetavis',                float)
@@ -225,25 +222,24 @@ class TreeProducerCommon(object):
         #self.addBranch('m_max_lb',                  float)
         #self.addBranch('m_mub',                     float)
         
-        self.nPU[0]             = -1
-        self.nTrueInt[0]        = -1
-        self.LHE_Njets[0]       = -1
+        self.nPU[0]           = -1
+        self.nTrueInt[0]      = -1
+        self.LHE_Njets[0]     = -1
         
-        self.weight[0]          = 1.
-        self.genweight[0]       = 1.
-        self.trigweight[0]      = 1.
-        self.puweight[0]        = 1.
-        self.idisoweight_1[0]   = 1.
-        self.idisoweight_2[0]   = 1.
-        self.btagweight[0]      = 1.
-        self.btagweight_deep[0] = 1.
-        self.zptweight[0]       = 1.
-        self.ttptweight[0]      = 1.
-        self.genmet[0]          = -1
-        self.genmetphi[0]       = -9
+        self.weight[0]        = 1.
+        self.genweight[0]     = 1.
+        self.trigweight[0]    = 1.
+        self.puweight[0]      = 1.
+        self.idisoweight_1[0] = 1.
+        self.idisoweight_2[0] = 1.
+        self.btagweight[0]    = 1.
+        self.zptweight[0]     = 1.
+        self.ttptweight[0]    = 1.
+        self.genmet[0]        = -1
+        self.genmetphi[0]     = -9
         
-        self.m_genboson[0]      = -1
-        self.pt_genboson[0]     = -1
+        self.m_genboson[0]    = -1
+        self.pt_genboson[0]   = -1
         
     def addBranch(self, name, dtype=float):
         """Add branch with a given name, and create an array of the same name as address."""
