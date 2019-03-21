@@ -117,6 +117,7 @@ sample_dict = [
    ('SingleElectron', "SingleElectron_Run2017D",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_D"   ),
    ('SingleElectron', "SingleElectron_Run2017E",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_E"   ),
    ('SingleElectron', "SingleElectron_Run2017F",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_F"   ),
+   ('EGamma',         "EGamma_$RUN",                      "EGamma/$RUN"                                              ),
    ('LQ',             "LQ3ToTauB_t-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_t-channel-M$MASS"       ),
    ('LQ',             "LQ3ToTauB_s-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_s-channel-M$MASS"       ),
    ('LQ',             "LQ3ToTauB_pair_M$MASS",            "LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M$MASS"            ),
@@ -133,6 +134,7 @@ haddsets = [
   ('Tau',            "Tau_$RUN",             [ 'Tau_$RUN?'            ]),
   ('SingleMuon',     "SingleMuon_$RUN",      [ 'SingleMuon_$RUN?'     ]),
   ('SingleElectron', "SingleElectron_$RUN",  [ 'SingleElectron_$RUN?' ]),
+  ('EGamma',         "EGamma_$RUN",          [ 'EGamma_$RUN?'         ]),
 ]
 
 
@@ -267,7 +269,7 @@ def main(args):
             if args.samples and not matchSampleToPattern(samplename,args.samples): continue
             if args.veto and matchSampleToPattern(directory,args.veto): continue
             if 'SingleMuon' in subdir and channel not in ['mutau','mumu','elemu']: continue
-            if 'SingleElectron' in subdir and channel!='eletau': continue
+            if ('SingleElectron' in subdir or 'EGamma' in subdir) and channel!='eletau': continue
             if 'Tau' in subdir and channel!='tautau': continue
             if 'LQ3' in subdir and channel not in ['mutau','tautau','eletau']: continue
             if '2017' in samplename and year!=2017: continue
@@ -328,8 +330,8 @@ def main(args):
 def isValidSample(pattern):
   if args.samples and not matchSampleToPattern(pattern,args.samples): return False
   if args.veto and matchSampleToPattern(pattern,args.veto): return False
-  if args.type=='mc' and any(s in pattern[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): return False
-  if args.type=='data' and not any(s in pattern[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): return False
+  if args.type=='mc' and any(s in pattern[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): return False
+  if args.type=='data' and not any(s in pattern[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): return False
   return True
 
 

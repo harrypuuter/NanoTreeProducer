@@ -58,7 +58,7 @@ class bcolors:
 # Diboson (WW, WZ, ZZ) have very large files and acceptance,
 # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
 nFilesPerJob_defaults = [
-  ( 1, ['DY','W*J','WW','WZ','ZZ','TT_','Single','Tau','ST_t-channel_top*TuneCUETP8M1']),
+  ( 1, ['DY','W*J','WW','WZ','ZZ','TT_','Single','Tau', 'EGamma','ST_t-channel']),
   (10, ['LQ3']),
 ]
 
@@ -211,8 +211,8 @@ def main():
           if line=='': continue
           if args.samples and not matchSampleToPattern(line,args.samples): continue
           if args.vetos and matchSampleToPattern(line,args.vetos): continue
-          if args.type=='mc' and any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
-          if args.type=='data' and not any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
+          if args.type=='mc' and any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
+          if args.type=='data' and not any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           directories.append(line)
       #print directories
       
@@ -227,7 +227,7 @@ def main():
             
             # FILTER
             if 'SingleMuon' in directory and channel not in ['mutau','mumu','elemu']: continue
-            if 'SingleElectron' in directory and channel!='eletau': continue
+            if ('SingleElectron' in directory or 'EGamma' in directory) and channel!='eletau': continue
             if 'Tau' in directory[:5] and channel!='tautau': continue
             if 'LQ3' in directory[:5] and channel not in ['mutau','eletau','tautau']: continue
             

@@ -72,8 +72,8 @@ def main():
           if not os.path.isdir(outdir+directory): continue
           if args.samples and not matchSampleToPattern(directory,args.samples): continue
           if args.vetos and matchSampleToPattern(directory,args.vetos): continue
-          if args.type=='mc' and any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
-          if args.type=='data' and not any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau']): continue
+          if args.type=='mc' and any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
+          if args.type=='data' and not any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           samplelist.append(directory)
       if not samplelist:
         print "No samples found in %s!"%(outdir)

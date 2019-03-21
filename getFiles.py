@@ -35,6 +35,9 @@ def main():
       events = [ ]
       for filename in files[:max]:
         file = TFile.Open(filename, 'READ')
+        if not file or not hasattr(file,'IsZombie'):
+          print ">>>   Warning! Could not open file %s"%(filename)
+          continue
         if file.IsZombie():
           print ">>>   Warning! Zombie file %s"%(filename)
           continue
