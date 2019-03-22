@@ -155,7 +155,6 @@ class MuTauProducer(Module):
             if event.Tau_pt[itau] < self.tauCutPt: continue
             ###if ord(event.Tau_idAntiEle[itau])<1: continue
             ###if ord(event.Tau_idAntiMu[itau])<1: continue
-            
             idx_goodtaus.append(itau)
         
         if len(idx_goodtaus)==0:

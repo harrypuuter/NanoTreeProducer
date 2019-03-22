@@ -21,6 +21,7 @@ class TauTauProducer(Module):
         self.year           = kwargs.get('year',     2017 )
         self.tes            = kwargs.get('tes',      1.0  )
         self.ltf            = kwargs.get('ltf',      1.0  )
+        self.jtf            = kwargs.get('jtf',      1.0  )
         self.doZpt          = kwargs.get('doZpt',    'DY' in name )
         self.doRecoil       = kwargs.get('doRecoil', ('DY' in name or re.search(r"W\d?Jets",name)) and year>2016)
         self.doTTpt         = kwargs.get('doTTpt',   'TT' in name )
@@ -201,7 +202,7 @@ class TauTauProducer(Module):
             if abs(event.Tau_charge[itau])!=1: continue
             if not self.vlooseIso(event,itau): continue
             if not self.isData:
-              Tau_genmatch[itau] = Tau_genmatch(event,itau)
+              Tau_genmatch[itau] = genmatch(event,itau)
               #if self.tes!=1.0:
               #  event.Tau_pt[itau]   *= self.tes
               #  event.Tau_mass[itau] *= self.tes
@@ -390,12 +391,13 @@ class TauTauProducer(Module):
         if not self.isData:
           self.out.genPartFlav_1[0] = Tau_genmatch[ditau.id1]
           self.out.genPartFlav_2[0] = Tau_genmatch[ditau.id2]
+          
           genvistau = Collection(event, 'GenVisTau')
           dRmax1,  dRmax2  = .5, .5
           gendm1,  gendm2  = -1, -1
           genpt1,  genpt2  = -1, -1
-          geneta1, geneta2 = -1, -1
-          genphi1, genphi2 = -1, -1
+          geneta1, geneta2 = -9, -9
+          genphi1, genphi2 = -9, -9
           for igvt in range(event.nGenVisTau):
             dR = genvistau[igvt].p4().DeltaR(tau1)
             if dR<dRmax1:
@@ -444,10 +446,10 @@ class TauTauProducer(Module):
           elif self.doTTpt:
             toppt1, toppt2           = getTTPt(event)
             self.out.ttptweight[0]   = getTTptWeight(toppt1,toppt2)
-          diTauLeg1SF                = self.tauSFs.getTriggerSF(   self.out.pt_1[0], self.out.eta_1[0], self.out.phi_1[0], self.out.genPartFlav_1[0] )
-          diTauLeg2SF                = self.tauSFs.getTriggerSF(   self.out.pt_2[0], self.out.eta_2[0], self.out.phi_2[0], self.out.genPartFlav_2[0] )
-          diTauLeg1SFVT              = self.tauSFsVT.getTriggerSF( self.out.pt_1[0], self.out.eta_1[0], self.out.phi_1[0], self.out.genPartFlav_1[0] )
-          diTauLeg2SFVT              = self.tauSFsVT.getTriggerSF( self.out.pt_2[0], self.out.eta_2[0], self.out.phi_2[0], self.out.genPartFlav_2[0] )
+          diTauLeg1SF                = self.tauSFs.getTriggerSF(  self.out.pt_1[0],self.out.eta_1[0],self.out.phi_1[0],self.out.decayMode_1[0],self.out.genPartFlav_1[0] )
+          diTauLeg2SF                = self.tauSFs.getTriggerSF(  self.out.pt_2[0],self.out.eta_2[0],self.out.phi_2[0],self.out.decayMode_2[0],self.out.genPartFlav_2[0] )
+          diTauLeg1SFVT              = self.tauSFsVT.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0],self.out.phi_1[0],self.out.decayMode_1[0],self.out.genPartFlav_1[0] )
+          diTauLeg2SFVT              = self.tauSFsVT.getTriggerSF(self.out.pt_2[0],self.out.eta_2[0],self.out.phi_2[0],self.out.decayMode_2[0],self.out.genPartFlav_2[0] )
           self.out.genweight[0]      = event.genWeight
           self.out.trigweight[0]     = diTauLeg1SF*diTauLeg2SF
           self.out.trigweightVT[0]   = diTauLeg1SFVT*diTauLeg2SFVT

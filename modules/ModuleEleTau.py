@@ -21,6 +21,7 @@ class EleTauProducer(Module):
         self.year           = kwargs.get('year',     2017 )
         self.tes            = kwargs.get('tes',      1.0  )
         self.ltf            = kwargs.get('ltf',      1.0  )
+        self.jtf            = kwargs.get('jtf',      1.0  )
         self.doZpt          = kwargs.get('doZpt',    'DY' in name )
         self.doRecoil       = kwargs.get('doRecoil', ('DY' in name or re.search(r"W\d?Jets",name)) and year>2016)
         self.doTTpt         = kwargs.get('doTTpt',   'TT' in name )
@@ -67,7 +68,7 @@ class EleTauProducer(Module):
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.TotalWeighted,       "no cut, weighted"       )
         self.out.cutflow.GetXaxis().SetBinLabel(1+self.TotalWeighted_no0PU, "no cut, weighted, PU>0" )
         self.out.cutflow.GetXaxis().SetLabelSize(0.041)
-    
+        
     def beginJob(self):
         pass
         
@@ -131,19 +132,28 @@ class EleTauProducer(Module):
         #####################################
         
         
+        Tau_genmatch = { } # bug in Tau_genPartFlav
         idx_goodtaus = [ ]
         for itau in range(event.nTau):
-            #if self.tes!=1.0:
-            #  event.Tau_pt[itau]   *= self.tes
-            #  event.Tau_mass[itau] *= self.tes
-            if event.Tau_pt[itau] < self.tauCutPt: continue
+            if not self.vlooseIso(event,itau): continue
             if abs(event.Tau_eta[itau]) > 2.3: continue
             if abs(event.Tau_dz[itau]) > 0.2: continue
             if event.Tau_decayMode[itau] not in [0,1,10]: continue
             if abs(event.Tau_charge[itau])!=1: continue
-            #if ord(event.Tau_idAntiEle[itau])<1: continue
-            #if ord(event.Tau_idAntiMu[itau])<1: continue
-            if not self.vlooseIso(event,itau): continue
+            if not self.isData:
+              Tau_genmatch[itau] = genmatch(event,itau)
+              #if self.tes!=1.0 and Tau_genmatch[itau]==5:
+              #  event.Tau_pt[itau]   *= self.tes
+              #  event.Tau_mass[itau] *= self.tes
+              #elif self.ltf!=1.0 and 0<Tau_genmatch[itau]<5:
+              #  event.Tau_pt[itau]   *= self.ltf
+              #  event.Tau_mass[itau] *= self.ltf
+              #elif self.jtf!=1.0 and Tau_genmatch[itau]==0:
+              #  event.Tau_pt[itau]   *= self.jtf
+              #  event.Tau_mass[itau] *= self.jtf
+            if event.Tau_pt[itau] < self.tauCutPt: continue
+            ###if ord(event.Tau_idAntiEle[itau])<1: continue
+            ###if ord(event.Tau_idAntiMu[itau])<1: continue
             idx_goodtaus.append(itau)
         
         if len(idx_goodtaus)==0:
@@ -289,7 +299,7 @@ class EleTauProducer(Module):
         # GENERATOR      
         if not self.isData:
           self.out.genPartFlav_1[0]     = ord(event.Electron_genPartFlav[ltau.id1])
-          self.out.genPartFlav_2[0]     = ord(event.Tau_genPartFlav[ltau.id2])
+          self.out.genPartFlav_2[0]     = Tau_genmatch[ltau.id2] # ord(event.Tau_genPartFlav[ltau.id2])
           
           genvistau = Collection(event, 'GenVisTau')
           dRmax  = 1000
