@@ -40,20 +40,14 @@ path       = 'CorrectionTools/leptonEfficiencies/'
 pathHTT_mu = 'CorrectionTools/leptonEfficiencies/HTT/Muon/Run2017/'
 pathHTT_el = 'CorrectionTools/leptonEfficiencies/HTT/Electron/Run2017/'
 
-# PT & ETA
-ptvals  = [ 10., 20., 21., 22., 24., 26., 27., 34., 35., 36., 40., 60., 156., 223., 410., 560. ]
-etavals = [ 0.0, 0.5, 1.1, 1.9, 2.0, 2.3, 2.4, 2.8, 3.4 ]
-etavals = [-eta for eta in reversed(etavals)]+etavals
-points  = [ ]
-for pt in ptvals:
-  for eta in etavals:
-    #points.append((pt,-eta))
-    points.append((pt,eta))
-
-
-
-def printMatrix(name,method):
+# MATRIX
+def printMatrix(name,method,ptvals=None,etavals=None):
   start2 = time.time()
+  if ptvals==None:
+    ptvals  = [ 10., 20., 21., 22., 24., 26., 27., 34., 35., 36., 40., 60., 156., 223., 410., 560. ]
+  if etavals==None:
+    etavals = [ 0.0, 0.5, 1.1, 1.9, 2.0, 2.3, 2.4, 2.8, 3.4 ]
+    etavals = [-eta for eta in reversed(etavals)]+etavals
   print ">>>   %s:"%name
   print ">>>    %10s"%('pt\eta')+' '.join('%10.2f'%eta for eta in etavals)
   for pt in ptvals:
@@ -162,11 +156,13 @@ def electronSFs():
 def tauTriggerSFs():
   
   # TAU TRIGGER
-  tauSFs = TauTriggerSFs('tautau',year=2016)
+  tauSFs = TauTriggerSFs('tautau',year=2018)
   
   # GET SFs
-  printMatrix('trigger real',lambda p,e: tauSFs.getTriggerSF(p,e,0,0,5))
-  printMatrix('trigger fake',lambda p,e: tauSFs.getTriggerSF(p,e,0,0,0))
+  ptvals  = [ 10., 20., 21., 22., 24., 26., 27., 34., 35., 36., 40., 60., 156., 223., 410., 560. ]
+  etavals = [ 0.0, 0.2, 0.5, 1.1, 1.5, 1.9, 2.0 ]
+  printMatrix('trigger real',lambda p,e: tauSFs.getTriggerSF(p,e,0,0,5),ptvals=ptvals,etavals=etavals)
+  printMatrix('trigger fake',lambda p,e: tauSFs.getTriggerSF(p,e,0,0,0),ptvals=ptvals,etavals=etavals)
   
   
 

@@ -182,9 +182,6 @@ class TauTauProducer(Module):
         #####################################        
         
         
-        #if event.HLT_DoubleMediumChargedIsoPFTau35_Trk1_eta2p1_Reg or : 
-        #print 'trig = ', event.HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg, event.HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg, event.HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg
-        #if event.HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg > 0.5 or event.HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg > 0.5 or event.HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg > 0.5:
         if not self.trigger(event):
             return False
         
@@ -195,18 +192,20 @@ class TauTauProducer(Module):
         #####################################
         
         
+        Tau_genmatch = { } # bug in Tau_genPartFlav
         idx_goodtaus = [ ]
         for itau in range(event.nTau):
-            #if self.tes!=1.0:
-            #  event.Tau_pt[itau]   *= self.tes
-            #  event.Tau_mass[itau] *= self.tes
-            if event.Tau_pt[itau] < self.tauCutPt: continue
             if abs(event.Tau_eta[itau]) > 2.1: continue
             if abs(event.Tau_dz[itau]) > 0.2: continue
             if event.Tau_decayMode[itau] not in [0,1,10]: continue
             if abs(event.Tau_charge[itau])!=1: continue
-            #print itau, 'decay mode = ', event.Tau_decayMode[itau] 
             if not self.vlooseIso(event,itau): continue
+            if not self.isData:
+              Tau_genmatch[itau] = Tau_genmatch(event,itau)
+              #if self.tes!=1.0:
+              #  event.Tau_pt[itau]   *= self.tes
+              #  event.Tau_mass[itau] *= self.tes
+            if event.Tau_pt[itau] < self.tauCutPt: continue
             idx_goodtaus.append(itau)
         
         if len(idx_goodtaus)<2:
@@ -356,29 +355,6 @@ class TauTauProducer(Module):
         self.out.idMVAoldDM2017v2_1[0]         = ord(event.Tau_idMVAoldDM2017v2[ditau.id1])
         
         
-        # GENERATOR 1
-        if not self.isData:
-          self.out.genPartFlav_1[0]            = ord(event.Tau_genPartFlav[ditau.id1])
-          genvistau = Collection(event, 'GenVisTau')
-          _drmax_ = 1000
-          gendm   = -1
-          genpt   = -1
-          geneta  = -1
-          genphi  = -1
-          for igvt in range(event.nGenVisTau):
-            _dr_ = genvistau[igvt].p4().DeltaR(tau1)
-            if _dr_ < 0.5 and _dr_ < _drmax_:
-              _drmax_ = _dr_
-              gendm   = event.GenVisTau_status[igvt]
-              genpt   = event.GenVisTau_pt[igvt]
-              geneta  = event.GenVisTau_eta[igvt]
-              genphi  = event.GenVisTau_phi[igvt]
-          self.out.gendecayMode_1[0]           = gendm
-          self.out.genvistaupt_1[0]            = genpt
-          self.out.genvistaueta_1[0]           = geneta
-          self.out.genvistauphi_1[0]           = genphi
-        
-        
         # TAU 2
         self.out.pt_2[0]                       = event.Tau_pt[ditau.id2]
         self.out.eta_2[0]                      = event.Tau_eta[ditau.id2]
@@ -410,28 +386,41 @@ class TauTauProducer(Module):
         self.out.idMVAnewDM2017v2_2[0]         = ord(event.Tau_idMVAnewDM2017v2[ditau.id2])
         
         
-        # GENERATOR 2
+        # GENERATOR
         if not self.isData:
-          self.out.genPartFlav_2[0]     = ord(event.Tau_genPartFlav[ditau.id2])
+          self.out.genPartFlav_1[0] = Tau_genmatch[ditau.id1]
+          self.out.genPartFlav_2[0] = Tau_genmatch[ditau.id2]
           genvistau = Collection(event, 'GenVisTau')
-          dRmax  = 1000
-          gendm  = -1
-          genpt  = -1
-          geneta = -1
-          genphi = -1
+          dRmax1,  dRmax2  = .5, .5
+          gendm1,  gendm2  = -1, -1
+          genpt1,  genpt2  = -1, -1
+          geneta1, geneta2 = -1, -1
+          genphi1, genphi2 = -1, -1
           for igvt in range(event.nGenVisTau):
+            dR = genvistau[igvt].p4().DeltaR(tau1)
+            if dR<dRmax1:
+              dRmax1  = dR
+              gendm1  = event.GenVisTau_status[igvt]
+              genpt1  = event.GenVisTau_pt[igvt]
+              geneta1 = event.GenVisTau_eta[igvt]
+              genphi1 = event.GenVisTau_phi[igvt]
             dR = genvistau[igvt].p4().DeltaR(tau2)
-            if dR < 0.5 and dR < dRmax:
-              dRmax  = dR
-              gendm  = event.GenVisTau_status[igvt]
-              genpt  = event.GenVisTau_pt[igvt]
-              geneta = event.GenVisTau_eta[igvt]
-              genphi = event.GenVisTau_phi[igvt]
+            if dR<dRmax2:
+              dRmax2  = dR
+              gendm2  = event.GenVisTau_status[igvt]
+              genpt2  = event.GenVisTau_pt[igvt]
+              geneta2 = event.GenVisTau_eta[igvt]
+              genphi2 = event.GenVisTau_phi[igvt]
           
-          self.out.gendecayMode_2[0] = gendm
-          self.out.genvistaupt_2[0]  = genpt
-          self.out.genvistaueta_2[0] = geneta
-          self.out.genvistauphi_2[0] = genphi
+          self.out.gendecayMode_1[0] = gendm1
+          self.out.genvistaupt_1[0]  = genpt1
+          self.out.genvistaueta_1[0] = geneta1
+          self.out.genvistauphi_1[0] = genphi1
+          
+          self.out.gendecayMode_2[0] = gendm2
+          self.out.genvistaupt_2[0]  = genpt2
+          self.out.genvistaueta_2[0] = geneta2
+          self.out.genvistauphi_2[0] = genphi2
         
         
         # WEIGHTS
@@ -455,10 +444,10 @@ class TauTauProducer(Module):
           elif self.doTTpt:
             toppt1, toppt2           = getTTPt(event)
             self.out.ttptweight[0]   = getTTptWeight(toppt1,toppt2)
-          diTauLeg1SF                = self.tauSFs.getTriggerSF(   self.out.pt_1, self.out.eta_1, self.out.phi_1 )
-          diTauLeg2SF                = self.tauSFs.getTriggerSF(   self.out.pt_2, self.out.eta_2, self.out.phi_2 )
-          diTauLeg1SFVT              = self.tauSFsVT.getTriggerSF( self.out.pt_1, self.out.eta_1, self.out.phi_1 )
-          diTauLeg2SFVT              = self.tauSFsVT.getTriggerSF( self.out.pt_2, self.out.eta_2, self.out.phi_2 )
+          diTauLeg1SF                = self.tauSFs.getTriggerSF(   self.out.pt_1[0], self.out.eta_1[0], self.out.phi_1[0], self.out.genPartFlav_1[0] )
+          diTauLeg2SF                = self.tauSFs.getTriggerSF(   self.out.pt_2[0], self.out.eta_2[0], self.out.phi_2[0], self.out.genPartFlav_2[0] )
+          diTauLeg1SFVT              = self.tauSFsVT.getTriggerSF( self.out.pt_1[0], self.out.eta_1[0], self.out.phi_1[0], self.out.genPartFlav_1[0] )
+          diTauLeg2SFVT              = self.tauSFsVT.getTriggerSF( self.out.pt_2[0], self.out.eta_2[0], self.out.phi_2[0], self.out.genPartFlav_2[0] )
           self.out.genweight[0]      = event.genWeight
           self.out.trigweight[0]     = diTauLeg1SF*diTauLeg2SF
           self.out.trigweightVT[0]   = diTauLeg1SFVT*diTauLeg2SFVT

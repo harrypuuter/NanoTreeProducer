@@ -14,8 +14,8 @@ class TauTriggerSFs(object):
     
     def __new__(self,*args,**kwargs):
         if kwargs.get('year',0)==2016:
-          return TauTriggerSFs2016.__new__(*args,**kwargs)
-        return TauTriggerSFs(self,*args,**kwargs)
+          return TauTriggerSFs2016(*args,**kwargs) #TauTriggerSFs2016.__new__(*args,**kwargs)
+        return object.__new__(TauTriggerSFs)
     
     def __init__(self, trigger, wp='medium', id='MVAv2', year=2016):
         """Load tau trigger histograms from files."""
@@ -30,7 +30,8 @@ class TauTriggerSFs(object):
         print "Loading Efficiencies for trigger %s usingTau %s ID WP %s for year %i"%(trigger,id,wp,year)
         
         # Assume this is in CMSSW with the below path structure
-        file = ensureTFile( path+'tauEfficiencies/%d/tauTriggerEfficiencies%i.root'%(year,year), 'r' )
+        if year==2018: year = 2017
+        file = ensureTFile( path+'%d/tauTriggerEfficiencies%i.root'%(year,year), 'r' )
         
         self.fit_data = { }
         self.fit_mc   = { }
@@ -43,20 +44,20 @@ class TauTriggerSFs(object):
         for dm in [0,1,10]:
           
           # Load the TF1s containing the analytic best-fit results.
-          self.fit_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA_fit'%(dm,trigger,wp,id))
-          self.fit_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC_fit'%(  dm,trigger,wp,id))
+          self.fit_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA_fit'%(trigger,wp,id,dm))
+          self.fit_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC_fit'%(  trigger,wp,id,dm))
           
           # Load the TH1s containing the analytic best-fit result in 1 GeV incriments and the associated uncertainty.
-          self.fitUnc_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA_errorBand'%(dm,trigger,wp,id))
-          self.fitUnc_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC_errorBand'%(  dm,trigger,wp,id))
+          self.fitUnc_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA_errorBand'%(trigger,wp,id,dm))
+          self.fitUnc_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC_errorBand'%(  trigger,wp,id,dm))
           
           # Load the TH2s containing the eta phi efficiency corrections
-          self.effEtaPhi_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA'%(dm,trigger,wp,id))
-          self.effEtaPhi_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC'%(  dm,trigger,wp,id))
+          self.effEtaPhi_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA'%(trigger,wp,id,dm))
+          self.effEtaPhi_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC'%(  trigger,wp,id,dm))
           
           # Eta Phi Averages
-          self.effEtaPhiAvg_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA_AVG'%(dm,trigger,wp,id))
-          self.effEtaPhiAvg_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC_AVG'%(  dm,trigger,wp,id))
+          self.effEtaPhiAvg_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA_AVG'%(trigger,wp,id,dm))
+          self.effEtaPhiAvg_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC_AVG'%(  trigger,wp,id,dm))
           
         file.Close()
         
@@ -194,10 +195,10 @@ class TauTriggerSFs(object):
     
 
 
-class TauTriggerSFs2016(TauTriggerSFs):
+class TauTriggerSFs2016():
     
-    def __new__(self,*args,**kwargs):
-        return object.__new__(TauTriggerSFs2016)
+#     def __new__(self,*args,**kwargs):
+#         return object.__new__(TauTriggerSFs2016)
     
     def __init__(self, trigger='tautau', wp='medium', id='MVAv2', year=2016):
         """Load histograms from files."""

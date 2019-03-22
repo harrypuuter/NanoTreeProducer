@@ -1,7 +1,7 @@
 # Author: Izaak Neutelings (November 2018)
 from CorrectionTools import modulepath
 import os, re
-from ROOT import TFile
+from ROOT import TFile, TH1
 
 
 def ensureTFile(filename,option='READ'):
@@ -17,11 +17,15 @@ def ensureTFile(filename,option='READ'):
   
 def extractTH1(file,histname):
   """Get histogram from a file, and do SetDirectory(0)."""
+  if not file or file.IsZombie():
+    print '>>> ERROR! ScaleFactorTool.extractTH1 Could not open file!'
+    exit(1)
   hist = file.Get(histname)
   if not hist:
-    print '>>> ERROR! ScaleFactorTool.extract: Did not find histogtam "%s" in file %s!'%(filename,file.GetName())
+    print '>>> ERROR! ScaleFactorTool.extractTH1: Did not find histogtam "%s" in file %s!'%(histname,file.GetName())
     exit(1)
-  hist.SetDirectory(0)
+  if isinstance(hist,TH1):
+    hist.SetDirectory(0)
   return hist
   
 
