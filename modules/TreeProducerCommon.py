@@ -8,18 +8,24 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 
 
 def checkBranches(tree):
-  """Redirect some branch names that depend on the nanoAOD version."""
+  """Redirect some branch names in case they are not available in some samples or nanoAOD version."""
   branches = [
     ('Electron_mvaFall17V2Iso',      'Electron_mvaFall17Iso'     ),
     ('Electron_mvaFall17V2Iso_WPL',  'Electron_mvaFall17Iso_WPL' ),
     ('Electron_mvaFall17V2Iso_WP80', 'Electron_mvaFall17Iso_WP80'),
     ('Electron_mvaFall17V2Iso_WP90', 'Electron_mvaFall17Iso_WP90'),
+    ('HLT_Ele32_WPTight_Gsf',        False                       ),
   ]
   fullbranchlist = tree.GetListOfBranches()
   for newbranch, oldbranch in branches:
     if newbranch not in fullbranchlist:
-      print "checkBranches: directing '%s' -> '%s'"%(newbranch,oldbranch)
-      exec "setattr(Event,newbranch,property(lambda self: self._tree.readBranch('%s')))"%oldbranch
+      if isinstance(oldbranch,str):
+        print "checkBranches: directing '%s' -> '%s'"%(newbranch,oldbranch)
+        exec "setattr(Event,newbranch,property(lambda self: self._tree.readBranch('%s')))"%oldbranch
+      else:
+        print "checkBranches: directing '%s' -> %s"%(newbranch,oldbranch)
+        exec "setattr(Event,newbranch,%s)"%(oldbranch)
+        
   
 def setBranchStatuses(tree,otherbranches=[ ]):
   """Activate or deactivate branch statuses."""
