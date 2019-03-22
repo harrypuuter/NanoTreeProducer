@@ -5,7 +5,9 @@ import time
 start0 = time.time()
 print
 print ">>> importing modules..."
-import os; os.chdir('..')
+#import os; os.chdir('..')
+import sys; sys.path.append('..')
+from CorrectionTools import *
 
 start1 = time.time()
 from ROOT import TFile
@@ -22,6 +24,10 @@ print ">>>   imported MuonSFs classes after %.1f seconds"%(time.time()-start1)
 start1 = time.time()
 from ElectronSFs import *
 print ">>>   imported ElectronSFs classes after %.1f seconds"%(time.time()-start1)
+
+start1 = time.time()
+from TauTriggerSFs import *
+print ">>>   imported TauTriggerSFs classes after %.1f seconds"%(time.time()-start1)
 
 start1 = time.time()
 from BTaggingTool import *
@@ -153,6 +159,17 @@ def electronSFs():
   printMatrix('idiso',eleSFs.getIdIsoSF)
   
 
+def tauTriggerSFs():
+  
+  # TAU TRIGGER
+  tauSFs = TauTriggerSFs('tautau',year=2016)
+  
+  # GET SFs
+  printMatrix('trigger real',lambda p,e: tauSFs.getTriggerSF(p,e,0,0,5))
+  printMatrix('trigger fake',lambda p,e: tauSFs.getTriggerSF(p,e,0,0,0))
+  
+  
+
 def btagSFs(tagger='CSVv2'):
   
   # BTAG SFs
@@ -173,11 +190,12 @@ def btagSFs(tagger='CSVv2'):
 
 if __name__ == "__main__":
   
-  muonPOG()
+  #muonPOG()
   #muonHTT()
   #electronHTT()
   #muonSFs()
   #electronSFs()
+  tauTriggerSFs()
   #btagSFs('CSVv2')
   #btagSFs('DeepCSV')
   print ">>> "

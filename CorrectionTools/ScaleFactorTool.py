@@ -1,14 +1,13 @@
-#! /bin/usr/env bash
 # Author: Izaak Neutelings (November 2018)
 from CorrectionTools import modulepath
 import os, re
-from ROOT import TFile #, TH2F, TGraphAsymmErrors, Double()
+from ROOT import TFile
 
 
 def ensureTFile(filename,option='READ'):
   """Open TFile, checking if the file in the given path exists."""
   if not os.path.isfile(filename):
-    print '>>> ERROR! ScaleFactorTool.ensureTFile: File in path "%s" does not exist!!'%(filename)
+    print '>>> ERROR! ScaleFactorTool.ensureTFile: File in path "%s" does not exist!'%(filename)
     exit(1)
   file = TFile(filename,option)
   if not file or file.IsZombie():
@@ -16,7 +15,15 @@ def ensureTFile(filename,option='READ'):
     exit(1)
   return file
   
-
+def extractTH1(file,histname):
+  """Get histogram from a file, and do SetDirectory(0)."""
+  hist = file.Get(histname)
+  if not hist:
+    print '>>> ERROR! ScaleFactorTool.extract: Did not find histogtam "%s" in file %s!'%(filename,file.GetName())
+    exit(1)
+  hist.SetDirectory(0)
+  return hist
+  
 
 class ScaleFactor:
     
