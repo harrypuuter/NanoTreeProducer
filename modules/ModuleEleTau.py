@@ -27,27 +27,27 @@ class EleTauProducer(Module):
         self.doTight        = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 )
         self.channel        = 'eletau'
         year, channel       = self.year, self.channel
-         
+        
         self.vlooseIso      = getVLooseTauIso(year)
-        if year==2016: 
+        if year==2016:
           self.trigger      = lambda e: e.HLT_Ele25_eta2p1_WPTight_Gsf or e.HLT_Ele27_WPTight_Gsf #or e.HLT_Ele45_WPLoose_Gsf_L1JetTauSeeded #or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20_SingleL1 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau20 or e.HLT_Ele24_eta2p1_WPLoose_Gsf_LooseIsoPFTau30
           self.eleCutPt     = 26
-        elif year==2017: 
-          self.trigger      = lambda e: e.HLT_Ele35_WPTight_Gsf or e.HLT_Ele32_WPTight_Gsf_L1DoubleEG #e.HLT_Ele32_WPTight_Gsf
+        elif year==2017:
+          self.trigger      = lambda e: e.HLT_Ele35_WPTight_Gsf or e.HLT_Ele32_WPTight_Gsf_L1DoubleEG or e.HLT_Ele32_WPTight_Gsf
           self.eleCutPt     = 36
-        else: 
-          self.trigger      = lambda e: e.HLT_Ele32_WPTight_Gsf
+        else:
+          self.trigger      = lambda e: e.HLT_Ele32_WPTight_Gsf or e.HLT_Ele35_WPTight_Gsf
           self.eleCutPt     = 33
         self.tauCutPt       = 20
-         
-        if not self.isData: 
+        
+        if not self.isData:
           self.eleSFs       = ElectronSFs(year=year)
           self.puTool       = PileupWeightTool(year=year)
           self.ltfSFs       = LeptonTauFakeSFs('loose','tight',year=year)
           self.btagTool     = BTagWeightTool('DeepCSV','medium',channel='mutau',year=year)
           if self.doZpt: 
             self.zptTool    = ZptCorrectionTool(year=year)
-          if self.doRecoil: 
+          if self.doRecoil:
             self.recoilTool = RecoilCorrectionTool(year=year)
         self.deepcsv_wp     = BTagWPs('DeepCSV',year=year)
         

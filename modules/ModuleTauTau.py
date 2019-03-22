@@ -4,7 +4,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 from TreeProducerTauTau import *
-from CorrectionTools.TauTauSFs import *
+from CorrectionTools.TauTriggerSFs import *
 from CorrectionTools.PileupWeightTool import *
 from CorrectionTools.LeptonTauFakeSFs import *
 from CorrectionTools.RecoilCorrectionTool import *
@@ -46,8 +46,8 @@ class TauTauProducer(Module):
         self.tauCutPt       = 40
         
         if not self.isData:
-          self.tauSFs       = TauTauSFs('tight',year=year)
-          self.tauSFsVT     = TauTauSFs('vtight',year=year)
+          self.tauSFs       = TauTriggerSFs('tautau','tight',year=year)
+          self.tauSFsVT     = TauTriggerSFs('tautau','vtight',year=year)
           self.ltfSFs       = LeptonTauFakeSFs('loose','vloose',year=year)
           self.puTool       = PileupWeightTool(year=year)
           self.btagTool     = BTagWeightTool('DeepCSV','medium',channel='mutau',year=year)
