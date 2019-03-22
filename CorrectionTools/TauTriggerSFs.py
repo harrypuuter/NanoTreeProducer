@@ -58,7 +58,7 @@ class TauTriggerSFs(object):
           # Eta Phi Averages
           self.effEtaPhiAvg_data[dm] = extractTH1(file,'%s_%s%s_dm%d_DATA_AVG'%(trigger,wp,id,dm))
           self.effEtaPhiAvg_mc[dm]   = extractTH1(file,'%s_%s%s_dm%d_MC_AVG'%(  trigger,wp,id,dm))
-          
+        
         file.Close()
         
         self.trigger = trigger
@@ -72,7 +72,7 @@ class TauTriggerSFs(object):
         if pt > 450:  pt = 450
         elif pt < 20: pt = 20
         return pt
-      
+        
     def dmCheck( self, dm ):
         """Make sure to have only old DMs, DM0, DM1, DM10"""
         if dm==2:  dm = 1  # Originally, DM=2 was included in oldDM, but with the dynamic strip clustering the second strip was reconstructed together with the first one. So it ends up to DM=1. But, there are still some cases where DM=2 survives.
@@ -115,19 +115,19 @@ class TauTriggerSFs(object):
         dm = self.dmCheck(dm)
         assert(dm in [0,1,10]), "Efficiencies only provided for DMs 0, 1, 10. You provided DM %i" % dm
         return self.getEfficiency(pt,eta,phi,self.fit_data[dm],self.fitUnc_data[dm], \
-            self.effEtaPhi_data[dm], self.effEtaPhiAvg_data[dm])
+                                  self.effEtaPhi_data[dm], self.effEtaPhiAvg_data[dm])
         
     def getTriggerEfficiencyDataUncertUp(self, pt, eta, phi, dm):
         dm = self.dmCheck(dm)
         assert(dm in [0,1,10]), "Efficiencies only provided for DMs 0, 1, 10. You provided DM %i" % dm
         return self.getEfficiency(pt,eta,phi,self.fit_data[dm],self.fitUnc_data[dm], \
-            self.effEtaPhi_data[dm], self.effEtaPhiAvg_data[dm], 'Up' )
+                                  self.effEtaPhi_data[dm], self.effEtaPhiAvg_data[dm], 'Up')
         
     def getTriggerEfficiencyDataUncertDown(self, pt, eta, phi, dm):
         dm = self.dmCheck(dm)
         assert(dm in [0,1,10]), "Efficiencies only provided for DMs 0, 1, 10. You provided DM %i" % dm
         return self.getEfficiency(pt,eta,phi,self.fit_data[dm],self.fitUnc_data[dm], \
-            self.effEtaPhi_data[dm], self.effEtaPhiAvg_data[dm], 'Down' )
+                                  self.effEtaPhi_data[dm], self.effEtaPhiAvg_data[dm], 'Down')
         
     
     def getTriggerEfficiencyMC(self, pt, eta, phi, dm):
@@ -135,19 +135,19 @@ class TauTriggerSFs(object):
         dm = self.dmCheck(dm)
         assert(dm in [0,1,10]), "Efficiencies only provided for DMs 0, 1, 10. You provided DM %i" % dm
         return self.getEfficiency(pt,eta,phi,self.fit_mc[dm],self.fitUnc_mc[dm], \
-            self.effEtaPhi_mc[dm], self.effEtaPhiAvg_mc[dm])
+                                  self.effEtaPhi_mc[dm], self.effEtaPhiAvg_mc[dm])
         
     def getTriggerEfficiencyMCUncertUp(self, pt, eta, phi, dm):
         dm = self.dmCheck(dm)
         assert(dm in [0,1,10]), "Efficiencies only provided for DMs 0, 1, 10. You provided DM %i" % dm
         return self.getEfficiency(pt,eta,phi,self.fit_mc[dm],self.fitUnc_mc[dm], \
-            self.effEtaPhi_mc[dm], self.effEtaPhiAvg_mc[dm], 'Up' )
+                                  self.effEtaPhi_mc[dm], self.effEtaPhiAvg_mc[dm], 'Up')
         
     def getTriggerEfficiencyMCUncertDown(self, pt, eta, phi, dm):
         dm = self.dmCheck(dm)
         assert(dm in [0,1,10]), "Efficiencies only provided for DMs 0, 1, 10. You provided DM %i" % dm
         return self.getEfficiency(pt,eta,phi,self.fit_mc[dm],self.fitUnc_mc[dm], \
-            self.effEtaPhi_mc[dm], self.effEtaPhiAvg_mc[dm], 'Down' )
+                                  self.effEtaPhi_mc[dm], self.effEtaPhiAvg_mc[dm], 'Down')
         
     
     def getTriggerSF(self, pt, eta, phi, dm, genmatch=5):
@@ -196,9 +196,6 @@ class TauTriggerSFs(object):
 
 
 class TauTriggerSFs2016():
-    
-#     def __new__(self,*args,**kwargs):
-#         return object.__new__(TauTriggerSFs2016)
     
     def __init__(self, trigger='tautau', wp='medium', id='MVAv2', year=2016):
         """Load histograms from files."""
