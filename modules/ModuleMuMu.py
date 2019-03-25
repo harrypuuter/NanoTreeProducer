@@ -22,7 +22,7 @@ class MuMuProducer(Module):
         self.ltf            = kwargs.get('ltf',         1.0  )
         self.inZmassWindow  = kwargs.get('ZmassWindow', True )
         self.doZpt          = kwargs.get('doZpt',       'DY' in name )
-        self.doRecoil       = kwargs.get('doRecoil',    ('DY' in name or re.search(r"W\d?Jets",name)) and year>2016)
+        self.doRecoil       = kwargs.get('doRecoil',    ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
         self.doTTpt         = kwargs.get('doTTpt',      'TT' in name )
         self.doTight        = kwargs.get('doTight',     self.tes!=1 or self.ltf!=1 )
         self.channel        = 'mumu'
