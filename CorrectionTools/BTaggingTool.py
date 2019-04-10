@@ -111,7 +111,7 @@ class BTagWeightTool:
         for flavor in [0,4,5]:
           flavor   = flavorToString(flavor)
           histname = "%s_%s_%s"%(tagger,flavor,wp)
-          effname  = "%s/eff_%s_%s_%s"%(channel,tagger,flavor,wp)
+          effname  = "%s/eff_%s_%s_%s"%(channel,tagger,flavor,'medium') # temporarily only use medium
           hists[flavor]        = TH2F(histname,histname,*bins)
           hists[flavor+'_all'] = TH2F(histname+'_all',histname+'_all',*bins)
           effs[flavor]         = efffile.Get(effname)

@@ -5,9 +5,9 @@ from TreeProducerCommon import *
 
 class TreeProducerMuTau(TreeProducerCommon):
 
-    def __init__(self, name):
+    def __init__(self, name, dataType):
         
-        super(TreeProducerMuTau, self).__init__(name)
+        super(TreeProducerMuTau, self).__init__(name,dataType)
         print 'TreeProducerMuTau is called', name
         
         
@@ -23,7 +23,9 @@ class TreeProducerMuTau(TreeProducerCommon):
         self.addBranch('dz_1',                       float)
         self.addBranch('q_1',                        int)
         self.addBranch('pfRelIso04_all_1',           float)
-        self.addBranch('genPartFlav_1',              int)
+        
+        if not self._isData:
+          self.addBranch('genPartFlav_1',            int, -1)
         
         
         ###########
@@ -59,16 +61,12 @@ class TreeProducerMuTau(TreeProducerCommon):
         self.addBranch('idMVAoldDM2017v1_2',         int)
         self.addBranch('idMVAoldDM2017v2_2',         int)
         self.addBranch('idIso_2',                    int)
-        self.addBranch('genPartFlav_2',              float)
-        self.addBranch('gendecayMode_2',             float)
-        self.addBranch('genvistaupt_2',              float)
-        self.addBranch('genvistaueta_2',             float)
-        self.addBranch('genvistauphi_2',             float)
+        self.addBranch('jpt_match_2',                float)
         
-        self.genPartFlav_1[0]  = -1
-        self.genPartFlav_2[0]  = -1
-        self.gendecayMode_2[0] = -1
-        self.genvistaupt_2[0]  = -9
-        self.genvistaueta_2[0] = -1
-        self.genvistauphi_2[0] = -9
+        if not self._isData:
+          self.addBranch('genPartFlav_2',            int,   -1)
+          self.addBranch('gendecayMode_2',           int,   -1)
+          self.addBranch('genvistaupt_2',            float, -9)
+          self.addBranch('genvistaueta_2',           float, -9)
+          self.addBranch('genvistauphi_2',           float, -9)
         
