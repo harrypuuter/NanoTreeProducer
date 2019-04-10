@@ -23,7 +23,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(prog="checkFiles",description=description,epilog="Good luck!")
     parser.add_argument('-y', '--year',     dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
                                             help="select year" )
-    parser.add_argument('-c', '--channel',  dest='channels', choices=['mutau','eletau','tautau','mumu'], nargs='+', default=['tautau'], action='store' )
+    parser.add_argument('-c', '--channel',  dest='channels', choices=['mutau','eletau','tautau','mumu','elemu'], nargs='+', default=['tautau'], action='store' )
     parser.add_argument('-m', '--make',     dest='make', default=False, action='store_true',
                                             help="hadd all output files" )
     parser.add_argument('-a', '--hadd',     dest='haddother', default=False, action='store_true',
@@ -78,6 +78,7 @@ sample_dict = [
    ('DY',             "DY3JetsToLL_M-50",                 "DY3JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('DY',             "DY4JetsToLL_M-50",                 "DY4JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext1"                   ), # ext before reg !
+   ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext2"                   ),
    ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIISummer16"           ),
    ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIIFall17"             ),
    ('WJ',             "WJetsToLNu",                       "WJetsToLNu_Tune*madgraph*pythia8"                         ),
@@ -87,6 +88,8 @@ sample_dict = [
    ('WJ',             "W4JetsToLNu",                      "W4JetsToLNu_Tune*madgraph*pythia8"                        ),
    ('ST',             "ST_t-channel_antitop",             "ST_t-channel_antitop_4f_inclusiveDecays"                  ),
    ('ST',             "ST_t-channel_top",                 "ST_t-channel_top_4f_inclusiveDecays"                      ),
+   ('ST',             "ST_t-channel_antitop",             "ST_t-channel_antitop_4f_InclusiveDecays"                  ),
+   ('ST',             "ST_t-channel_top",                 "ST_t-channel_top_4f_InclusiveDecays"                      ),
    ('ST',             "ST_tW_antitop",                    "ST_tW_antitop_5f_inclusiveDecays"                         ),
    ('ST',             "ST_tW_top",                        "ST_tW_top_5f_inclusiveDecays"                             ),
    ('ST',             "ST_s-channel",                     "ST_s-channel_4f_hadronicDecays"                           ),
@@ -118,6 +121,9 @@ sample_dict = [
    ('SingleElectron', "SingleElectron_Run2017E",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_E"   ),
    ('SingleElectron', "SingleElectron_Run2017F",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_F"   ),
    ('EGamma',         "EGamma_$RUN",                      "EGamma/$RUN"                                              ),
+   ('LQ',             "SLQ_pair_M$MASS",                  "LegacyRun2_*_LQ_Pair_5f_Madgraph_LO_M$MASS"               ),
+   ('LQ',             "SLQ_single_M$MASS",                "LegacyRun2_*_LQ_Single_5f_Madgraph_LO_M$MASS"             ),
+   ('LQ',             "SLQ_t-channel_M$MASS",             "LegacyRun2_*_LQ_NonRes_5f_Madgraph_LO_M$MASS"             ),
    ('LQ',             "LQ3ToTauB_t-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_t-channel-M$MASS"       ),
    ('LQ',             "LQ3ToTauB_s-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_s-channel-M$MASS"       ),
    ('LQ',             "LQ3ToTauB_pair_M$MASS",            "LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M$MASS"            ),
@@ -217,7 +223,7 @@ def main(args):
             if checkFiles(filelist,directory):
               print bcolors.BOLD + bcolors.OKGREEN + '[OK] ' + directory + ' ... can be hadded ' + bcolors.ENDC
             
-            if 'LQ3' not in directory:
+            if not any(s in directory for s in ['LQ3','LQ_']):
               if args.compareToDas:
                 compareEventsToDAS(filelist,directory)
               if args.compareToDasExisting and os.path.isfile(outfile):
