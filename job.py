@@ -12,7 +12,7 @@ parser.add_argument('-i', '--infiles', dest='infiles', action='store', type=str,
 parser.add_argument('-o', '--outdir',  dest='outdir', action='store', type=str, default="outdir")
 parser.add_argument('-N', '--outfile', dest='outfile', action='store', type=str, default="noname")
 parser.add_argument('-n', '--nchunck', dest='nchunck', action='store', type=int, default='test')
-parser.add_argument('-c', '--channel', dest='channel', action='store', choices=['tautau','mutau','eletau','elemu','mumu'], type=str, default='tautau')
+parser.add_argument('-c', '--channel', dest='channel', action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
 parser.add_argument('-t', '--type',    dest='type', action='store', choices=['data','mc'], default='mc')
 parser.add_argument('-y', '--year',    dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
 parser.add_argument('-M', '--Zmass',   dest='Zmass', action='store_true', default=False)
