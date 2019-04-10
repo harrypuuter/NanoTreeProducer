@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser()
 parser.add_argument('-i', '--infiles',  dest='infiles', action='store', type=str, default=[ ])
-parser.add_argument('-c', '--channel',  dest='channel', action='store', choices=['tautau','mutau','eletau','elemu','mumu'], type=str, default='tautau')
+parser.add_argument('-c', '--channel',  dest='channel', action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
 parser.add_argument('-t', '--type',     dest='type', action='store', choices=['data','mc'], default='mc')
 parser.add_argument('-y', '--year',     dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
 parser.add_argument('-T', '--tes',      dest='tes', action='store', type=float, default=1.0)
@@ -240,6 +240,21 @@ else:
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000_0.root',
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000_0.root',
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_0.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000_0.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000_1.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000_10.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000_100.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_NonRes_5f_Madgraph_LO_M1000_101.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000_0.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000_1.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000_10.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000_100.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Pair_5f_Madgraph_LO_M1000_101.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_0.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_1.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_10.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_100.root',
+          #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_101.root',
         ]
     elif year==2018:
       infiles = [
@@ -258,6 +273,21 @@ else:
         #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000_0.root',
         #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000_0.root',
         #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/test_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_test_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000_0.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000_0.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000_1.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000_10.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000_100.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_NonRes_5f_Madgraph_LO_M1000_101.root
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000_0.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000_1.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000_10.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000_100.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Pair_5f_Madgraph_LO_M1000_101.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000_0.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000_1.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000_10.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000_100.root',
+        #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000_101.root',
       ]
 
 
