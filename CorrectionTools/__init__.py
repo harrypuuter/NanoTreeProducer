@@ -29,4 +29,8 @@ def extractTH1(file,histname):
 
 def warning(string,**kwargs):
   """Print warning with color."""
-  print "\033[1m\033[93m%sWarning!\033[0m\033[93m %s\033[0m"%(kwargs.get('pre',""),string)
+  pre    = kwargs.get('pre',  "") + "\033[1m\033[93mWarning!\033[0m \033[93m"
+  title  = kwargs.get('title',"")
+  if title: pre = "%s%s: "%(pre,title)
+  string = "%s%s\033[0m"%(pre,string)
+  print string.replace('\n','\n'+' '*(len(pre)-18))

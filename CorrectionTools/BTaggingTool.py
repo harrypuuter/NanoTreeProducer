@@ -103,11 +103,11 @@ class BTagWeightTool:
         
         # EFFICIENCIES
         hists      = { } # histograms to compute the b tagging efficiencies in MC
-        effmaps    = { } # b tagging efficiencies in MC to compute b tagging weight for an event
+        effmaps    = { } # b tag efficiencies in MC to compute b tagging weight for an event
         efffile    = ensureTFile(effname)
         default    = False
         if not efffile:
-          warning("BTagWeightTool: File %s with efficiency histograms does not exist! Reverting to default efficiency histogram..."%(effname))
+          warning("File %s with efficiency histograms does not exist! Reverting to default efficiency histogram..."%(effname),title="BTagWeightTool")
           default  = True
         for flavor in [0,4,5]:
           flavor   = flavorToString(flavor)
@@ -118,7 +118,7 @@ class BTagWeightTool:
           if efffile:
             effmaps[flavor]    = efffile.Get(effname)
             if not effmaps[flavor]:
-              warning("BTagWeightTool: histogram '%s' does not exist in %s! Reverting to default efficiency histogram..."%(effname,efffile.GetName()))
+              warning("histogram '%s' does not exist in %s! Reverting to default efficiency histogram..."%(effname,efffile.GetName()),title="BTagWeightTool")
               default          = True
               effmaps[flavor]  = createDefaultEfficiencyMap(effname,flavor,wp)
           else:
@@ -127,9 +127,9 @@ class BTagWeightTool:
         efffile.Close()
         
         if default:
-          warning("BTagWeightTool: Made use of default efficiency histograms! The b tag weights from this module should be regarded as placeholders only,\n"+\
-                  "                         and should NOT be used for analyses. B (mis)tag efficiencies in MC are analysis dependent. Please create your own\n"+\
-                  "                         efficiency histogram with CorrectionTools/btag/getBTagEfficiencies.py after running all MC samples with BTagWeightTool.")
+          warning("Made use of default efficiency histograms! The b tag weights from this module should be regarded as placeholders only,\n"+\
+                  "and should NOT be used for analyses. B (mis)tag efficiencies in MC are analysis dependent. Please create your own\n"+\
+                  "efficiency histogram with CorrectionTools/btag/getBTagEfficiencies.py after running all MC samples with BTagWeightTool.",title="BTagWeightTool")
         
         self.tagged  = tagged
         self.calib   = calib
@@ -145,7 +145,7 @@ class BTagWeightTool:
         return weight
         
     def getSF(self,pt,eta,flavor,tagged):
-        """Get b tag SF for one jet."""
+        """Get b tag SF for a single jet."""
         FLAV = flavorToFLAV(flavor)
         SF   = self.reader.eval(FLAV,abs(eta),pt)
         if tagged:
@@ -156,7 +156,7 @@ class BTagWeightTool:
         return weight
         
     def getEfficiency(self,pt,eta,flavor):
-        """Get b tag SF for one jet."""
+        """Get b tag SF for a single jet."""
         flavor = flavorToString(flavor)
         hist   = self.effmaps[flavor]
         xbin   = hist.GetXaxis().FindBin(eta)
