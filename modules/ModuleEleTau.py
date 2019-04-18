@@ -1,8 +1,8 @@
 import sys
-import ROOT
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection 
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
+from ModuleCommon import *
 from TreeProducerEleTau import *
 from CorrectionTools.ElectronSFs import *
 from CorrectionTools.PileupWeightTool import *
