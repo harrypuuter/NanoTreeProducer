@@ -182,8 +182,8 @@ else:
           'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/40000/EF19DF60-F32E-3343-82CA-C79A7FC80158.root',     #    1212
           'root://xrootd-cms.infn.it//store/data/Run2018B/Tau/NANOAOD/Nano14Dec2018-v1/80000/65F6D0A7-84B1-B14B-8ECD-8FE9F0FC8AC4.root',     #   18185
           'root://xrootd-cms.infn.it//store/data/Run2018C/Tau/NANOAOD/Nano14Dec2018-v1/280000/D3DA2DE0-60BE-964F-AF46-38BBFC500B6D.root',    #    8070
-          #'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/40000/A273F86C-EEA5-A045-91C6-58FBC2709F06.root',     #    4732
-          #'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/50000/5CE993F1-C822-BA4D-A09F-865A39C859DE.root',     #   12462
+          'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/40000/A273F86C-EEA5-A045-91C6-58FBC2709F06.root',     #    4732
+          'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/50000/5CE993F1-C822-BA4D-A09F-865A39C859DE.root',     #   12462
           #'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/280000/BBF7FF8D-0E03-1246-96A6-FB59F421DD96.root',    #  106907
           #'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/280000/7FDF91AF-7C29-9247-A204-46894479D63C.root',    # 1006638
           #'root://xrootd-cms.infn.it//store/data/Run2018B/Tau/NANOAOD/Nano14Dec2018-v1/90000/05C42610-AAFE-2B4A-8ADF-4A2173E2A598.root',     #   31121
@@ -212,7 +212,7 @@ else:
         ]
     elif year==2017:
         infiles = [
-          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/90000/946BE003-BA74-554C-81C4-98F9B4D41772.root',  #   83977
+#           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/90000/946BE003-BA74-554C-81C4-98F9B4D41772.root',  #   83977
 #           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/280000/1C5D9C07-B3BA-254E-832D-89AD21C9F258.root', #  109916
 #           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/280000/01CBA228-11A8-7848-8710-DF8CFEA1454E.root', #  169467
 #           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/80000/94D4274B-B7AE-3E4B-9F98-398C07A5B18D.root',  #  257903
@@ -255,6 +255,14 @@ else:
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_10.root',
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_100.root',
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_101.root',
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/280000/0A39C2EA-6216-8C44-91B6-5B6B2F334089.root', #  84000
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/280000/BD99C649-C5E7-D643-BCB7-2ED148297E78.root', # 905000
+          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/80000/2A0AF07C-DC2A-DB4F-A800-9889130CF9D5.root',  #  80000
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/80000/946A566B-5001-834B-999F-B9C94C122DC8.root',  #  84000
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/PairVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/00000/4F29BB0F-E041-1B42-98E1-CA0542B60CF5.root',
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/PairVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/40000/1D21AB6D-D603-994D-81FA-512FC5B5444C.root',
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/PairVectorLQ_InclusiveDecay_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/80000/3D33C19F-1B26-BC4A-A84E-D68D46120797.root', # 301000
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/PairVectorLQ_InclusiveDecay_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/80000/483DBAB3-4723-AA4B-8FB6-EF985DDD82BE.root', # 671000
         ]
     elif year==2018:
       infiles = [
@@ -304,6 +312,7 @@ if channel=='tautau':
     module2run = lambda: TauTauProducer(postfix, dataType, **kwargs)
 elif channel=='mutau':
     from modules.ModuleMuTau import *
+    #from modules.ModuleMuTau_check import *
     module2run = lambda: MuTauProducer(postfix, dataType, **kwargs)
 elif channel=='eletau':
     from modules.ModuleEleTau import *
@@ -319,5 +328,4 @@ else:
 
 #p = PostProcessor(".",["../../../crab/WZ_TuneCUETP8M1_13TeV-pythia8.root"],"Jet_pt>150","keep_and_drop.txt",[exampleModule()],provenance=True)
 p = PostProcessor(".", infiles, None, "keep_and_drop.txt", noOut=True, modules=[module2run()], provenance=False, postfix=postfix)
-
 p.run()

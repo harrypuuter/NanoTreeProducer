@@ -58,8 +58,9 @@ class bcolors:
 # Diboson (WW, WZ, ZZ) have very large files and acceptance,
 # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
 nFilesPerJob_defaults = [
-  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_', "TTTo2L2Nu*RunIIAutumn18", "TTToSemiLep*RunIIFall17", 'Single','Tau', 'EGamma']),
-  (40, ['LQ3','*LQ_']),
+  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_', "TTTo2L2Nu", "TTToSemiLep*RunIIFall17", 'Single','Tau', 'EGamma']),
+  ( 2, ['*VectorLQ_']),
+  (40, ['LQ3','*_LQ_']),
 ]
 
 
