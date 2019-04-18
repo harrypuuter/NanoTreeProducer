@@ -12,19 +12,20 @@ TES_FIRST=0.972
 TES_LAST=1.028
 STEP_SIZE=0.002
 VARIATIONS=`seq $TES_FIRST $STEP_SIZE $TES_LAST`
-while getopts "aCc:dcfJLmRrs:Tvx:y:" option; do case "${option}" in
+while getopts "aBCc:dcfJLmRrs:Tvx:y:" option; do case "${option}" in
   a) OPTIONS+=" -a"; CHECKDAS=1;;
+  B) OPTIONS+=" --rm-bad --rm-bug";;
   C) CHECKDAS=1;;
   c) CHANNELS="${OPTARG}";;
   d) OPTIONS+=" -d"; CHECKDAS=1;;
   f) OPTIONS+=" -f";;
   J) VARFLAG="--jtf"; VARIATIONS="0.900 1.100"; SAMPLES="DY W*J TT";;
-  L) VARFLAG="--ltf"; VARIATIONS="0.970 1.030";;
+  L) VARFLAG="--ltf"; VARIATIONS="0.970 1.030"; SAMPLES="DY TT";;
   m) OPTIONS+=" -m";;
   R) RESUBMIT=1;;
   r) OPTIONS+=" -r"; REMOVE=1;;
   s) SAMPLES="${OPTARG}";;
-  T) VARFLAG="--tes"; VARIATIONS="0.970 1.030";;
+  T) VARFLAG="--tes"; VARIATIONS="0.970 1.030"; SAMPLES="DY TT";;
   v) OPTIONS+=" -v";;
   x) OPTIONS+=" -x ${OPTARG}";;
   y) YEARS=${OPTARG//,/ };;
