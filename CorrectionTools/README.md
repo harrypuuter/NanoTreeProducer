@@ -75,7 +75,7 @@ The event weight is calculated according to [this method](https://twiki.cern.ch/
 
 ### Computing the b tag efficiencies
 
-The b tag efficiencies are analysis-dependent. They can be computed from the analysis output run on MC samples. For each event, fill the numerator and denominator histograms with `fillEfficiencies`, after removing overlap with other selected objects, e.g. the muon and tau object in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
+The b tag efficiencies are analysis-dependent. They can be computed from the analysis output run on MC samples. For each MC event, fill the numerator and denominator histograms with `fillEfficiencies`, after removing overlap with other selected objects, e.g. the muon and tau object in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
 <pre>
     def analyze(self event):
     
@@ -94,7 +94,7 @@ The b tag efficiencies are analysis-dependent. They can be computed from the ana
         
         ...
 </pre>
-Do this for as many MC samples as possible, for the most statistics (also note that Drell-Yan, W+jets and ttbar events typically have different jet flavor content). Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/btag/getBTagEfficiencies.py) to extract all histograms from analysis output, and compute the efficiencies. (You should want to edit this script to read in your analysis output.)
+Do this for as many MC samples as possible, to gain as much statistics as possible (also note that jets in Drell-Yan, W+jets and ttbar events typically have different jet flavor content). Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/btag/getBTagEfficiencies.py) to extract all histograms from analysis output, add them together for maximum statistics, and compute the efficiencies. (You should edit this script to read in your analysis output.)
 Examples of efficiency maps per jet flavor, and as a function of jet pT versus jet eta for the mutau analysis in 2017 are shown [here](https://ineuteli.web.cern.ch/ineuteli/btag/2017/).
 
 
