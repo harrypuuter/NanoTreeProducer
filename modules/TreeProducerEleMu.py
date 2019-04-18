@@ -6,9 +6,9 @@ from TreeProducerCommon import *
 
 class TreeProducerEleMu(TreeProducerCommon):
     
-    def __init__(self, name, dataType):
+    def __init__(self, name, dataType, **kwargs):
         
-        super(TreeProducerEleMu, self).__init__(name,dataType)
+        super(TreeProducerEleMu, self).__init__(name,dataType,**kwargs)
         print 'TreeProducerEleMu is called', name
         
         

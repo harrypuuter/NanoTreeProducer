@@ -25,6 +25,7 @@ class MuMuProducer(Module):
         self.doRecoil         = kwargs.get('doRecoil',    ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
         self.doTTpt           = kwargs.get('doTTpt',      'TT' in name )
         self.doTight          = kwargs.get('doTight',     self.tes!=1 or self.ltf!=1 )
+        self.isVectorLQ       = kwargs.get('isVectorLQ',  'VectorLQ' in name )
         self.channel          = 'mumu'
         year, channel         = self.year, self.channel
         
@@ -46,7 +47,7 @@ class MuMuProducer(Module):
         if not self.isData:
           self.muSFs          = MuonSFs(year=year)
           self.puTool         = PileupWeightTool(year=year)
-          self.btagTool       = BTagWeightTool('DeepCSV','medium',channel='mutau',year=year)
+          self.btagTool       = BTagWeightTool('DeepCSV','medium',channel=channel,year=year)
           self.btagTool_loose = BTagWeightTool('DeepCSV','loose',channel=channel,year=year)
           if self.doZpt:
             self.zptTool      = ZptCorrectionTool(year=year)
@@ -206,6 +207,9 @@ class MuMuProducer(Module):
             self.out.LHE_Njets[0]              = event.LHE_Njets
           except RuntimeError:
             self.out.LHE_Njets[0]              = -1
+          
+          if self.isVectorLQ:
+            self.out.ntops[0] = countTops(event)
         
         
         # MUON 1

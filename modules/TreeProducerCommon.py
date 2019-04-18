@@ -7,78 +7,6 @@ from CorrectionTools.RecoilCorrectionTool import hasBit
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Event
 
 
-def checkBranches(tree):
-  """Redirect some branch names in case they are not available in some samples or nanoAOD version."""
-  branches = [
-    ('Electron_mvaFall17V2Iso',        'Electron_mvaFall17Iso'       ),
-    ('Electron_mvaFall17V2Iso_WPL',    'Electron_mvaFall17Iso_WPL'   ),
-    ('Electron_mvaFall17V2Iso_WP80',   'Electron_mvaFall17Iso_WP80'  ),
-    ('Electron_mvaFall17V2Iso_WP90',   'Electron_mvaFall17Iso_WP90'  ),
-    ('Electron_mvaFall17V2noIso_WPL',  'Electron_mvaFall17noIso_WPL' ),
-    ('Electron_mvaFall17V2noIso_WP80', 'Electron_mvaFall17noIso_WP80'),
-    ('Electron_mvaFall17V2noIso_WP90', 'Electron_mvaFall17noIso_WP90'),
-    ('HLT_Ele32_WPTight_Gsf',           False                        ),
-  ]
-  fullbranchlist = tree.GetListOfBranches()
-  for newbranch, oldbranch in branches:
-    if newbranch not in fullbranchlist:
-      if isinstance(oldbranch,str):
-        print "checkBranches: directing '%s' -> '%s'"%(newbranch,oldbranch)
-        exec "setattr(Event,newbranch,property(lambda self: self._tree.readBranch('%s')))"%oldbranch
-      else:
-        print "checkBranches: directing '%s' -> %s"%(newbranch,oldbranch)
-        exec "setattr(Event,newbranch,%s)"%(oldbranch)
-        
-  
-def setBranchStatuses(tree,otherbranches=[ ]):
-  """Activate or deactivate branch statuses."""
-  tree.SetBranchStatus('*',0)
-  branches = [
-   'run', 'luminosityBlock', 'event', 'PV_*', 'Pileup_*', 'Flag_*', 'HLT_*',
-   'LHE_*', 'nGenPart', 'GenPart_*', 'GenMET_*', 'nGenVisTau', 'GenVisTau_*', 'genWeight',
-   'nElectron', 'Electron_*', 'nMuon', 'Muon_*', 'nTau', 'Tau_*',
-   'nJet', 'Jet_*', 'MET_*',
-  ]
-  for branchname in branches+otherbranches:
-   tree.SetBranchStatus(branchname,1)
-  
-
-def getVLooseTauIso(year):
-  """Return a method to check whether event passes the VLoose working
-  point of all available tau IDs. (For tau ID measurement.)"""
-  return lambda e,i: ord(e.Tau_idMVAoldDM[i])>0 or ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v1[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0
-  
-def getMET(year):
-  """Return year-dependent MET recipe."""
-  ###if year==2017:
-  ###  return lambda e: TLorentzVector(e.METFixEE2017_pt*cos(e.METFixEE2017_phi),e.METFixEE2017_pt*sin(e.METFixEE2017_phi),0,e.METFixEE2017_pt)
-  ###else:
-  return lambda e: TLorentzVector(e.MET_pt*cos(e.MET_phi),e.MET_pt*sin(e.MET_phi),0,e.MET_pt)
-  
-def getMETFilters(year,isData):
-  """Return a method to check if an event passes the recommended MET filters."""
-  if year==2018:
-    if isData:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilterV2
-    else:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilterV2
-  else:
-    if isData:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilter
-    else:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilter
-  
-def Tau_idIso(event,i):
-  raw = event.Tau_rawIso[i]
-  if event.Tau_photonsOutsideSignalCone[i]/event.Tau_pt[i]<0.10:
-    return 0 if raw>4.5 else 1 if raw>3.5 else 3 if raw>2.5 else 7 if raw>1.5 else 15 if raw>0.8 else 31 # VVLoose, VLoose, Loose, Medium, Tight
-  return 0 if raw>4.5 else 1 if raw>3.5 else 3 # VVLoose, VLoose
-  
-
 root_dtype = {
   float: 'D',  int: 'I',  bool: 'O',
   'f':   'D',  'i': 'I',  '?':  'O',  'b': 'b'
@@ -89,15 +17,16 @@ num_dtype = {
 
 class TreeProducerCommon(object):
     
-    def __init__(self, name, dataType):
+    def __init__(self, name, dataType, **kwargs):
         
         print 'TreeProducerCommon is called', name
-        self.name   = name
-        self._isData = dataType=='data'
+        self.name       = name
+        self._isData    = dataType=='data'
+        self.isVectorLQ = kwargs.get('isVectorLQ', 'VectorLQ' in self.name)
         
         # TREE
         self.outputfile = ROOT.TFile(name, 'RECREATE')
-        self.tree = TTree('tree','tree')
+        self.tree       = TTree('tree','tree')
         
         # HISTOGRAM
         self.cutflow = TH1D('cutflow', 'cutflow',  25, 0,  25)
@@ -235,6 +164,8 @@ class TreeProducerCommon(object):
           self.addBranch('ngentaus',              int,   -1)
           self.addBranch('m_genboson',            float, -1)
           self.addBranch('pt_genboson',           float, -1)
+          if self.isVectorLQ:
+            self.addBranch('ntops',               int,   -1)
         
         #self.addBranch('m_taub',                  float)
         #self.addBranch('m_taumub',                float)
@@ -265,7 +196,82 @@ class TreeProducerCommon(object):
         
 
 
+def checkBranches(tree):
+  """Redirect some branch names in case they are not available in some samples or nanoAOD version."""
+  branches = [
+    ('Electron_mvaFall17V2Iso',        'Electron_mvaFall17Iso'       ),
+    ('Electron_mvaFall17V2Iso_WPL',    'Electron_mvaFall17Iso_WPL'   ),
+    ('Electron_mvaFall17V2Iso_WP80',   'Electron_mvaFall17Iso_WP80'  ),
+    ('Electron_mvaFall17V2Iso_WP90',   'Electron_mvaFall17Iso_WP90'  ),
+    ('Electron_mvaFall17V2noIso_WPL',  'Electron_mvaFall17noIso_WPL' ),
+    ('Electron_mvaFall17V2noIso_WP80', 'Electron_mvaFall17noIso_WP80'),
+    ('Electron_mvaFall17V2noIso_WP90', 'Electron_mvaFall17noIso_WP90'),
+    ('HLT_Ele32_WPTight_Gsf',           False                        ),
+  ]
+  fullbranchlist = tree.GetListOfBranches()
+  for newbranch, oldbranch in branches:
+    if newbranch not in fullbranchlist:
+      if isinstance(oldbranch,str):
+        print "checkBranches: directing '%s' -> '%s'"%(newbranch,oldbranch)
+        exec "setattr(Event,newbranch,property(lambda self: self._tree.readBranch('%s')))"%oldbranch
+      else:
+        print "checkBranches: directing '%s' -> %s"%(newbranch,oldbranch)
+        exec "setattr(Event,newbranch,%s)"%(oldbranch)
+        
+
+def setBranchStatuses(tree,otherbranches=[ ]):
+  """Activate or deactivate branch statuses."""
+  tree.SetBranchStatus('*',0)
+  branches = [
+   'run', 'luminosityBlock', 'event', 'PV_*', 'Pileup_*', 'Flag_*', 'HLT_*',
+   'LHE_*', 'nGenPart', 'GenPart_*', 'GenMET_*', 'nGenVisTau', 'GenVisTau_*', 'genWeight',
+   'nElectron', 'Electron_*', 'nMuon', 'Muon_*', 'nTau', 'Tau_*',
+   'nJet', 'Jet_*', 'MET_*',
+  ]
+  for branchname in branches+otherbranches:
+   tree.SetBranchStatus(branchname,1)
+  
+
+def getVLooseTauIso(year):
+  """Return a method to check whether event passes the VLoose working
+  point of all available tau IDs. (For tau ID measurement.)"""
+  return lambda e,i: ord(e.Tau_idMVAoldDM[i])>0 or ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v1[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0
+  
+def getMET(year):
+  """Return year-dependent MET recipe."""
+  ###if year==2017:
+  ###  return lambda e: TLorentzVector(e.METFixEE2017_pt*cos(e.METFixEE2017_phi),e.METFixEE2017_pt*sin(e.METFixEE2017_phi),0,e.METFixEE2017_pt)
+  ###else:
+  return lambda e: TLorentzVector(e.MET_pt*cos(e.MET_phi),e.MET_pt*sin(e.MET_phi),0,e.MET_pt)
+  
+def getMETFilters(year,isData):
+  """Return a method to check if an event passes the recommended MET filters."""
+  if year==2018:
+    if isData:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilterV2
+    else:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilterV2
+  else:
+    if isData:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilter
+    else:
+      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilter
+  
+def Tau_idIso(event,i):
+  raw = event.Tau_rawIso[i]
+  if event.Tau_photonsOutsideSignalCone[i]/event.Tau_pt[i]<0.10:
+    return 0 if raw>4.5 else 1 if raw>3.5 else 3 if raw>2.5 else 7 if raw>1.5 else 15 if raw>0.8 else 31 # VVLoose, VLoose, Loose, Medium, Tight
+  return 0 if raw>4.5 else 1 if raw>3.5 else 3 # VVLoose, VLoose
+  
+
+
+
 class DiLeptonBasicClass:
+    """Container class to pair and order tau decay candidates."""
     def __init__(self, id1, pt1, iso1, id2, pt2, iso2):
         self.id1  = id1
         self.id2  = id2
@@ -471,6 +477,7 @@ def genmatch(event,index,out=None):
 
 
 def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
+    """Check if event has extra electrons or muons."""
     
     extramuon_veto = False
     extraelec_veto = False
@@ -523,7 +530,7 @@ def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
 
 
 def fillJetsBranches(self,event,tau1,tau2):
-    """Help function to get jets and b tags, after removing overlap with tau decay candidates,
+    """Help function to select jets and b tags, after removing overlap with tau decay candidates,
     and fill the jet variable branches."""
     
     jetIds, bjetIds = [ ], [ ]
@@ -566,42 +573,52 @@ def fillJetsBranches(self,event,tau1,tau2):
     self.out.nbtag_loose[0]   = nbtag_loose
     self.out.nbtag50_loose[0] = nbtag50_loose
     
-    if len(jetIds)>0: 
-      self.out.jpt_1[0]     = event.Jet_pt[jetIds[0]]
-      self.out.jeta_1[0]    = event.Jet_eta[jetIds[0]]
-      self.out.jphi_1[0]    = event.Jet_phi[jetIds[0]]
-      self.out.jdeepb_1[0]  = event.Jet_btagDeepB[jetIds[0]]
+    if len(jetIds)>0:
+      self.out.jpt_1[0]       = event.Jet_pt[jetIds[0]]
+      self.out.jeta_1[0]      = event.Jet_eta[jetIds[0]]
+      self.out.jphi_1[0]      = event.Jet_phi[jetIds[0]]
+      self.out.jdeepb_1[0]    = event.Jet_btagDeepB[jetIds[0]]
     else:
-      self.out.jpt_1[0]     = -9.
-      self.out.jeta_1[0]    = -9.
-      self.out.jphi_1[0]    = -9.
-      self.out.jdeepb_1[0]  = -9.
+      self.out.jpt_1[0]       = -1.
+      self.out.jeta_1[0]      = -9.
+      self.out.jphi_1[0]      = -9.
+      self.out.jdeepb_1[0]    = -9.
     
-    if len(jetIds)>1: 
-      self.out.jpt_2[0]     = event.Jet_pt[jetIds[1]]
-      self.out.jeta_2[0]    = event.Jet_eta[jetIds[1]]
-      self.out.jphi_2[0]    = event.Jet_phi[jetIds[1]]
-      self.out.jdeepb_2[0]  = event.Jet_btagDeepB[jetIds[1]]
+    if len(jetIds)>1:
+      self.out.jpt_2[0]       = event.Jet_pt[jetIds[1]]
+      self.out.jeta_2[0]      = event.Jet_eta[jetIds[1]]
+      self.out.jphi_2[0]      = event.Jet_phi[jetIds[1]]
+      self.out.jdeepb_2[0]    = event.Jet_btagDeepB[jetIds[1]]
     else:
-      self.out.jpt_2[0]     = -9.
-      self.out.jeta_2[0]    = -9.
-      self.out.jphi_2[0]    = -9.
-      self.out.jdeepb_2[0]  = -9.
+      self.out.jpt_2[0]       = -1.
+      self.out.jeta_2[0]      = -9.
+      self.out.jphi_2[0]      = -9.
+      self.out.jdeepb_2[0]    = -9.
     
-    if len(bjetIds)>0: 
-      self.out.bpt_1[0]     = event.Jet_pt[bjetIds[0]]
-      self.out.beta_1[0]    = event.Jet_eta[bjetIds[0]]
+    if len(bjetIds)>0:
+      self.out.bpt_1[0]       = event.Jet_pt[bjetIds[0]]
+      self.out.beta_1[0]      = event.Jet_eta[bjetIds[0]]
     else:
-      self.out.bpt_1[0]     = -9.
-      self.out.beta_1[0]    = -9.
+      self.out.bpt_1[0]       = -1.
+      self.out.beta_1[0]      = -9.
     
-    if len(bjetIds)>1: 
-      self.out.bpt_2[0]     = event.Jet_pt[bjetIds[1]]
-      self.out.beta_2[0]    = event.Jet_eta[bjetIds[1]]
+    if len(bjetIds)>1:
+      self.out.bpt_2[0]       = event.Jet_pt[bjetIds[1]]
+      self.out.beta_2[0]      = event.Jet_eta[bjetIds[1]]
     else:
-      self.out.bpt_2[0]     = -9.
-      self.out.beta_2[0]    = -9.
+      self.out.bpt_2[0]       = -1.
+      self.out.beta_2[0]      = -9.
     
     return jetIds
+    
+
+
+def countTops(event):
+    """Count number of tops in a given event."""
+    ntops = 0
+    for id in range(event.nGenPart):
+      if abs(event.GenPart_pdgId[id])==6 and hasBit(event.GenPart_statusFlags[id],13):
+        ntops += 1
+    return ntops
     
 

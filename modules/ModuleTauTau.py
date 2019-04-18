@@ -18,14 +18,15 @@ class TauTauProducer(Module):
         self.name             = name
         self.out              = TreeProducerTauTau(name,dataType)
         self.isData           = dataType=='data'
-        self.year             = kwargs.get('year',     2017 )
-        self.tes              = kwargs.get('tes',      1.0  )
-        self.ltf              = kwargs.get('ltf',      1.0  )
-        self.jtf              = kwargs.get('jtf',      1.0  )
-        self.doZpt            = kwargs.get('doZpt',    'DY' in name )
-        self.doRecoil         = kwargs.get('doRecoil', ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
-        self.doTTpt           = kwargs.get('doTTpt',   'TT' in name )
-        self.doTight          = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 )
+        self.year             = kwargs.get('year',       2017 )
+        self.tes              = kwargs.get('tes',        1.0  )
+        self.ltf              = kwargs.get('ltf',        1.0  )
+        self.jtf              = kwargs.get('jtf',        1.0  )
+        self.doZpt            = kwargs.get('doZpt',      'DY' in name )
+        self.doRecoil         = kwargs.get('doRecoil',   ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
+        self.doTTpt           = kwargs.get('doTTpt',     'TT' in name )
+        self.doTight          = kwargs.get('doTight',    self.tes!=1 or self.ltf!=1 )
+        self.isVectorLQ       = kwargs.get('isVectorLQ', 'VectorLQ' in name )
         self.channel          = 'tautau'
         year, channel         = self.year, self.channel
         
@@ -283,15 +284,18 @@ class TauTauProducer(Module):
             self.out.LHE_Njets[0]              = event.LHE_Njets
           except RuntimeError:
             self.out.LHE_Njets[0]              = -1
-        #print 'check (LO)', event.LHE_NpLO, type(event.LHE_NpLO)
-        #print 'check (NLO)', event.LHE_NpNLO, type(event.LHE_NpNLO)        
-        #self.out.LHE_NpLO[0]                   = event.LHE_NpLO
-        #self.out.LHE_NpNLO[0]                  = event.LHE_NpNLO
-        #print self.out.LHE_Njets[0], event.LHE_Njets 
-        #print self.out.event[0], event.event, (event.event & 0xffffffffffffffff)
-        #print self.out.LHE_Njets[0], event.LHE_Njets, int(event.LHE_Njets)
-        #print event.LHE_NpNLO
-        #print self.out.Pileup_nPU, event.Pileup_nPU
+          #print 'check (LO)', event.LHE_NpLO, type(event.LHE_NpLO)
+          #print 'check (NLO)', event.LHE_NpNLO, type(event.LHE_NpNLO)        
+          #self.out.LHE_NpLO[0]                   = event.LHE_NpLO
+          #self.out.LHE_NpNLO[0]                  = event.LHE_NpNLO
+          #print self.out.LHE_Njets[0], event.LHE_Njets 
+          #print self.out.event[0], event.event, (event.event & 0xffffffffffffffff)
+          #print self.out.LHE_Njets[0], event.LHE_Njets, int(event.LHE_Njets)
+          #print event.LHE_NpNLO
+          #print self.out.Pileup_nPU, event.Pileup_nPU
+          
+          if self.isVectorLQ:
+            self.out.ntops[0] = countTops(event)
         
         
         # TAU 1

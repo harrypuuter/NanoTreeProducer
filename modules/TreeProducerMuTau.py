@@ -5,9 +5,9 @@ from TreeProducerCommon import *
 
 class TreeProducerMuTau(TreeProducerCommon):
 
-    def __init__(self, name, dataType):
+    def __init__(self, name, dataType, **kwargs):
         
-        super(TreeProducerMuTau, self).__init__(name,dataType)
+        super(TreeProducerMuTau, self).__init__(name,dataType,**kwargs)
         print 'TreeProducerMuTau is called', name
         
         
@@ -23,9 +23,6 @@ class TreeProducerMuTau(TreeProducerCommon):
         self.addBranch('dz_1',                       float)
         self.addBranch('q_1',                        int)
         self.addBranch('pfRelIso04_all_1',           float)
-        
-        if not self._isData:
-          self.addBranch('genPartFlav_1',            int, -1)
         
         
         ###########
@@ -64,9 +61,10 @@ class TreeProducerMuTau(TreeProducerCommon):
         self.addBranch('jpt_match_2',                float)
         
         if not self._isData:
+          self.addBranch('genPartFlav_1',            int,   -1)
           self.addBranch('genPartFlav_2',            int,   -1)
           self.addBranch('gendecayMode_2',           int,   -1)
-          self.addBranch('genvistaupt_2',            float, -9)
+          self.addBranch('genvistaupt_2',            float, -1)
           self.addBranch('genvistaueta_2',           float, -9)
           self.addBranch('genvistauphi_2',           float, -9)
         

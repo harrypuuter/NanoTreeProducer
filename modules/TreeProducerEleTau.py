@@ -5,8 +5,8 @@ from TreeProducerCommon import *
 
 class TreeProducerEleTau(TreeProducerCommon):
 
-    def __init__(self, name, dataType):
-        super(TreeProducerEleTau, self).__init__(name,dataType)
+    def __init__(self, name, dataType, **kwargs):
+        super(TreeProducerEleTau, self).__init__(name,dataType,**kwargs)
         print 'TreeProducerEleTau is called', name
         
         
@@ -28,9 +28,6 @@ class TreeProducerEleTau(TreeProducerCommon):
         self.addBranch('mvaFall17Iso_WP90_1',        bool)
         self.addBranch('mvaFall17noIso_WP80_1',      bool)
         self.addBranch('mvaFall17noIso_WP90_1',      bool)
-        
-        if not self._isData:
-          self.addBranch('genPartFlav_1',            int, -1)
         
         
         ########### 
@@ -68,9 +65,10 @@ class TreeProducerEleTau(TreeProducerCommon):
         self.addBranch('jpt_match_2',                float)
         
         if not self._isData:
+          self.addBranch('genPartFlav_1',            int,   -1)
           self.addBranch('genPartFlav_2',            int,   -1)
           self.addBranch('gendecayMode_2',           int,   -1)
-          self.addBranch('genvistaupt_2',            float, -9)
+          self.addBranch('genvistaupt_2',            float, -1)
           self.addBranch('genvistaueta_2',           float, -9)
           self.addBranch('genvistauphi_2',           float, -9)
         

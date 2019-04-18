@@ -2,9 +2,9 @@ from TreeProducerCommon import *
 
 class TreeProducerTauTau(TreeProducerCommon):
 
-    def __init__(self, name, dataType):
+    def __init__(self, name, dataType, **kwargs):
         
-        super(TreeProducerTauTau, self).__init__(name,dataType)
+        super(TreeProducerTauTau, self).__init__(name,dataType,**kwargs)
         print 'TreeProducerTauTau is called', name
         
         
@@ -44,7 +44,7 @@ class TreeProducerTauTau(TreeProducerCommon):
         if not self._isData:
           self.addBranch('genPartFlav_1',            int,   -1)
           self.addBranch('gendecayMode_1',           int,   -1)
-          self.addBranch('genvistaupt_1',            float, -9)
+          self.addBranch('genvistaupt_1',            float, -1)
           self.addBranch('genvistaueta_1',           float, -9)
           self.addBranch('genvistauphi_1',           float, -9)
         
@@ -88,5 +88,5 @@ class TreeProducerTauTau(TreeProducerCommon):
           self.addBranch('genvistaupt_2',            float, -1)
           self.addBranch('genvistaueta_2',           float, -9)
           self.addBranch('genvistauphi_2',           float, -9)
-          self.addBranch('trigweightVT',             float, -9)
+          self.addBranch('trigweightVT',             float, 1.)
         

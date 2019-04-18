@@ -18,14 +18,15 @@ class MuTauProducer(Module):
         self.name             = name
         self.out              = TreeProducerMuTau(name,dataType)
         self.isData           = dataType=='data'
-        self.year             = kwargs.get('year',     2017 )
-        self.tes              = kwargs.get('tes',      1.0  )
-        self.ltf              = kwargs.get('ltf',      1.0  )
-        self.jtf              = kwargs.get('jtf',      1.0  )
-        self.doZpt            = kwargs.get('doZpt',    'DY' in name )
-        self.doRecoil         = kwargs.get('doRecoil', ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
-        self.doTTpt           = kwargs.get('doTTpt',   'TT' in name )
-        self.doTight          = kwargs.get('doTight',  self.tes!=1 or self.ltf!=1 or self.jtf!=1)
+        self.year             = kwargs.get('year',       2017 )
+        self.tes              = kwargs.get('tes',        1.0  )
+        self.ltf              = kwargs.get('ltf',        1.0  )
+        self.jtf              = kwargs.get('jtf',        1.0  )
+        self.doZpt            = kwargs.get('doZpt',      'DY' in name )
+        self.doRecoil         = kwargs.get('doRecoil',   ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
+        self.doTTpt           = kwargs.get('doTTpt',     'TT' in name )
+        self.doTight          = kwargs.get('doTight',    self.tes!=1 or self.ltf!=1 or self.jtf!=1)
+        self.isVectorLQ       = kwargs.get('isVectorLQ', 'VectorLQ' in name )
         self.channel          = 'mutau'
         year, channel         = self.year, self.channel
         
@@ -225,6 +226,9 @@ class MuTauProducer(Module):
             self.out.LHE_Njets[0]              = event.LHE_Njets
           except RuntimeError:
             self.out.LHE_Njets[0]              = -1
+          
+          if self.isVectorLQ:
+            self.out.ntops[0] = countTops(event)
         
         
         # MUON
