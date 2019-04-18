@@ -113,10 +113,10 @@ class BTagWeightTool:
           flavor   = flavorToString(flavor)
           histname = "%s_%s_%s"%(tagger,flavor,wp)
           effname  = "%s/eff_%s_%s_%s"%(channel,tagger,flavor,wp)
-          hists[flavor]        = createEfficienyMap(histname)
-          hists[flavor+'_all'] = createEfficienyMap(histname+'_all')
+          hists[flavor]        = createEfficienyMap(histname)        # numerator   = b tagged jets
+          hists[flavor+'_all'] = createEfficienyMap(histname+'_all') # denomenator = all jets
           if efffile:
-            effmaps[flavor]       = efffile.Get(effname)
+            effmaps[flavor]    = efffile.Get(effname)
             if not effmaps[flavor]:
               warning("BTagWeightTool: histogram '%s' does not exist in %s! Reverting to default efficiency histogram..."%(effname,efffile.GetName()))
               default          = True
@@ -127,9 +127,9 @@ class BTagWeightTool:
         efffile.Close()
         
         if default:
-          warning("BTagWeightTool: Made use of default efficiency histograms!\n"+\
-                  "                         B (mis)tag efficiencies in MC are analysis dependent. Please create your own efficiency histogram\n"+\
-                  "                         with CorrectionTools/btag/getBTagEfficiencies.py after running all MC samples with BTagWeightTool.")
+          warning("BTagWeightTool: Made use of default efficiency histograms! The b tag weights from this module should be regarded as placeholders only,\n"+\
+                  "                         and should NOT be used for analyses. B (mis)tag efficiencies in MC are analysis dependent. Please create your own\n"+\
+                  "                         efficiency histogram with CorrectionTools/btag/getBTagEfficiencies.py after running all MC samples with BTagWeightTool.")
         
         self.tagged  = tagged
         self.calib   = calib
