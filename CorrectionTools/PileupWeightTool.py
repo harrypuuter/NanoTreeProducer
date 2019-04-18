@@ -1,7 +1,6 @@
 # Author: Izaak Neutelings (November 2018)
-from CorrectionTools import modulepath
+from CorrectionTools import modulepath, ensureTFile
 from ROOT import TFile
-from ScaleFactorTool import ensureTFile
 path = modulepath+"/pileup/"
 
 

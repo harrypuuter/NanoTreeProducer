@@ -3,8 +3,7 @@
 # 2017: https://github.com/truggles/TauTriggerSFs/tree/final_2017_MCv2
 import os
 from math import sqrt, pi
-from CorrectionTools import modulepath
-from ScaleFactorTool import ensureTFile, extractTH1
+from CorrectionTools import modulepath, ensureTFile, extractTH1
 from ROOT import TMath
 path = modulepath+"/tauEfficiencies/"
         
