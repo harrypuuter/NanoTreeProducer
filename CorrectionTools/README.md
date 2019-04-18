@@ -41,9 +41,9 @@ git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
 ```
 
 
-## B-tagging tools
+## B tagging tools
 
-`BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b-tagging weights. These can be called during the initialization of you analysis module, e.g. in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
+`BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b tagging weights. These can be called during the initialization of you analysis module, e.g. in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
 ```
 class MuTauProducer(Module):
     
@@ -70,10 +70,12 @@ class MuTauProducer(Module):
           self.out.btagweight[0] = self.btagTool.getWeight(event,jetIds)
 ```
 
-`BTagWeightTool` calculates b-tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/btag).
+`BTagWeightTool` calculates b tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/btag).
 The event weight is calculated according to [this method](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagSFMethods#1a_Event_reweighting_using_scale).
 
-The efficiencies in MC can be calculated for your particular analys by filling histograms with `fillEfficiencies` for each selected event, after removing overlap with other selected objects, e.g. the muon and tau object in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
+### Computing the b tag efficiencies
+
+The b tag efficiencies are analysis-dependent. They can be computed from the analysis output run on MC samples. For each event, fill the numerator and denominator histograms with `fillEfficiencies`, after removing overlap with other selected objects, e.g. the muon and tau object in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
 <pre>
     def analyze(self event):
     
@@ -92,7 +94,8 @@ The efficiencies in MC can be calculated for your particular analys by filling h
         
         ...
 </pre>
-Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/btag/getBTagEfficiencies.py) to extract all histograms from MC output and compute the efficiencies. Examples for the mutau analysis in 2017 are shown [here](https://ineuteli.web.cern.ch/ineuteli/btag/2017/).
+Do this for as many MC samples as possible, for the most statistics (also note that Drell-Yan, W+jets and ttbar events typically have different jet flavor content). Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/btag/getBTagEfficiencies.py) to extract all histograms from analysis output, and compute the efficiencies. (You should want to edit this script to read in your analysis output.)
+Examples of efficiency maps per jet flavor, and as a function of jet pT versus jet eta for the mutau analysis in 2017 are shown [here](https://ineuteli.web.cern.ch/ineuteli/btag/2017/).
 
 
 

@@ -5,9 +5,8 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
-from CorrectionTools import modulepath
+from CorrectionTools import modulepath, ensureTFile, warning
 from array import array
-from ScaleFactorTool import ensureTFile
 import ROOT
 #ROOT.gROOT.ProcessLine('.L ./BTagCalibrationStandalone.cpp+')
 from ROOT import TH2F, BTagCalibration, BTagCalibrationReader
@@ -85,6 +84,7 @@ class BTagWeightTool:
             effname = path+'CSVv2_2018_Autumn18_eff.root'
         
         # TAGGING WP
+        self.wpname = wp
         self.wp     = getattr(BTagWPs(tagger,year),wp)
         if 'deep' in tagger.lower():
           tagged = lambda e,i: e.Jet_btagDeepB[i]>self.wp
@@ -102,39 +102,50 @@ class BTagWeightTool:
         reader.load(calib, FLAV_UDSG, type_udsg)
         
         # EFFICIENCIES
-        ptbins     = array('d',[10,20,30,50,70,100,140,200,300,500,1000,1500])
-        etabins    = array('d',[-2.5,-1.5,0.0,1.5,2.5])
-        bins       = (len(ptbins)-1,ptbins,len(etabins)-1,etabins)
-        hists      = { }
-        effs       = { }
+        hists      = { } # histograms to compute the b tagging efficiencies in MC
+        effmaps    = { } # b tagging efficiencies in MC to compute b tagging weight for an event
         efffile    = ensureTFile(effname)
+        default    = False
+        if not efffile:
+          warning("BTagWeightTool: File %s with efficiency histograms does not exist! Reverting to default efficiency histogram..."%(effname))
+          default  = True
         for flavor in [0,4,5]:
           flavor   = flavorToString(flavor)
           histname = "%s_%s_%s"%(tagger,flavor,wp)
-          effname  = "%s/eff_%s_%s_%s"%(channel,tagger,flavor,'medium') # temporarily only use medium
-          hists[flavor]        = TH2F(histname,histname,*bins)
-          hists[flavor+'_all'] = TH2F(histname+'_all',histname+'_all',*bins)
-          effs[flavor]         = efffile.Get(effname)
-          hists[flavor].SetDirectory(0)
-          hists[flavor+'_all'].SetDirectory(0)
-          effs[flavor].SetDirectory(0)
+          effname  = "%s/eff_%s_%s_%s"%(channel,tagger,flavor,wp)
+          hists[flavor]        = createEfficienyMap(histname)
+          hists[flavor+'_all'] = createEfficienyMap(histname+'_all')
+          if efffile:
+            effmaps[flavor]       = efffile.Get(effname)
+            if not effmaps[flavor]:
+              warning("BTagWeightTool: histogram '%s' does not exist in %s! Reverting to default efficiency histogram..."%(effname,efffile.GetName()))
+              default          = True
+              effmaps[flavor]  = createDefaultEfficiencyMap(effname,flavor,wp)
+          else:
+            effmaps[flavor]    = createDefaultEfficiencyMap(effname,flavor,wp)
+          effmaps[flavor].SetDirectory(0)
         efffile.Close()
         
-        self.tagged = tagged
-        self.calib  = calib
-        self.reader = reader
-        self.hists  = hists
-        self.effs   = effs
+        if default:
+          warning("BTagWeightTool: Made use of default efficiency histograms!\n"+\
+                  "                         B (mis)tag efficiencies in MC are analysis dependent. Please create your own efficiency histogram\n"+\
+                  "                         with CorrectionTools/btag/getBTagEfficiencies.py after running all MC samples with BTagWeightTool.")
+        
+        self.tagged  = tagged
+        self.calib   = calib
+        self.reader  = reader
+        self.hists   = hists
+        self.effmaps = effmaps
         
     def getWeight(self,event,jetids):
-        """Get event weight for a given set of jets."""
+        """Get b tagging event weight for a given set of jets."""
         weight = 1.
         for id in jetids:
           weight *= self.getSF(event.Jet_pt[id],event.Jet_eta[id],event.Jet_partonFlavour[id],self.tagged(event,id))
         return weight
         
     def getSF(self,pt,eta,flavor,tagged):
-        """Get SF for one jet."""
+        """Get b tag SF for one jet."""
         FLAV = flavorToFLAV(flavor)
         SF   = self.reader.eval(FLAV,abs(eta),pt)
         if tagged:
@@ -145,9 +156,9 @@ class BTagWeightTool:
         return weight
         
     def getEfficiency(self,pt,eta,flavor):
-        """Get SF for one jet."""
+        """Get b tag SF for one jet."""
         flavor = flavorToString(flavor)
-        hist   = self.effs[flavor]
+        hist   = self.effmaps[flavor]
         xbin   = hist.GetXaxis().FindBin(eta)
         ybin   = hist.GetYaxis().FindBin(pt)
         if xbin==0: xbin = 1
@@ -158,14 +169,16 @@ class BTagWeightTool:
         return sf
         
     def fillEfficiencies(self,event,jetids):
-        """Fill efficiency of MC."""
+        """Fill histograms to make efficiency map for MC, split by true jet flavor, and
+        jet pT and eta. Numerator = b tagged jets; denominator = all jets."""
         for id in jetids:
           flavor = flavorToString(event.Jet_partonFlavour[id])
           if self.tagged(event,id):
             self.hists[flavor].Fill(event.Jet_pt[id],event.Jet_eta[id])
           self.hists[flavor+'_all'].Fill(event.Jet_pt[id],event.Jet_eta[id])
-        
+            
     def setDirectory(self,directory,subdirname=None):
+        """Set directory of histograms before writing."""
         if subdirname:
           subdir = directory.Get(subdirname)
           if not subdir:
@@ -173,11 +186,40 @@ class BTagWeightTool:
           directory = subdir
         for histname, hist in self.hists.iteritems():
           hist.SetDirectory(directory)
+     
+
 
 def flavorToFLAV(flavor):
+  """Help function to convert an integer flavor ID to a BTagEntry enum value."""
   return FLAV_B if abs(flavor)==5 else FLAV_C if abs(flavor)==4 or abs(flavor)==15 else FLAV_UDSG       
-
+  
 def flavorToString(flavor):
+  """Help function to convert an integer flavor ID to a string value."""
   return 'b' if abs(flavor)==5 else 'c' if abs(flavor)==4 else 'udsg'
   
+def createEfficienyMap(histname):
+    """Help function to create efficiency maps (TH2D) with uniform binning and layout.
+    One method to rule them all."""
+    ptbins  = array('d',[10,20,30,50,70,100,140,200,300,500,1000,1500])
+    etabins = array('d',[-2.5,-1.5,0.0,1.5,2.5])
+    bins    = (len(ptbins)-1,ptbins,len(etabins)-1,etabins)
+    hist    = TH2F(histname,histname,*bins)
+    hist.GetXaxis().SetTitle("jet p_{T} [GeV]")
+    hist.GetYaxis().SetTitle("jet #eta")
+    hist.SetDirectory(0)
+    return hist
+    
+def createDefaultEfficiencyMap(histname,flavor,wp='medium'):
+    """Create default efficiency histograms. WARNING! Do not use for analysis! Use it as a placeholder,
+    until you have made an efficiency map from MC for you analysis."""
+    if wp=='medium':  eff = 0.75 if flavor=='b' else 0.11 if flavor=='c' else 0.01
+    elif wp=='loose': eff = 0.85 if flavor=='b' else 0.42 if flavor=='c' else 0.10
+    else:             eff = 0.60 if flavor=='b' else 0.05 if flavor=='c' else 0.001
+    histname = histname.split('/')[-1] + "_default"
+    hist     = createEfficienyMap(histname)
+    for xbin in xrange(0,hist.GetXaxis().GetNbins()+2):
+      for ybin in xrange(0,hist.GetYaxis().GetNbins()+2):
+        hist.SetBinContent(xbin,ybin,eff)
+    return hist
+    
 

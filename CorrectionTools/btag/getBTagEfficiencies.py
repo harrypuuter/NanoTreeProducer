@@ -9,7 +9,7 @@ gStyle.SetOptStat(False)
 gROOT.SetBatch(True)
 
 argv = sys.argv
-description = '''This script extracts histograms to create b tag efficiencies.'''
+description = '''This script extracts histograms from the analysis framework output run on MC samples to create b tag efficiencies.'''
 parser = ArgumentParser(prog="pileup",description=description,epilog="Succes!")
 parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
                                        help="year to run" )
@@ -27,20 +27,21 @@ args = parser.parse_args()
 
 
 
-def getBTagEfficiencies(tagger,wp,outfilename,indir,samples,year,channel,plot=False):
+def getBTagEfficiencies(tagger,wp,outfilename,samples,year,channel,plot=False):
     """Get pileup profile in MC by adding Pileup_nTrueInt histograms from a given list of samples."""
     print ">>> getBTagEfficiencies(%s)"%(outfilename)
     
-    # GET HISTOGRAMS
+    # PREPARE numerator and denominator histograms per flavor
     nhists  = { }
     hists   = { }
     histdir = 'btag'
     for flavor in ['b','c','udsg']:
       histname = '%s_%s_%s'%(tagger,flavor,wp)
       hists[histname] = None
-      hists[histname+'_all'] = None   
-    for subdir, samplename in samples:
-      filename = "%s/%s/%s_%s.root"%(indir,subdir,samplename,channel)
+      hists[histname+'_all'] = None
+    
+    # ADD numerator and denominator histograms
+    for filename in samples:
       print ">>>   %s"%(filename)
       file = TFile(filename,'READ')
       if not file or file.IsZombie():
@@ -62,6 +63,8 @@ def getBTagEfficiencies(tagger,wp,outfilename,indir,samples,year,channel,plot=Fa
           hists[histname].Add(hist)
           nhists[histname] += 1
       file.Close()
+    
+    # CHECK
     if len(nhists)>0:
       print ">>>   added %d MC hists:"%(sum(nhists[n] for n in nhists))
       for histname, nhist in nhists.iteritems():
@@ -70,7 +73,7 @@ def getBTagEfficiencies(tagger,wp,outfilename,indir,samples,year,channel,plot=Fa
       print ">>>   no histograms added !"
       return
     
-    # SAVE HISTOGRAMS
+    # DIVIDE and SAVE histograms
     print ">>>   writing to %s..."%(outfilename)
     file = TFile(outfilename,'UPDATE') #RECREATE
     ensureTDirectory(file,channel)
@@ -141,9 +144,8 @@ def plot2D(histname,hist,year,channel,log=False):
     hist.SetMaximum(1.0)
     
     gStyle.SetPaintTextFormat('.2f')
-    hist.SetMarkerSize(1.0)
     hist.SetMarkerColor(kRed)
-    hist.SetMarkerSize(1)
+    hist.SetMarkerSize(1.8 if log else 1)
     
     canvas.SaveAs(name+'.pdf')
     canvas.SaveAs(name+'.png')
@@ -182,7 +184,11 @@ def main():
     years    = args.years
     channels = args.channels
     
+    
     for year in args.years:
+      
+      # SAMPLES: list of analysis framework output run on MC samples
+      #          that is used to add together and compute the efficiency
       if year==2016:
         samples = [
           ( 'TT', "TT",                   ),
@@ -256,14 +262,21 @@ def main():
           ( 'VV', "ZZ",                   ),
         ]
       
+      # MC CAMPAIGN NAMES of each year 
       campaigns = { 2016: "Moriond17", 2017: "12Apr2017", 2018: "Autumn18" }
       
+      # LOOP over channels
       for channel in args.channels:
+        
+        # SAMPLE FILE NAMES
+        indir = "/scratch/ineuteli/analysis/LQ_%d"%(year)
+        samplefilenames = ["%s/%s/%s_%s.root"%(indir,subdir,samplename,channel) for subdir, samplename in samples]
+        
+        # COMPUTE and SAVE b tag efficiencies
         for tagger in args.taggers:
           for wp in args.wps:
-            filename = "%s_%d_%s_eff.root"%(tagger,year,campaigns[year])
-            indir    = "/scratch/ineuteli/analysis/LQ_%d"%(year)
-            getBTagEfficiencies(tagger,wp,filename,indir,samples,year,channel,plot=args.plot)
+            outfilename = "%s_%d_%s_eff.root"%(tagger,year,campaigns[year])
+            getBTagEfficiencies(tagger,wp,outfilename,samplefilenames,year,channel,plot=args.plot)
     
 
 
