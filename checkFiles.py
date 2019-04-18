@@ -39,7 +39,9 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--clean',    dest='cleanup', default=False, action='store_true',
                                             help="remove all output files after hadd" )
     parser.add_argument('-R', '--rm-bad',   dest='removeBadFiles', default=False, action='store_true',
-                                            help="remove files that are bad" )
+                                            help="remove files that are bad (zombies, no tree, no cutflow, ...)" )
+    parser.add_argument(      '--rm-bug',   dest='removeBuggedFiles', default=False, action='store_true',
+                                            help="remove files that have bad LHE_Njets" )
     parser.add_argument('-o', '--outdir',   dest='outdir', type=str, default=None, action='store' )
     parser.add_argument('-s', '--sample',   dest='samples', type=str, nargs='+', default=[ ], action='store',
                                             help="samples to run over, glob patterns (wildcards * and ?) are allowed." )
@@ -124,6 +126,8 @@ sample_dict = [
    ('LQ',             "SLQ_pair_M$MASS",                  "LegacyRun2_*_LQ_Pair_5f_Madgraph_LO_M$MASS"               ),
    ('LQ',             "SLQ_single_M$MASS",                "LegacyRun2_*_LQ_Single_5f_Madgraph_LO_M$MASS"             ),
    ('LQ',             "SLQ_t-channel_M$MASS",             "LegacyRun2_*_LQ_NonRes_5f_Madgraph_LO_M$MASS"             ),
+   ('LQ',             "VLQ_pair_M$MASS",                  "PairVectorLQ_InclusiveDecay_M-$MASS"                      ),
+   ('LQ',             "VLQ_single_M$MASS",                "SingleVectorLQ_InclusiveDecay_M-$MASS"                    ),
    ('LQ',             "LQ3ToTauB_t-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_t-channel-M$MASS"       ),
    ('LQ',             "LQ3ToTauB_s-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_s-channel-M$MASS"       ),
    ('LQ',             "LQ3ToTauB_pair_M$MASS",            "LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M$MASS"            ),
@@ -220,7 +224,7 @@ def main(args):
             if not filelist: continue
             #running = [f for f in filelist if any(j.outfile in f for j in submitted)]
             
-            if checkFiles(filelist,directory):
+            if checkFiles(filelist,directory,clean=args.removeBadFiles,force=args.force,cleanBug=args.removeBuggedFiles):
               print bcolors.BOLD + bcolors.OKGREEN + '[OK] ' + directory + ' ... can be hadded ' + bcolors.ENDC
             
             if not any(s in directory for s in ['LQ3','LQ_']):
@@ -247,8 +251,8 @@ def main(args):
                 print haddcmd
                 os.system(haddcmd)
                 
-                if 'LQ3' not in directory:
-                     compareEventsToDAS(outfile,directory)
+                if not any(s in directory for s in ['LQ3','LQ_']):
+                  compareEventsToDAS(outfile,directory)
                 #    skimcmd = 'python extractTrees.py -c %s -f %s'%(channel,outfile)
                 #    rmcmd = 'rm %s'%(infiles)
                 #    #os.system(skimcmd)
@@ -342,56 +346,79 @@ def isValidSample(pattern):
 
 
 indexpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?(?:_Zmass)?\.root")
-def checkFiles(filelist,directory,clean=False):
+def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False):
     if args.verbose:
       print "checkFiles: %s, %s"%(filelist,directory)
     if isinstance(filelist,str):
       filelist = [filelist]
     badfiles = [ ]
+    bugfiles = [ ]
     ifound   = [ ]
+    nfiles   = len(filelist)
     for filename in filelist:
       file  = TFile(filename, 'READ')
       isbad = False
       if file.IsZombie():
         print bcolors.FAIL + '[NG] file %s is a zombie'%(filename) + bcolors.ENDC
-        isbad = True
+        badfiles.append(filename)
       else:
         tree = file.Get('tree')
         if not isinstance(tree,TTree):
           print bcolors.FAIL + '[NG] no tree found in ' + filename + bcolors.ENDC
-          isbad = True
+          badfiles.append(filename)
         elif not isinstance(file.Get('cutflow'),TH1):
           print bcolors.FAIL + '[NG] no cutflow found in ' + filename + bcolors.ENDC
-          isbad = True
+          badfiles.append(filename)
         elif any(s in filename for s in ['DYJets','WJets']) and tree.GetMaximum('LHE_Njets')>10:
-          print bcolors.WARNING + '[WN] LHE_Njets = %d > 10 in %s'%(tree.GetMaximum('LHE_Njets'),filename) + bcolors.ENDC
-      if isbad:
-        badfiles.append(filename)
-        #rmcmd = 'rm %s' %filename
-        #print rmcmd
-        #os.system(rmcmd)
+          print bcolors.BOLD + bcolors.WARNING + '[WN] %d/%d events have LHE_Njets = %d > 10 in %s'%(tree.GetEntries(),tree.GetEntries("LHE_Njets>10"),tree.GetMaximum('LHE_Njets'),filename) + bcolors.ENDC
+          bugfiles.append(filename)
+      
       file.Close()
       match = indexpattern.search(filename)
       if match: ifound.append(int(match.group(1)))
     
     if len(badfiles)>0:
       print bcolors.BOLD + bcolors.FAIL + "[NG] %s:   %d out of %d files %s no tree!"%(directory,len(badfiles),len(filelist),"have" if len(badfiles)>1 else "has") + bcolors.ENDC
-      if clean:
-        for filename in badfiles:
-          os.remove(filename)
-      return False
+    
+    for cleanlist, cleanflag in [(badfiles,clean),(bugfiles,cleanBug)]:
+      if len(cleanlist)>0 and cleanflag:
+        if force:
+          print bcolors.WARNING + '  [WN] removing bad files:'
+          for filename in cleanlist:
+            print "    %s"%filename
+          print bcolors.ENDC
+          for filename in cleanlist:
+            os.system("rm %s"%filename)
+            filelist.remove(filename)
+        else:
+          print "\n  Bad files:"
+          for filename in cleanlist:
+            print "    %s"%filename
+          submit = raw_input("  Do you really want to remove these? [y/n] ")
+          if submit.lower()=='force':
+            submit = 'y'
+            force = True
+          if submit.lower()=='quit':
+            exit(0)
+          if submit.lower()=='y':
+            for filename in cleanlist:
+              print "removing %s..."%filename
+              os.system("rm %s"%filename)
+              filelist.remove(filename)
+          print
     
     # TODO: check all chunks (those>imax)
     if ifound:
       imax = max(ifound)+1
-      if len(filelist)<imax:
+      if nfiles<imax:
         imiss = [ i for i in range(0,max(ifound)) if i not in ifound ]
         chunktext = ('chunks ' if len(imiss)>1 else 'chunk ') + ', '.join(str(i) for i in imiss)
-        print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files (%s) ?"%(directory,len(imiss),len(filelist),chunktext) + bcolors.ENDC
+        print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files (%s) ?"%(directory,len(imiss),nfiles,chunktext) + bcolors.ENDC
+        return False
     else:
       print bcolors.BOLD + bcolors.WARNING + "[WN] %s did not find any valid chunk pattern in file list ?"%(directory) + bcolors.ENDC
     
-    return True
+    return len(badfiles)==0
     
 def compareEventsToDAS(filenames,dasname):
     """Compare a number of processed events in an output file to the available number of events in DAS."""
