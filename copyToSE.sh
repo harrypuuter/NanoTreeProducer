@@ -4,7 +4,7 @@
 CHANNEL="mutau"
 YEAR="2018"
 while getopts "c:y:" option; do case "${option}" in
-  c) CHANNELS="${OPTARG}";;
+  c) CHANNEL="${OPTARG}";;
   y) YEAR="${OPTARG}";;
 esac done
 function peval { echo ">>>   $@"; eval "$@"; }
@@ -31,7 +31,7 @@ for year in $YEAR; do
   XRD="root://t3dcachedb.psi.ch:1094"
     
   cd "/scratch/$OUTPUT"
-  FILES=`ls */*.root`
+  FILES=`ls */*${CHANNEL}*.root`
   DIRS=`ls /scratch/$OUTPUT`
   
   # MAKE DIR

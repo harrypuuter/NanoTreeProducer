@@ -1,6 +1,6 @@
 #! /bin/bash
 
-CHANNELS='mutau mumu tautau'
+CHANNELS='mutau eletau mumu tautau'
 YEAR="2018"
 TAG=""
 while getopts "c:t:y:" option; do case "${option}" in
@@ -20,10 +20,7 @@ if [ "$YEAR" == "2016" ]; then
   "
 else
   SAMPLES="
-    DY/DY4JetsToLL_M-50
     WJ/WJetsToLNu
-    ST/ST_t-channel_top
-    ST/ST_t-channel_antitop
   "
 fi
 
