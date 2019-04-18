@@ -1,3 +1,6 @@
 *.pyc
 *~
 *.root
+joblist/
+filelist/
+output_201*/
