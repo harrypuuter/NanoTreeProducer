@@ -147,7 +147,8 @@ Note that `zboson` and `boson` are equivalent.
 ## Jet/MET corrections
 
 Currently not available. Please see the official modules:
-<https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/modules/jme>
+
+<https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/modules/jme>  
 <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/data/jme>
 
 
