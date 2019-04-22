@@ -1,14 +1,18 @@
 # Correction Tools
 Several tools to get corrections, efficiencies, scale factors (SFs), event weights, etc.
 
-[Pileup reweighting](#PU)
-[Lepton efficiencies](#lepton)
-[B tagging tools](#btag)
-[Recoil corrections](#recoil)
-[Test SFs](test)
+[Pileup reweighting](#pileup-reweighting)
+
+[Lepton efficiencies](#lepton-efficiencies)
+
+[B tagging tools](#b-tagging-tools)
+
+[Recoil corrections](#recoil-corrections)
+
+[Test SFs](test-sfs)
 
 
-<a name="PU"/>
+
 ## Pileup reweighting
 
 `PileupWeightTool.py` provides the pileup event weight based on the data and MC profiles in [`pileup/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/pileup).
@@ -22,7 +26,6 @@ and then extracted with [`pileup/getPileupProfiles.py`](https://github.com/Izaak
 
 
 
-<a name="lepton"/>
 ## Lepton efficiencies
 
 Several classes are available to get corrections for electrons, muons and hadronically-decayed tau leptons:
@@ -49,7 +52,6 @@ git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
 
 
 
-<a name="btag"/>
 ## B tagging tools
 
 `BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b tagging weights. These can be called during the initialization of you analysis module, e.g. in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
@@ -108,7 +110,6 @@ Examples of efficiency maps per jet flavor, and as a function of jet pT versus j
 
 
 
-<a name="recoil"/>
 ## Recoil corrections
 
 `RecoilCorrectionTool.py` provides the tools for three different things:
@@ -146,7 +147,6 @@ Note that `zboson` and `boson` are equivalent.
 
 
 
-<a name="jetmet"/>
 ## Jet/MET corrections
 
 Currently not available. Please see the official modules:
@@ -155,7 +155,6 @@ Currently not available. Please see the official modules:
 
 
 
-<a name="test"/>
 ## Test SFs
 
 `testSFs.py` provides a simple and direct way of testing the correction tool classes, without running the whole framework.
