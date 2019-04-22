@@ -1,15 +1,12 @@
 # Correction Tools
 Several tools to get corrections, efficiencies, scale factors (SFs), event weights, etc.
 
-[Pileup reweighting](#pileup-reweighting)
-
-[Lepton efficiencies](#lepton-efficiencies)
-
-[B tagging tools](#b-tagging-tools)
-
-[Recoil corrections](#recoil-corrections)
-
-[Test SFs](test-sfs)
+[Pileup reweighting](#pileup-reweighting)  
+[Lepton efficiencies](#lepton-efficiencies)  
+[B tagging tools](#b-tagging-tools)  
+[Recoil corrections](#recoil-corrections)  
+[Jet/MET corrections](#jetmet-corrections)  
+[Test SFs](test-sfs)  
 
 
 
