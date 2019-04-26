@@ -4,7 +4,7 @@
 import os, sys
 from argparse import ArgumentParser
 import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
-from ROOT import gStyle, gROOT, TFile, TTree, TH2F, TCanvas, kRed
+from ROOT import gROOT, gStyle, gPad, TFile, TTree, TH2F, TCanvas, kRed, TLatex
 gStyle.SetOptStat(False)
 gROOT.SetBatch(True)
 
@@ -37,21 +37,21 @@ def getBTagEfficiencies(tagger,wp,outfilename,samples,year,channel,plot=False):
     histdir = 'btag'
     for flavor in ['b','c','udsg']:
       histname = '%s_%s_%s'%(tagger,flavor,wp)
-      hists[histname] = None
-      hists[histname+'_all'] = None
+      hists[histname] = None        # numerator
+      hists[histname+'_all'] = None # denominator
     
     # ADD numerator and denominator histograms
     for filename in samples:
       print ">>>   %s"%(filename)
       file = TFile(filename,'READ')
       if not file or file.IsZombie():
-        print ">>>   Warning! getBTagEfficiencies: Could not open %s"%(filename)
+        print ">>>   Warning! getBTagEfficiencies: Could not open %s. Ignoring..."%(filename)
         continue
       for histname in hists:
         histpath = "%s/%s"%(histdir,histname)
         hist = file.Get(histpath)
         if not hist:
-          print ">>>   Warning! getBTagEfficiencies: Could not open histogram '%s' in %s"%(histpath,filename)        
+          print ">>>   Warning! getBTagEfficiencies: Could not open histogram '%s' in %s. Ignoring..."%(histpath,filename)        
           dir = file.Get(histdir)
           if dir: dir.ls()
           continue
@@ -82,12 +82,12 @@ def getBTagEfficiencies(tagger,wp,outfilename,samples,year,channel,plot=False):
         continue
       histname_all = histname+'_all'
       histname_eff = 'eff_'+histname
-      print ">>>      writing %s..."%(histname)
-      print ">>>      writing %s..."%(histname_all)
-      print ">>>      writing %s..."%(histname_eff)
+      print ">>>     writing %s..."%(histname)
+      print ">>>     writing %s..."%(histname_all)
+      print ">>>     writing %s..."%(histname_eff)
       hist_all = hists[histname_all]
       hist_eff = hist.Clone(histname_eff)
-      hist_eff.SetTitle(makeTitle(histname_eff,channel))
+      hist_eff.SetTitle(makeTitle(tagger,wp,histname_eff,channel,year))
       hist_eff.Divide(hist_all)
       hist.Write(histname,TH2F.kOverwrite)
       hist_all.Write(histname_all,TH2F.kOverwrite)
@@ -119,6 +119,7 @@ def plot2D(histname,hist,year,channel,log=False):
     canvas.SetLeftMargin( 0.12 ); canvas.SetRightMargin(  0.17 )
     canvas.SetTickx(0); canvas.SetTicky(0)
     canvas.SetGrid()
+    gStyle.SetOptTitle(0) #FontSize(0.04)
     if log:
       canvas.SetLogx()
       canvas.SetLogz()
@@ -146,17 +147,30 @@ def plot2D(histname,hist,year,channel,log=False):
     gStyle.SetPaintTextFormat('.2f')
     hist.SetMarkerColor(kRed)
     hist.SetMarkerSize(1.8 if log else 1)
+    #gPad.Update()
+    #gPad.RedrawAxis()
+    
+    latex = TLatex()
+    latex.SetTextSize(0.048)
+    latex.SetTextAlign(23)
+    latex.SetTextFont(42)
+    latex.SetNDC(True)
+    latex.DrawLatex(0.475,0.99,hist.GetTitle()) # to prevent typesetting issues
     
     canvas.SaveAs(name+'.pdf')
     canvas.SaveAs(name+'.png')
     canvas.Close()
   
 
-def makeTitle(string,channel):
-  string = string.replace('_',' ')
-  string = string.replace(' c ',' c jet ')
-  string = string.replace(' udsg ',' light-flavor jet ')
-  string = "%s (%s)"%(string,channel.replace('tau',"#tau").replace('mu',"#mu").replace('ele',"e"))
+def makeTitle(tagger,wp,flavor,channel,year):
+  flavor = flavor.replace('_',' ')
+  if ' b ' in flavor:
+    flavor = 'b quark'
+  elif ' c ' in flavor:
+    flavor = 'c quark'
+  else:
+    flavor = 'light-flavor'
+  string = "%s, %s %s WP (%s, %d)"%(flavor,tagger,wp,channel.replace('tau',"#tau_{h}").replace('mu',"#mu").replace('ele',"e"),year)
   return string
   
 
@@ -256,7 +270,7 @@ def main():
           ( 'ST', "ST_tW_antitop",        ),
           ( 'ST', "ST_t-channel_top",     ),
           ( 'ST', "ST_t-channel_antitop", ),
-          ( 'ST', "ST_s-channel",         ),
+          #( 'ST', "ST_s-channel",         ),
           ( 'VV', "WW",                   ),
           ( 'VV', "WZ",                   ),
           ( 'VV', "ZZ",                   ),
