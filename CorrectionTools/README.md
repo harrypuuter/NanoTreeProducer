@@ -103,7 +103,7 @@ The b tag efficiencies are analysis-dependent. They can be computed from the ana
         ...
 </pre>
 Do this for as many MC samples as possible, to gain as much statistics as possible (also note that jets in Drell-Yan, W+jets and ttbar events typically have different jet flavor content). Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/btag/getBTagEfficiencies.py) to extract all histograms from analysis output, add them together for maximum statistics, and compute the efficiencies. (You should edit this script to read in your analysis output.)
-Examples of efficiency maps per jet flavor, and as a function of jet pT versus jet eta for the mutau analysis in 2017 are shown [here](https://ineuteli.web.cern.ch/ineuteli/btag/2017/).
+Examples of efficiency maps per jet flavor, and as a function of jet pT versus jet eta for the mutau analysis in 2017 are shown [here](https://ineuteli.web.cern.ch/ineuteli/btag/2017/?match=mutau).
 
 
 
