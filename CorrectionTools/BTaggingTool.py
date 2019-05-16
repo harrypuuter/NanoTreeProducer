@@ -114,7 +114,7 @@ class BTagWeightTool:
           histname = "%s_%s_%s"%(tagger,flavor,wp)
           effname  = "%s/eff_%s_%s_%s"%(channel,tagger,flavor,wp)
           hists[flavor]        = createEfficienyMap(histname)        # numerator   = b tagged jets
-          hists[flavor+'_all'] = createEfficienyMap(histname+'_all') # denomenator = all jets
+          hists[flavor+'_all'] = createEfficienyMap(histname+'_all') # denominator = all jets
           if efffile:
             effmaps[flavor]    = efffile.Get(effname)
             if not effmaps[flavor]:
@@ -159,8 +159,8 @@ class BTagWeightTool:
         """Get b tag SF for a single jet."""
         flavor = flavorToString(flavor)
         hist   = self.effmaps[flavor]
-        xbin   = hist.GetXaxis().FindBin(eta)
-        ybin   = hist.GetYaxis().FindBin(pt)
+        xbin   = hist.GetXaxis().FindBin(pt)
+        ybin   = hist.GetYaxis().FindBin(eta)
         if xbin==0: xbin = 1
         elif xbin>hist.GetXaxis().GetNbins(): xbin -= 1
         if ybin==0: ybin = 1
@@ -191,7 +191,7 @@ class BTagWeightTool:
 
 def flavorToFLAV(flavor):
   """Help function to convert an integer flavor ID to a BTagEntry enum value."""
-  return FLAV_B if abs(flavor)==5 else FLAV_C if abs(flavor)==4 or abs(flavor)==15 else FLAV_UDSG       
+  return FLAV_B if abs(flavor)==5 else FLAV_C if abs(flavor) in [4,15] else FLAV_UDSG       
   
 def flavorToString(flavor):
   """Help function to convert an integer flavor ID to a string value."""
@@ -212,9 +212,9 @@ def createEfficienyMap(histname):
 def createDefaultEfficiencyMap(histname,flavor,wp='medium'):
     """Create default efficiency histograms. WARNING! Do not use for analysis! Use it as a placeholder,
     until you have made an efficiency map from MC for you analysis."""
-    if wp=='medium':  eff = 0.75 if flavor=='b' else 0.11 if flavor=='c' else 0.01
-    elif wp=='loose': eff = 0.85 if flavor=='b' else 0.42 if flavor=='c' else 0.10
-    else:             eff = 0.60 if flavor=='b' else 0.05 if flavor=='c' else 0.001
+    if   wp=='loose':  eff = 0.75 if flavor=='b' else 0.11 if flavor=='c' else 0.01
+    elif wp=='medium': eff = 0.85 if flavor=='b' else 0.42 if flavor=='c' else 0.10
+    else:              eff = 0.60 if flavor=='b' else 0.05 if flavor=='c' else 0.001
     histname = histname.split('/')[-1] + "_default"
     hist     = createEfficienyMap(histname)
     for xbin in xrange(0,hist.GetXaxis().GetNbins()+2):
