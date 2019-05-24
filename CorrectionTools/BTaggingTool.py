@@ -52,7 +52,6 @@ class BTagWeightTool:
     
     def __init__(self, tagger, wp='medium', sigma='central', channel='mutau', year=2017):
         """Load b tag weights from CSV file."""
-        print "Loading BTagWeightTool for %s (%s WP)..."%(tagger,wp)
         
         assert(year in [2016,2017,2018]), "You must choose a year from: 2016, 2017, or 2018."
         assert(tagger in ['CSVv2','DeepCSV']), "BTagWeightTool: You must choose a tagger from: CSVv2, DeepCSV!"
@@ -92,6 +91,7 @@ class BTagWeightTool:
           tagged = lambda e,i: e.Jet_btagCSVV2[i]>self.wp
         
         # CSV READER
+        print "Loading BTagWeightTool for %s (%s WP)..."%(tagger,wp)
         op        = OP_LOOSE if wp=='loose' else OP_MEDIUM if wp=='medium' else OP_TIGHT if wp=='tight' else OP_RESHAPING
         type_udsg = 'incl'
         type_bc   = 'comb' # 'mujets' for QCD; 'comb' for QCD+TT
