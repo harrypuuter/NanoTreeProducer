@@ -12,7 +12,7 @@ parser.add_argument('-v', '--verbose', dest='verbose', default=False, action='st
                                        help="set verbose" )
 args = parser.parse_args()
 import submit
-from submit import getFileListDAS, getFileListDAS
+from submit import getFileListPNFS, getFileListDAS
 submit.args = args
 
 
@@ -21,6 +21,7 @@ def main():
     samples = args.samples
     nFiles  = args.nFiles
     
+    badfiles = [ ]
     for sample in samples:
       
       print ">>> checking %s..."%(sample)
@@ -32,31 +33,49 @@ def main():
       print ">>>   found %d files"%(len(files))
       max = nFiles if nFiles>0 else len(files)
       
+      eventstot = 0
       events = [ ]
       for filename in files[:max]:
         file = TFile.Open(filename, 'READ')
         if not file or not hasattr(file,'IsZombie'):
           print ">>>   Warning! Could not open file %s"%(filename)
+          badfiles.append(filename)
           continue
         if file.IsZombie():
           print ">>>   Warning! Zombie file %s"%(filename)
+          badfiles.append(filename)
           continue
         tree = file.Get('Events')
         if not tree:
           print ">>>   Warning! No tree in %s"%(filename)
+          badfiles.append(filename)
           continue
         events.append((tree.GetEntries(),filename))
+        eventstot += tree.GetEntries()
+        file.Close()
       
-      print ">>> files ordered from smallest to largest number of events:"
-      for nevents, filename in sorted(events):
-        print ">>> %12d: %s"%(nevents,filename)
-    
+      print ">>>   total events: %d"%(eventstot)
+      
+#       print "\n>>> files ordered from smallest to largest number of events:"
+#       for nevents, filename in sorted(events):
+#         print ">>> %12d: %s"%(nevents,filename)
+            
+      print ">>> "
+      
+    if badfiles:
+      print "'>>> files with a problem:"
+      for filename in sorted(badfiles):
+        print ">>>      %s"%(filename)
+    else:
+      print ">>> no files with a problem found"
+    print ">>> "
+
 
 
 if __name__ == "__main__":
     
     print
     main()
-    print "Done\n"
+    print ">>> done\n"
 	
 
