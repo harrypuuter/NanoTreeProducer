@@ -16,50 +16,50 @@ class TreeProducerMuMu(TreeProducerCommon):
         #   MUON 1   #
         ##############
         
-        self.addBranch('pt_1',                float)
-        self.addBranch('eta_1',               float)
-        self.addBranch('phi_1',               float)
-        self.addBranch('m_1',                 float)
-        self.addBranch('dxy_1',               float)
-        self.addBranch('dz_1',                float)
-        self.addBranch('pfRelIso04_all_1',    float)
-        self.addBranch('q_1',                 int)
+        self.addBranch('pt_1',                'F')
+        self.addBranch('eta_1',               'F')
+        self.addBranch('phi_1',               'F')
+        self.addBranch('m_1',                 'F')
+        self.addBranch('dxy_1',               'F')
+        self.addBranch('dz_1',                'F')
+        self.addBranch('pfRelIso04_all_1',    'F')
+        self.addBranch('q_1',                 'I')
         
         
         ##############
         #   MUON 2   #
         ##############
         
-        self.addBranch('pt_2',                float)
-        self.addBranch('eta_2',               float)
-        self.addBranch('phi_2',               float)
-        self.addBranch('m_2',                 float)
-        self.addBranch('dxy_2',               float)
-        self.addBranch('dz_2',                float)
-        self.addBranch('pfRelIso04_all_2',    float)
-        self.addBranch('q_2',                 int)
+        self.addBranch('pt_2',                'F')
+        self.addBranch('eta_2',               'F')
+        self.addBranch('phi_2',               'F')
+        self.addBranch('m_2',                 'F')
+        self.addBranch('dxy_2',               'F')
+        self.addBranch('dz_2',                'F')
+        self.addBranch('pfRelIso04_all_2',    'F')
+        self.addBranch('q_2',                 'I')
         
         
         ###########
         #   TAU   #
         ###########
         
-        self.addBranch('pt_3',                float)
-        self.addBranch('eta_3',               float)
-        self.addBranch('m_3',                 float)
-        self.addBranch('decayMode_3',         int)
-        self.addBranch('idAntiEle_3',         int)
-        self.addBranch('idAntiMu_3',          int)
-        ###self.addBranch('idDecayMode_3',       bool)
-        ###self.addBranch('idDecayModeNewDMs_3', bool)
-        self.addBranch('idMVAoldDM_3',        int)
-        self.addBranch('idMVAoldDM2017v1_3',  int)
-        self.addBranch('idMVAoldDM2017v2_3',  int)
-        self.addBranch('idMVAnewDM2017v2_3',  int)
-        self.addBranch('idIso_3',             int)
+        self.addBranch('pt_3',                'F')
+        self.addBranch('eta_3',               'F')
+        self.addBranch('m_3',                 'F')
+        self.addBranch('decayMode_3',         'I')
+        self.addBranch('idAntiEle_3',         'I')
+        self.addBranch('idAntiMu_3',          'I')
+        ###self.addBranch('idDecayMode_3',       '?')
+        ###self.addBranch('idDecayModeNewDMs_3', '?')
+        self.addBranch('idMVAoldDM_3',        'I')
+        self.addBranch('idMVAoldDM2017v1_3',  'I')
+        self.addBranch('idMVAoldDM2017v2_3',  'I')
+        self.addBranch('idMVAnewDM2017v2_3',  'I')
+        self.addBranch('idIso_3',             'I')
         
         if not self._isData:
-          self.addBranch('genPartFlav_1',     int, -1)
-          self.addBranch('genPartFlav_2',     int, -1)
-          self.addBranch('genPartFlav_3',     int, -1)
+          self.addBranch('genPartFlav_1',     'I', -1)
+          self.addBranch('genPartFlav_2',     'I', -1)
+          self.addBranch('genPartFlav_3',     'I', -1)
         

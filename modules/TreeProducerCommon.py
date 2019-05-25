@@ -1,15 +1,16 @@
 import numpy as num
 from ROOT import TTree, TFile, TH1D, TH2D
 
-
 root_dtype = {
   float: 'D',  int: 'I',  bool: 'O',
   'f':   'D',  'i': 'I',  '?':  'O',  'b': 'b',
-  'F':   'D',  'I': 'I',
+  'F':   'D',  'I': 'I',  'B':  'O',
 }
+
 num_dtype = {
   'D':   'f',  'I': 'i',  'O':  '?',  'b': 'b'
 }
+
 
 class TreeProducerCommon(object):
     """Class to create a custom output file & tree; as well as create and contain branches."""
@@ -63,19 +64,19 @@ class TreeProducerCommon(object):
         #   EVENT   #
         #############
         
-        self.addBranch('run',                     int)
-        self.addBranch('lumi',                    int)
-        self.addBranch('event',                   int)
-        self.addBranch('isData',                  bool, self._isData)
+        self.addBranch('run',                     'I')
+        self.addBranch('lumi',                    'I')
+        self.addBranch('event',                   'I')
+        self.addBranch('isData',                  '?', self._isData)
         
-        self.addBranch('npvs',                    int)
-        self.addBranch('npvsGood',                int)
-        self.addBranch('metfilter',               bool)
+        self.addBranch('npvs',                    'I')
+        self.addBranch('npvsGood',                'I')
+        self.addBranch('metfilter',               '?')
         
         if not self._isData:
-          self.addBranch('nPU',                   int, -1)
-          self.addBranch('nTrueInt',              int, -1)
-          self.addBranch('LHE_Njets',             int, -1)
+          self.addBranch('nPU',                   'I', -1)
+          self.addBranch('nTrueInt',              'I', -1)
+          self.addBranch('LHE_Njets',             'I', -1)
         
         
         ##############
@@ -83,121 +84,121 @@ class TreeProducerCommon(object):
         ##############
         
         if not self._isData:
-          self.addBranch('weight',                float, 1.)
-          self.addBranch('genweight',             float, 1.)
-          self.addBranch('trigweight',            float, 1.)
-          self.addBranch('puweight',              float, 1.)
-          self.addBranch('idisoweight_1',         float, 1.)
-          self.addBranch('idisoweight_2',         float, 1.)
-          self.addBranch('zptweight',             float, 1.)
-          self.addBranch('ttptweight',            float, 1.)
-          self.addBranch('btagweight',            float, 1.)
-          self.addBranch('btagweight_loose',      float, 1.)
+          self.addBranch('weight',                'F', 1.)
+          self.addBranch('genweight',             'F', 1.)
+          self.addBranch('trigweight',            'F', 1.)
+          self.addBranch('puweight',              'F', 1.)
+          self.addBranch('idisoweight_1',         'F', 1.)
+          self.addBranch('idisoweight_2',         'F', 1.)
+          self.addBranch('zptweight',             'F', 1.)
+          self.addBranch('ttptweight',            'F', 1.)
+          self.addBranch('btagweight',            'F', 1.)
+          self.addBranch('btagweight_loose',      'F', 1.)
         
         
         ############
         #   JETS   #
         ############
         
-        self.addBranch('njets',                   int)
-        self.addBranch('njets50',                 int)
-        self.addBranch('ncjets',                  int)
-        self.addBranch('nfjets',                  int)
-        self.addBranch('nbtag',                   int)
-        self.addBranch('nbtag50',                 int)
-        self.addBranch('nbtag_loose',             int)
-        self.addBranch('nbtag50_loose',           int)
+        self.addBranch('njets',                   'I')
+        self.addBranch('njets50',                 'I')
+        self.addBranch('ncjets',                  'I')
+        self.addBranch('nfjets',                  'I')
+        self.addBranch('nbtag',                   'I')
+        self.addBranch('nbtag50',                 'I')
+        self.addBranch('nbtag_loose',             'I')
+        self.addBranch('nbtag50_loose',           'I')
         
-        self.addBranch('jpt_1',                   float)
-        self.addBranch('jeta_1',                  float)
-        self.addBranch('jphi_1',                  float)
-        self.addBranch('jdeepb_1',                float)
-        self.addBranch('jpt_2',                   float)
-        self.addBranch('jeta_2',                  float)
-        self.addBranch('jphi_2',                  float)
-        self.addBranch('jdeepb_2',                float)
+        self.addBranch('jpt_1',                   'F')
+        self.addBranch('jeta_1',                  'F')
+        self.addBranch('jphi_1',                  'F')
+        self.addBranch('jdeepb_1',                'F')
+        self.addBranch('jpt_2',                   'F')
+        self.addBranch('jeta_2',                  'F')
+        self.addBranch('jphi_2',                  'F')
+        self.addBranch('jdeepb_2',                'F')
         
-        self.addBranch('bpt_1',                   float)
-        self.addBranch('beta_1',                  float)
-        self.addBranch('bpt_2',                   float)
-        self.addBranch('beta_2',                  float)
+        self.addBranch('bpt_1',                   'F')
+        self.addBranch('beta_1',                  'F')
+        self.addBranch('bpt_2',                   'F')
+        self.addBranch('beta_2',                  'F')
         
         if self.doJECSys:
           for uncertainty in ['jer','jes']:
             for variation in ['Down','Up']:
               label = '_'+uncertainty+variation
-              self.addBranch('njets'+label,         int)
-              self.addBranch('njets50'+label,       int)
-              self.addBranch('nbtag50'+label,       int)
-              self.addBranch('nbtag50_loose'+label, int)
-              self.addBranch('jpt_1'+label,         float)
-              self.addBranch('jpt_2'+label,         float)
+              self.addBranch('njets'+label,         'I')
+              self.addBranch('njets50'+label,       'I')
+              self.addBranch('nbtag50'+label,       'I')
+              self.addBranch('nbtag50_loose'+label, 'I')
+              self.addBranch('jpt_1'+label,         'F')
+              self.addBranch('jpt_2'+label,         'F')
         
-        self.addBranch('met',                     float)
-        self.addBranch('metphi',                  float)
-        ###self.addBranch('puppimet',                float)
-        ###self.addBranch('puppimetphi',             float)
-        ###self.addBranch('metsignificance',         float)
-        ###self.addBranch('metcovXX',                float)
-        ###self.addBranch('metcovXY',                float)
-        ###self.addBranch('metcovYY',                float)
-        ###self.addBranch('fixedGridRhoFastjetAll',  float)
+        self.addBranch('met',                     'F')
+        self.addBranch('metphi',                  'F')
+        ###self.addBranch('puppimet',                'F')
+        ###self.addBranch('puppimetphi',             'F')
+        ###self.addBranch('metsignificance',         'F')
+        ###self.addBranch('metcovXX',                'F')
+        ###self.addBranch('metcovXY',                'F')
+        ###self.addBranch('metcovYY',                'F')
+        ###self.addBranch('fixedGridRhoFastjetAll',  'F')
         if not self._isData:
-          self.addBranch('genmet',                float, -1)
-          self.addBranch('genmetphi',             float, -9)
+          self.addBranch('genmet',                'F', -1)
+          self.addBranch('genmetphi',             'F', -9)
         
         
         #############
         #   OTHER   #
         #############
         
-        self.addBranch('pfmt_1',                  float)
-        self.addBranch('pfmt_2',                  float)
-        self.addBranch('m_vis',                   float)
-        self.addBranch('pt_ll',                   float)
-        self.addBranch('dR_ll',                   float)
-        self.addBranch('dphi_ll',                 float)
-        self.addBranch('deta_ll',                 float)
+        self.addBranch('pfmt_1',                  'F')
+        self.addBranch('pfmt_2',                  'F')
+        self.addBranch('m_vis',                   'F')
+        self.addBranch('pt_ll',                   'F')
+        self.addBranch('dR_ll',                   'F')
+        self.addBranch('dphi_ll',                 'F')
+        self.addBranch('deta_ll',                 'F')
         
-        self.addBranch('pzetamiss',               float)
-        self.addBranch('pzetavis',                float)
-        self.addBranch('dzeta',                   float)
+        self.addBranch('pzetamiss',               'F')
+        self.addBranch('pzetavis',                'F')
+        self.addBranch('dzeta',                   'F')
         
         if self.doJECSys:
           for uncertainty in ['jer','jes','unclEn']:
             for variation in ['Down','Up']:
               label = '_'+uncertainty+variation
-              self.addBranch('met'+label,         float)
-              self.addBranch('pfmt_1'+label,      float)
-              self.addBranch('dzeta'+label,       float)
+              self.addBranch('met'+label,         'F')
+              self.addBranch('pfmt_1'+label,      'F')
+              self.addBranch('dzeta'+label,       'F')
         
-        self.addBranch('dilepton_veto',           bool)
-        self.addBranch('extraelec_veto',          bool)
-        self.addBranch('extramuon_veto',          bool)
-        self.addBranch('lepton_vetos',            bool)
+        self.addBranch('dilepton_veto',           '?')
+        self.addBranch('extraelec_veto',          '?')
+        self.addBranch('extramuon_veto',          '?')
+        self.addBranch('lepton_vetos',            '?')
         
         if not self._isData:
-          ###self.addBranch('ngentauhads',           int,   -1)
-          ###self.addBranch('ngentaus',              int,   -1)
-          self.addBranch('m_genboson',            float, -1)
-          self.addBranch('pt_genboson',           float, -1)
+          ###self.addBranch('ngentauhads',           'I', -1)
+          ###self.addBranch('ngentaus',              'I', -1)
+          self.addBranch('m_genboson',            'F', -1)
+          self.addBranch('pt_genboson',           'F', -1)
           ###if self.isVectorLQ:
-          ###  self.addBranch('ntops',               int,   -1)
+          ###  self.addBranch('ntops',               'I', -1)
         
-        ###self.addBranch('m_taub',                  float)
-        ###self.addBranch('m_taumub',                float)
-        ###self.addBranch('m_tauj',                  float)
-        ###self.addBranch('m_muj',                   float)
-        ###self.addBranch('m_coll_muj',              float)
-        ###self.addBranch('m_coll_tauj',             float)
-        ###self.addBranch('mt_coll_muj',             float)
-        ###self.addBranch('mt_coll_tauj',            float)
-        ###self.addBranch('m_max_lj',                float)
-        ###self.addBranch('m_max_lb',                float)
-        ###self.addBranch('m_mub',                   float)
+        ###self.addBranch('m_taub',                  'F')
+        ###self.addBranch('m_taumub',                'F')
+        ###self.addBranch('m_tauj',                  'F')
+        ###self.addBranch('m_muj',                   'F')
+        ###self.addBranch('m_coll_muj',              'F')
+        ###self.addBranch('m_coll_tauj',             'F')
+        ###self.addBranch('mt_coll_muj',             'F')
+        ###self.addBranch('mt_coll_tauj',            'F')
+        ###self.addBranch('m_max_lj',                'F')
+        ###self.addBranch('m_max_lb',                'F')
+        ###self.addBranch('m_mub',                   'F')
         
     
-    def addBranch(self, name, dtype=float, default=None):
+    def addBranch(self, name, dtype='F', default=None):
         """Add branch with a given name, and create an array of the same name as address."""
         if hasattr(self,name):
           print "ERROR! TreeProducerCommon.addBranch: Branch of name '%s' already exists!"%(name)
@@ -207,8 +208,10 @@ class TreeProducerCommon(object):
         if default!=None:
           getattr(self,name)[0] = default
         
+    
     def endJob(self):
+        """Write and close files after the job ends."""
         self.outputfile.Write()
         self.outputfile.Close()
-    
+        
 
