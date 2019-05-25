@@ -94,7 +94,7 @@ A simple example of a postprocessor that skims a nanoAOD file, by applying a sim
 ./postprocessors/skim_example.py
 ```
 
-Other examples can by found in <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/examples>
+Official examples can by found in <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/examples>
 
 
 ## Notes
