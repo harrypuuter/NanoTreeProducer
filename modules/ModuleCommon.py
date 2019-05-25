@@ -293,7 +293,7 @@ class CommonProducer(Module):
           self.out.m_genboson[0]     = boson.M()
           self.out.pt_genboson[0]    = boson.Pt()
           
-          for label in jecMETlabels:
+          for label in self.jecMETlabels:
             self.recoilTool.CorrectPFMETByMeanResolution(met_vars[label],boson,boson_vis,njets_var.get(label,len(jetIds)))
           
           if self.doZpt:
