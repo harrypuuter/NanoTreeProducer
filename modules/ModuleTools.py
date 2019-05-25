@@ -5,7 +5,8 @@ from modules import hasBit
 
 
 
-def checkBranches(tree,year=None):
+def checkBranches(tree,year
+):
   """Check if these branches are available in the tree branch list. If not redirect them."""
   print hasBit
   branches = [
@@ -19,7 +20,11 @@ def checkBranches(tree,year=None):
     ('HLT_Ele32_WPTight_Gsf',           False                         ),
   ]
   if year==2017:
-    branches += [ ('METFixEE2017_pt', 'MET_pt'), ('METFixEE2017_phi', 'MET_phi'), ]
+    branches += [
+      ('METFixEE2017_pt', 'MET_pt'), ('METFixEE2017_phi', 'MET_phi'),
+      ('METFixEE2017_MetUnclustEnUpDeltaX', 'MET_MetUnclustEnUpDeltaX'),
+      ('METFixEE2017_MetUnclustEnUpDeltaY', 'MET_MetUnclustEnUpDeltaY'),
+    ]
   fullbranchlist = tree.GetListOfBranches()
   for newbranch, oldbranch in branches:
     if newbranch not in fullbranchlist:
