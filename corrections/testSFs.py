@@ -7,7 +7,7 @@ print
 print ">>> importing modules..."
 #import os; os.chdir('..')
 import sys; sys.path.append('..')
-from CorrectionTools import *
+from corrections import *
 
 start1 = time.time()
 from ROOT import TFile
@@ -36,9 +36,9 @@ print ">>>   imported everything after %.1f seconds"%(time.time()-start0)
 print ">>> "
 
 # PATHS
-path       = 'CorrectionTools/leptonEfficiencies/'
-pathHTT_mu = 'CorrectionTools/leptonEfficiencies/HTT/Muon/Run2017/'
-pathHTT_el = 'CorrectionTools/leptonEfficiencies/HTT/Electron/Run2017/'
+path       = 'corrections/leptonEfficiencies/'
+pathHTT_mu = 'corrections/leptonEfficiencies/HTT/Muon/Run2017/'
+pathHTT_el = 'corrections/leptonEfficiencies/HTT/Electron/Run2017/'
 
 # MATRIX
 def printMatrix(name,method,ptvals=None,etavals=None):
