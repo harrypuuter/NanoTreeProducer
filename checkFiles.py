@@ -126,6 +126,7 @@ sample_dict = [
    ('LQ',             "SLQ_pair_M$MASS",                  "LegacyRun2_*_LQ_Pair_5f_Madgraph_LO_M$MASS"               ),
    ('LQ',             "SLQ_single_M$MASS",                "LegacyRun2_*_LQ_Single_5f_Madgraph_LO_M$MASS"             ),
    ('LQ',             "SLQ_t-channel_M$MASS",             "LegacyRun2_*_LQ_NonRes_5f_Madgraph_LO_M$MASS"             ),
+   ('LQ',             "VLQ_t-channel_M$MASS",             "LegacyRun2_*_LQ_VecNonRes_5f_Madgraph_LO_M$MASS"          ),
    ('LQ',             "VLQ_pair_M$MASS",                  "PairVectorLQ_InclusiveDecay_M-$MASS"                      ),
    ('LQ',             "VLQ_single_M$MASS",                "SingleVectorLQ_InclusiveDecay_M-$MASS"                    ),
    ('LQ',             "LQ3ToTauB_t-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_t-channel-M$MASS"       ),

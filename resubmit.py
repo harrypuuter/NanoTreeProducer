@@ -5,7 +5,7 @@ from commands import getoutput
 from argparse import ArgumentParser
 import submit, checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header
-from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getFileListLocal, getFileListPNFS, getFileListDAS, submitJobs, split_seq
+from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getBlackList, getFileListLocal, saveFileListLocal, getFileListPNFS, getFileListDAS, submitJobs, split_seq
 import itertools
 import subprocess
 from ROOT import TFile, Double
@@ -79,6 +79,7 @@ def main():
         print "No samples found in %s!"%(outdir)
       if args.verbose:
         print samplelist
+      blacklist = getBlackList("filelist/blacklist.txt")
       
       # RESUBMIT samples
       for channel in channels:
@@ -94,20 +95,23 @@ def main():
             if not outfilelist: continue            
             
             # FILE LIST
-            infiles = [ ]
+            infiles   = [ ]
             if not args.useDAS:
                 infiles = getFileListLocal(directory)
             if not infiles:
               if not args.useDAS:
                 print "Getting file list from DAS..."
-              if 'LQ3' in directory:
-                infiles = getFileListPNFS('/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'+directory)
+              if any(s in directory for s in ['LQ3','LegacyRun2']):
+                pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'
+                if any(s in directory for s in ['LegacyRun2_2018_LQ_Pair','LegacyRun2_2018_LQ_Single']):
+                  pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/rdelburg/'
+                infiles = getFileListPNFS(pnfspath+directory)
               else:
                 infiles = getFileListDAS('/'+directory)
               if infiles:
                 saveFileListLocal(directory,infiles)
             if not infiles:
-              print bcolors.BOLD + bcolors.WARNING + "Warning!!! FILELIST empty" + bcolors.ENDC
+              print bcolors.BOLD + bcolors.WARNING + "Warning! EMPTY filelist for " + directory + bcolors.ENDC
               continue
             elif args.verbose:
               print "FILELIST = "+infiles[0]
@@ -149,6 +153,10 @@ def main():
                   if not file.IsZombie() and file.GetListOfKeys().Contains('tree') and file.GetListOfKeys().Contains('cutflow'):
                     continue
                   infiles = infilelists[chunk]
+                  for filename in blacklist:
+                    if filename in infiles:
+                      print ">>> removing blacklisted %s"%filename
+                      infiles.remove(filename)
                   createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
                   badchunks.append(chunk)
               
