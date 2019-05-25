@@ -16,12 +16,14 @@ class CommonProducer(Module):
     
     def __init__(self, name, dataType, channel, **kwargs):
         
+        # HEADER
         classname = self.__class__.__name__
         print '\n'
         print ' '*9+'#'*(len(classname)+8)
         print ' '*9+"#   %s   #"%(classname)
         print ' '*9+'#'*(len(classname)+8)+'\n'
         
+        # SETTINGS
         self.name             = name
         self.isData           = dataType=='data'
         self.channel          = channel
@@ -60,7 +62,7 @@ class CommonProducer(Module):
             if self.doJECSys:
               self.jeclabels    = [ u+v for u in ['jer','jes'] for v in ['Down','Up']]
               self.jecMETlabels = [ u+v for u in ['jer','jes','unclEn'] for v in ['Down','Up']]
-        elif self.year in [2016,2018]:
+        elif self.year in [2016,2017,2018]:
           self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,systematics=self.doJECSys,updateEvent=False,data=True,era=self.era)
         else:
           self.doJEC = False
@@ -99,7 +101,7 @@ class CommonProducer(Module):
     
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         sys.stdout.flush()
-        checkBranches(inputTree)
+        checkBranches(inputTree,self.year)
         
     
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):

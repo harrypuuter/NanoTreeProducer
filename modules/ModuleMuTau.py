@@ -257,6 +257,7 @@ class MuTauProducer(CommonProducer):
           if self.vlooseIso(event,ltau.id2) and event.Muon_pfRelIso04_all[ltau.id1]<0.50:
             self.btagTool.fillEfficiencies(event,jetIds)
             self.btagTool_loose.fillEfficiencies(event,jetIds)
+          print self.out.pt_1[0], self.out.eta_1[0]
           self.out.trigweight[0]    = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
           self.out.idisoweight_1[0] = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
           self.out.idisoweight_2[0] = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
