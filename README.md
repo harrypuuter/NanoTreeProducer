@@ -22,7 +22,7 @@ git clone https://github.com/IzaakWN/NanoTreeProducer
 
 In case you use [lepton scale factors and efficiencies from the HTT group](https://github.com/CMS-HTT/LeptonEfficiencies), you will also need to get
 ```
-cd CorrectionTools/leptonEfficiencies
+cd corrections/leptonEfficiencies
 git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
 ```
 
