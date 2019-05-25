@@ -5,6 +5,7 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopPtReweighting#MC_SFs_Reweighting
 # https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting
 from corrections import modulepath, ensureTFile
+from modules import hasBit
 import os
 from math import sqrt, exp
 from ctypes import c_float
@@ -155,11 +156,3 @@ def getTTPt(event):
           toppt2 = particle.pt
     return toppt1, toppt2
     
-
-def hasBit(value,bit):
-  """Check if i'th bit is set to 1, i.e. binary of 2^(i-1),
-  from the right to the left, starting from position i=0."""
-  #return bin(value)[-bit-1]=='1'
-  #return format(value,'b').zfill(bit+1)[-bit-1]=='1'
-  return (value & (1 << bit))>0
-  

@@ -1,12 +1,13 @@
 from math import sqrt, sin, cos, pi
 from ROOT import TLorentzVector
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Event
-from corrections.RecoilCorrectionTool import hasBit
+from modules import hasBit
 
 
 
 def checkBranches(tree,year=None):
   """Check if these branches are available in the tree branch list. If not redirect them."""
+  print hasBit
   branches = [
     ('Electron_mvaFall17V2Iso',        'Electron_mvaFall17Iso'        ),
     ('Electron_mvaFall17V2Iso_WPL',    'Electron_mvaFall17Iso_WPL'    ),
