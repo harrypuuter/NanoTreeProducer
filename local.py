@@ -1,46 +1,64 @@
-#!/usr/bin/env python
-import os, sys
+#! /usr/bin/env python
+# Authors: Yuta Takahashi & Izaak Neutelings (2018)
+# Description: This postprocessor is used for local runs, to test the framework
+import os, sys, re
 sys.path.append('python')
-from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
+from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument('-i', '--infiles',  dest='infiles', action='store', type=str, default=[ ])
-parser.add_argument('-c', '--channel',  dest='channel', action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
-parser.add_argument('-t', '--type',     dest='type', action='store', choices=['data','mc'], default='mc')
-parser.add_argument('-y', '--year',     dest='year', action='store', choices=[2016,2017,2018], type=int, default=2017)
-parser.add_argument('-T', '--tes',      dest='tes', action='store', type=float, default=1.0)
-parser.add_argument('-L', '--ltf',      dest='ltf', action='store', type=float, default=1.0)
-parser.add_argument('-J', '--jtf',      dest='jtf', action='store', type=float, default=1.0)
-parser.add_argument('-l', '--tag',      dest='tag', action='store', type=str, default="")
-parser.add_argument('-M', '--Zmass',    dest='Zmass', action='store_true', default=False)
-parser.add_argument('-Z', '--doZpt',    dest='doZpt', action='store_true', default=False)
-parser.add_argument('-R', '--doRecoil', dest='doRecoil', action='store_true', default=False)
+parser.add_argument('-i', '--infiles',  dest='infiles',  action='store', type=str, default=[ ])
+parser.add_argument('-o', '--outdir',   dest='outdir',   action='store', type=str, default=".")
+parser.add_argument('-c', '--channel',  dest='channel',  action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
+parser.add_argument('-t', '--type',     dest='type',     action='store', choices=['data','mc'], default=None)
+parser.add_argument('-y', '--year',     dest='year',     action='store', choices=[2016,2017,2018], type=int, default=2017)
+parser.add_argument('-e', '--era',      dest='era',      action='store', type=str, default="")
+parser.add_argument('-m', '--max',      dest='maxEvts',  action='store', type=int, default=None)
+parser.add_argument('-T', '--tes',      dest='tes',      action='store', type=float, default=1.0)
+parser.add_argument('-L', '--ltf',      dest='ltf',      action='store', type=float, default=1.0)
+parser.add_argument('-J', '--jtf',      dest='jtf',      action='store', type=float, default=1.0)
+parser.add_argument('-l', '--tag',      dest='tag',      action='store', type=str, default="")
+parser.add_argument('-M', '--Zmass',    dest='Zmass',    action='store_true',  default=False)
+parser.add_argument('-Z', '--doZpt',    dest='doZpt',    action='store_true',  default=False)
+parser.add_argument('-R', '--doRecoil', dest='doRecoil', action='store_true',  default=False)
+parser.add_argument(      '--no-jec',   dest='doJEC',    action='store_false', default=True)
+parser.add_argument(      '--jec-sys',  dest='doJECSys', action='store_true',  default=None)
 args = parser.parse_args()
 
-channel  = args.channel
-year     = args.year
-dataType = args.type
-infiles  = args.infiles
+channel       = args.channel
+outdir        = args.outdir
+year          = args.year
+era           = args.era
+dataType      = args.type
+infiles       = args.infiles
+maxEvts       = args.maxEvts
+args.doJECSys = args.tes==1 and args.ltf==1 and args.jtf==1 if args.doJECSys==None else args.doJECSys
 if args.tag and args.tag[0]!='_': args.tag = '_'+args.tag
-postfix  = channel + args.tag + '.root'
+postfix  = "%s/%s_%s%s.root"%(outdir,channel,year,args.tag)
 kwargs = {
   'year':        args.year,
+  'era':         args.era,
   'tes':         args.tes,
   'ltf':         args.ltf,
   'jtf':         args.jtf,
   'doZpt':       args.doZpt,
   'doRecoil':    args.doRecoil,
+  'doJEC':       args.doJEC,
+  'doJECSys':    args.doJECSys,
   'ZmassWindow': args.Zmass,
 }
 
 if isinstance(infiles,str):
   infiles = infiles.split(',')
 if infiles:
-  dataType = 'mc'
-  if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in infiles[0] or 'EGamma' in infiles[0]:
-    dataType = 'data'
+  if not dataType:
+    if infiles and 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in infiles[0] or 'EGamma' in infiles[0]:
+      dataType = 'data'
+    else:
+      dataType = 'mc'
 else:
+  if not dataType:
+    dataType = 'mc'
   if dataType=='data':
     if year==2016:
       if channel in ['mutau','elemu','mumu']:
@@ -181,9 +199,9 @@ else:
         infiles = [
           'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/40000/EF19DF60-F32E-3343-82CA-C79A7FC80158.root',     #    1212
           'root://xrootd-cms.infn.it//store/data/Run2018B/Tau/NANOAOD/Nano14Dec2018-v1/80000/65F6D0A7-84B1-B14B-8ECD-8FE9F0FC8AC4.root',     #   18185
-          'root://xrootd-cms.infn.it//store/data/Run2018C/Tau/NANOAOD/Nano14Dec2018-v1/280000/D3DA2DE0-60BE-964F-AF46-38BBFC500B6D.root',    #    8070
-          'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/40000/A273F86C-EEA5-A045-91C6-58FBC2709F06.root',     #    4732
-          'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/50000/5CE993F1-C822-BA4D-A09F-865A39C859DE.root',     #   12462
+#           'root://xrootd-cms.infn.it//store/data/Run2018C/Tau/NANOAOD/Nano14Dec2018-v1/280000/D3DA2DE0-60BE-964F-AF46-38BBFC500B6D.root',    #    8070
+#           'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/40000/A273F86C-EEA5-A045-91C6-58FBC2709F06.root',     #    4732
+#           'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/50000/5CE993F1-C822-BA4D-A09F-865A39C859DE.root',     #   12462
           #'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/280000/BBF7FF8D-0E03-1246-96A6-FB59F421DD96.root',    #  106907
           #'root://xrootd-cms.infn.it//store/data/Run2018A/Tau/NANOAOD/Nano14Dec2018-v1/280000/7FDF91AF-7C29-9247-A204-46894479D63C.root',    # 1006638
           #'root://xrootd-cms.infn.it//store/data/Run2018B/Tau/NANOAOD/Nano14Dec2018-v1/90000/05C42610-AAFE-2B4A-8ADF-4A2173E2A598.root',     #   31121
@@ -212,7 +230,7 @@ else:
         ]
     elif year==2017:
         infiles = [
-#           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/90000/946BE003-BA74-554C-81C4-98F9B4D41772.root',  #   83977
+          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/90000/946BE003-BA74-554C-81C4-98F9B4D41772.root',  #   83977
 #           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/280000/1C5D9C07-B3BA-254E-832D-89AD21C9F258.root', #  109916
 #           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/280000/01CBA228-11A8-7848-8710-DF8CFEA1454E.root', #  169467
 #           'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/80000/94D4274B-B7AE-3E4B-9F98-398C07A5B18D.root',  #  257903
@@ -257,7 +275,7 @@ else:
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ytakahas/LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2017_LQ_Single_5f_Madgraph_LO_M1000_101.root',
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/280000/0A39C2EA-6216-8C44-91B6-5B6B2F334089.root', #  84000
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/280000/BD99C649-C5E7-D643-BCB7-2ED148297E78.root', # 905000
-          'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/80000/2A0AF07C-DC2A-DB4F-A800-9889130CF9D5.root',  #  80000
+          #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/80000/2A0AF07C-DC2A-DB4F-A800-9889130CF9D5.root',  #  80000
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/SingleVectorLQ_InclusiveDecay_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/80000/946A566B-5001-834B-999F-B9C94C122DC8.root',  #  84000
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/PairVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/00000/4F29BB0F-E041-1B42-98E1-CA0542B60CF5.root',
           #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/PairVectorLQ_InclusiveDecay_M-1000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1/40000/1D21AB6D-D603-994D-81FA-512FC5B5444C.root',
@@ -298,14 +316,24 @@ else:
         #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/rdelburg/LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000/nanoAOD/v1/nanoAOD_LegacyRun2_2018_LQ_Single_5f_Madgraph_LO_M1000_101.root',
       ]
 
+if dataType=='data' and era=="" and infiles:
+  matches = re.findall(r"Run(201[678])([A-Z]+)",infiles[0])
+  if not matches:
+    print "Warning! Could not find an era in %s"%infiles[0]
+  elif year!=int(matches[0][0]):
+    print "Warning! Given year does not match the data file %s"%infiles[0]
+  else:
+    era = matches[0][1]
+    kwargs['era'] = era
 
-print ">>> %-10s = %s"%('channel',channel)
-print ">>> %-10s = %s"%('dataType',dataType)
-print ">>> %-10s = %s"%('year',kwargs['year'])
-print ">>> %-10s = %s"%('tes',kwargs['tes'])
-print ">>> %-10s = %s"%('ltf',kwargs['ltf'])
-print ">>> %-10s = %s"%('jtf',kwargs['jtf'])
-print ">>> %-10s = %s"%('postfix',postfix)
+print '-'*80
+print ">>> %-10s = '%s'"%('postfix',postfix)
+print ">>> %-10s = '%s'"%('channel',channel)
+print ">>> %-10s = %s"  %('year',kwargs['year'])
+print ">>> %-10s = '%s'"%('era',kwargs['era'])
+print ">>> %-10s = '%s'"%('dataType',dataType)
+print ">>> %-10s = %s"  %('maxEvts',maxEvts)
+print '-'*80
 
 if channel=='tautau':
     from modules.ModuleTauTau import *
@@ -326,6 +354,5 @@ elif channel=='elemu':
 else:
     print 'Invalid channel name'
 
-#p = PostProcessor(".",["../../../crab/WZ_TuneCUETP8M1_13TeV-pythia8.root"],"Jet_pt>150","keep_and_drop.txt",[exampleModule()],provenance=True)
-p = PostProcessor(".", infiles, None, "keep_and_drop.txt", noOut=True, modules=[module2run()], provenance=False, postfix=postfix)
+p = PostProcessor(".", infiles, None, noOut=True, modules=[module2run()], provenance=False, postfix=postfix, maxEntries=maxEvts)
 p.run()

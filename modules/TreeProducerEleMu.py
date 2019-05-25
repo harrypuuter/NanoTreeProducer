@@ -5,11 +5,11 @@ import numpy as num
 from TreeProducerCommon import *
 
 class TreeProducerEleMu(TreeProducerCommon):
+    """Class to create a custom output file & tree; as well as create and contain branches."""
     
     def __init__(self, name, dataType, **kwargs):
-        
+        print 'TreeProducerEleMu is called for', name
         super(TreeProducerEleMu, self).__init__(name,dataType,**kwargs)
-        print 'TreeProducerEleMu is called', name
         
         
         ################

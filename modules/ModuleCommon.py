@@ -1,444 +1,360 @@
-import re, math
+# Author: Izaak Neutelings (May 2019)
+import sys, re
 from math import sqrt, sin, cos, pi
-import ROOT
-from ROOT import TTree, TH1D, TH2D, TLorentzVector, TVector3
-from CorrectionTools.RecoilCorrectionTool import hasBit
+from ROOT import TH1D, TH2D, TLorentzVector, TVector3
+from ModuleTools import *
+from CorrectionTools.PileupWeightTool import *
+from CorrectionTools.RecoilCorrectionTool import *
+from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
+from CorrectionTools.JetMETCorrectionTool import JetMETCorrectionTool
+from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Event
+__metaclass__ = type # to use super() with subclasses from CommonProducer
 
 
-
-def checkBranches(tree):
-  """Redirect some branch names in case they are not available in some samples or nanoAOD versions."""
-  branches = [
-    ('Electron_mvaFall17V2Iso',        'Electron_mvaFall17Iso'       ),
-    ('Electron_mvaFall17V2Iso_WPL',    'Electron_mvaFall17Iso_WPL'   ),
-    ('Electron_mvaFall17V2Iso_WP80',   'Electron_mvaFall17Iso_WP80'  ),
-    ('Electron_mvaFall17V2Iso_WP90',   'Electron_mvaFall17Iso_WP90'  ),
-    ('Electron_mvaFall17V2noIso_WPL',  'Electron_mvaFall17noIso_WPL' ),
-    ('Electron_mvaFall17V2noIso_WP80', 'Electron_mvaFall17noIso_WP80'),
-    ('Electron_mvaFall17V2noIso_WP90', 'Electron_mvaFall17noIso_WP90'),
-    ('HLT_Ele32_WPTight_Gsf',           False                        ),
-  ]
-  fullbranchlist = tree.GetListOfBranches()
-  for newbranch, oldbranch in branches:
-    if newbranch not in fullbranchlist:
-      if isinstance(oldbranch,str):
-        print "checkBranches: directing '%s' -> '%s'"%(newbranch,oldbranch)
-        exec "setattr(Event,newbranch,property(lambda self: self._tree.readBranch('%s')))"%oldbranch
-      else:
-        print "checkBranches: directing '%s' -> %s"%(newbranch,oldbranch)
-        exec "setattr(Event,newbranch,%s)"%(oldbranch)
+class CommonProducer(Module):
     
-
-
-def setBranchStatuses(tree,otherbranches=[ ]):
-  """Activate or deactivate branch statuses for better performance."""
-  tree.SetBranchStatus('*',0)
-  branches = [
-   'run', 'luminosityBlock', 'event', 'PV_*', 'Pileup_*', 'Flag_*', 'HLT_*',
-   'LHE_*', 'nGenPart', 'GenPart_*', 'GenMET_*', 'nGenVisTau', 'GenVisTau_*', 'genWeight',
-   'nElectron', 'Electron_*', 'nMuon', 'Muon_*', 'nTau', 'Tau_*',
-   'nJet', 'Jet_*', 'MET_*',
-  ]
-  for branchname in branches+otherbranches:
-   tree.SetBranchStatus(branchname,1)
-  
-
-
-def getVLooseTauIso(year):
-  """Return a method to check whether event passes the VLoose working
-  point of all available tau IDs. (For tau ID measurement.)"""
-  return lambda e,i: ord(e.Tau_idMVAoldDM[i])>0 or ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v1[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0
-  
-
-
-def getMET(year):
-  """Return year-dependent MET recipe."""
-  ###if year==2017:
-  ###  return lambda e: TLorentzVector(e.METFixEE2017_pt*cos(e.METFixEE2017_phi),e.METFixEE2017_pt*sin(e.METFixEE2017_phi),0,e.METFixEE2017_pt)
-  ###else:
-  return lambda e: TLorentzVector(e.MET_pt*cos(e.MET_phi),e.MET_pt*sin(e.MET_phi),0,e.MET_pt)
-  
-
-
-def getMETFilters(year,isData):
-  """Return a method to check if an event passes the recommended MET filters."""
-  if year==2018:
-    if isData:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilterV2
-    else:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilterV2
-  else:
-    if isData:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter and e.Flag_ecalBadCalibFilter
-    else:
-      return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_BadChargedCandidateFilter and e.Flag_ecalBadCalibFilter
-  
-
-
-def Tau_idIso(event,i):
-  raw = event.Tau_rawIso[i]
-  if event.Tau_photonsOutsideSignalCone[i]/event.Tau_pt[i]<0.10:
-    return 0 if raw>4.5 else 1 if raw>3.5 else 3 if raw>2.5 else 7 if raw>1.5 else 15 if raw>0.8 else 31 # VVLoose, VLoose, Loose, Medium, Tight
-  return 0 if raw>4.5 else 1 if raw>3.5 else 3 # VVLoose, VLoose
-  
-
-
-class DiLeptonBasicClass:
-    """Container class to pair and order tau decay candidates."""
-    def __init__(self, id1, pt1, iso1, id2, pt2, iso2):
-        self.id1  = id1
-        self.id2  = id2
-        self.pt1  = pt1
-        self.pt2  = pt2
-        self.iso1 = iso1
-        self.iso2 = iso2
+    def __init__(self, name, dataType, channel, **kwargs):
         
-    def __gt__(self, odilep):
-        """Order dilepton pairs according to the pT of both objects first, then in isolation."""
-        if   self.pt1  != odilep.pt1:  return self.pt1  > odilep.pt1  # greater = higher pT
-        elif self.pt2  != odilep.pt2:  return self.pt2  > odilep.pt2  # greater = higher pT
-        elif self.iso1 != odilep.iso1: return self.iso1 < odilep.iso1 # greater = smaller isolation
-        elif self.iso2 != odilep.iso2: return self.iso2 < odilep.iso2 # greater = smaller isolation
-        return True
-    
-class LeptonTauPair(DiLeptonBasicClass):
-    def __gt__(self, oltau):
-        """Override for tau isolation."""
-        if   self.pt1  != oltau.pt1:  return self.pt1  > oltau.pt1  # greater = higher pT
-        elif self.pt2  != oltau.pt2:  return self.pt2  > oltau.pt2  # greater = higher pT
-        elif self.iso1 != oltau.iso1: return self.iso1 < oltau.iso1 # greater = smaller lepton isolation
-        elif self.iso2 != oltau.iso2: return self.iso2 > oltau.iso2 # greater = larger tau isolation
-        return True
-    
-class DiTauPair(DiLeptonBasicClass):
-    def __gt__(self, oditau):
-        """Override for tau isolation."""
-        if   self.pt1  != oditau.pt1:  return self.pt1  > oditau.pt1  # greater = higher pT
-        elif self.pt2  != oditau.pt2:  return self.pt2  > oditau.pt2  # greater = higher pT
-        elif self.iso1 != oditau.iso1: return self.iso1 > oditau.iso1 # greater = larger tau isolation
-        elif self.iso2 != oditau.iso2: return self.iso2 > oditau.iso2 # greater = larger tau isolation
-        return True
-    
-
-
-def bestDiLepton(diLeptons):
-    """Take best dilepton pair."""
-    if len(diLeptons)==1:
-        return diLeptons[0]
-    #least_iso_highest_pt = lambda dl: (-dl.tau1_pt, -dl.tau2_pt, dl.tau2_iso, -dl.tau1_iso)
-    #return sorted(diLeptons, key=lambda dl: least_iso_highest_pt(dl), reverse=False)[0]
-    return sorted(diLeptons, reverse=True)[0]
-    
-
-
-def deltaR(eta1, phi1, eta2, phi2):
-    """Compute DeltaR."""
-    deta = eta1 - eta2
-    dphi = deltaPhi(phi1, phi2)
-    return sqrt( deta*deta + dphi*dphi )
-    
-
-
-def deltaPhi(phi1, phi2):
-    """Computes Delta phi, handling periodic limit conditions."""
-    res = phi1 - phi2
-    while res > pi:
-      res -= 2*pi
-    while res < -pi:
-      res += 2*pi
-    return res
-    
-
-
-def genmatch(event,index,out=None):
-    """Match reco tau to gen particles, as there is a bug in the nanoAOD matching
-    for lepton to tau fakes of taus reconstructed as DM1."""
-    genmatch  = 0
-    dR_min    = 0.2
-    particles = Collection(event,'GenPart')
-    eta_reco  = event.Tau_eta[index]
-    phi_reco  = event.Tau_phi[index]
-    
-    # lepton -> tau fakes
-    for id in range(event.nGenPart):
-      particle = particles[id]
-      PID = abs(particle.pdgId)
-      if (particle.status!=1 and PID!=13) or particle.pt<8: continue
-      dR = deltaR(eta_reco,phi_reco,particle.eta,particle.phi)
-      if dR<dR_min:
-        if hasBit(particle.statusFlags,0): # isPrompt
-          if   PID==11: genmatch = 1; dR_min = dR
-          elif PID==13: genmatch = 2; dR_min = dR
-        elif hasBit(particle.statusFlags,5): # isDirectPromptTauDecayProduct
-          if   PID==11: genmatch = 3; dR_min = dR
-          elif PID==13: genmatch = 4; dR_min = dR
-    
-    # real tau leptons
-    for id in range(event.nGenVisTau):
-      dR = deltaR(eta_reco,phi_reco,event.GenVisTau_eta[id],event.GenVisTau_phi[id])
-      if dR<dR_min:
-        dR_min = dR
-        genmatch = 5
-    
-    return genmatch
-    
-
-
-###def genmatchCheck(event,index,out):
-###    """Match reco tau to gen particles, as there is a bug in the nanoAOD matching
-###    for lepton to tau fakes of taus reconstructed as DM1."""
-###    #print '-'*80
-###    genmatch  = 0
-###    #partmatch_s1 = None
-###    #partmatch_sn1 = None # status != 1
-###    dR_min    = 1.0
-###    particles = Collection(event,'GenPart')
-###    eta_reco  = event.Tau_eta[index]
-###    phi_reco  = event.Tau_phi[index]
-###    
-###    # lepton -> tau fakes
-###    for id in range(event.nGenPart):
-###      particle = particles[id]
-###      PID = abs(particle.pdgId)
-###      if particle.status!=1 or particle.pt<8: continue
-###      #if (particle.status!=1 and PID!=13) or particle.pt<8: continue
-###      dR = deltaR(eta_reco,phi_reco,particle.eta,particle.phi)
-###      if dR<dR_min:
-###        if hasBit(particle.statusFlags,0): # isPrompt
-###          if   PID==11:
-###            genmatch = 1; dR_min = dR
-###            #if particle.status==1: partmatch_s1 = particle
-###            #else:                  partmatch_sn1 = particle
-###          elif PID==13:
-###            genmatch = 2; dR_min = dR
-###            #if particle.status==1: partmatch_s1 = particle
-###            #else:                  partmatch_sn1 = particle
-###        elif hasBit(particle.statusFlags,5): # isDirectPromptTauDecayProduct
-###          if   PID==11:
-###            genmatch = 3; dR_min = dR
-###            #if particle.status==1: partmatch_s1 = particle
-###            #else:                  partmatch_sn1 = particle
-###          elif PID==13:
-###            genmatch = 4; dR_min = dR
-###            #if particle.status==1: partmatch_s1 = particle
-###            #else:                  partmatch_sn1 = particle
-###        #if particle.status!=1 and particle.status!=23:
-###        # mother = abs(particles[particle.genPartIdxMother].pdgId) if hasattr(particle,'genPartIdxMother') and particle.genPartIdxMother>0 else 0
-###        # print "%3d: PID=%3d, mass=%3.1f, pt=%4.1f, status=%2d, mother=%2d, statusFlags=%5d (%16s), isPrompt=%d, isDirectPromptTauDecayProduct=%d, fromHardProcess=%1d, isHardProcessTauDecayProduct=%1d, isDirectHardProcessTauDecayProduct=%1d"%\
-###        # (id,particle.pdgId,particle.mass,particle.pt,particle.status,mother,particle.statusFlags,bin(particle.statusFlags),hasBit(particle.statusFlags,0),hasBit(particle.statusFlags,5),hasBit(particle.statusFlags,8),hasBit(particle.statusFlags,9),hasBit(particle.statusFlags,10))
-###    
-###    # real tau leptons
-###    for id in range(event.nGenVisTau):
-###      dR = deltaR(eta_reco,phi_reco,event.GenVisTau_eta[id],event.GenVisTau_phi[id])
-###      if dR<dR_min:
-###        dR_min = dR
-###        genmatch = 5
-###    
-###    ## CHECKS
-###    #if genmatch!=ord(event.Tau_genPartFlav[index]):
-###    # #mother = abs(particles[partmatch_s1.genPartIdxMother].pdgId) if hasattr(partmatch_s1,'genPartIdxMother') else 0
-###    # #print "gen mismatch: Tau_genPartFlav = %s, genmatch = %s, Tau_decayMode = %2s, mother = %s"%(ord(event.Tau_genPartFlav[index]),genmatch,event.Tau_decayMode[index],mother)
-###    # if genmatch>0 and genmatch<5 and event.Tau_decayMode[index]==1:
-###    #   if partmatch_s1:
-###    #     fillFlagHistogram(out.flags_LTF_mis,partmatch_s1)
-###    #   elif partmatch_sn1:
-###    #     fillFlagHistogram(out.flags_LTF_mis_sn1,partmatch_sn1)
-###    #
-###    ## CHECK status and flags
-###    #if genmatch>0 and genmatch<5:
-###    # if event.Tau_decayMode[index]==0:
-###    #   if partmatch_s1:
-###    #     fillFlagHistogram(out.flags_LTF_DM0,partmatch_s1)       
-###    #   elif partmatch_sn1:
-###    #     fillFlagHistogram(out.flags_LTF_DM0_sn1,partmatch_sn1)
-###    # elif event.Tau_decayMode[index]==1:
-###    #   if partmatch_s1:
-###    #     fillFlagHistogram(out.flags_LTF_DM1,partmatch_s1)
-###    #   elif partmatch_sn1:
-###    #     fillFlagHistogram(out.flags_LTF_DM1_sn1,partmatch_sn1)
-###    #     #if partmatch_sn1.status not in [23,44,52]:
-###    #     #  print partmatch_sn1.status
-###    #
-###    ## CHECK correlation
-###    #out.genmatch_corr.Fill(ord(event.Tau_genPartFlav[index]),genmatch)
-###    #if event.Tau_decayMode[index]==0:
-###    # out.genmatch_corr_DM0.Fill(ord(event.Tau_genPartFlav[index]),genmatch)
-###    #if event.Tau_decayMode[index]==1:
-###    # out.genmatch_corr_DM1.Fill(ord(event.Tau_genPartFlav[index]),genmatch)
-###    
-###    return genmatch
-
-
-
-###def fillFlagHistogram(hist,particle):
-###  """Fill histograms with status flags for genPartFlav check."""
-###  if hasBit(particle.statusFlags, 0): hist.Fill( 0) # isPrompt
-###  if hasBit(particle.statusFlags, 5): hist.Fill( 1) # isDirectPromptTauDecayProduct
-###  if hasBit(particle.statusFlags, 7): hist.Fill( 2) # isHardProcess
-###  if hasBit(particle.statusFlags, 8): hist.Fill( 3) # fromHardProcess
-###  if hasBit(particle.statusFlags,10): hist.Fill( 4) # isDirectHardProcessTauDecayProduct
-###  if hasBit(particle.statusFlags,11): hist.Fill( 5) # fromHardProcessBeforeFSR
-###  if hasBit(particle.statusFlags,12): hist.Fill( 6) # isFirstCopy
-###  if hasBit(particle.statusFlags,13): hist.Fill( 7) # isLastCop
-###  if hasBit(particle.statusFlags,14): hist.Fill( 8) # isLastCopyBeforeFSR
-###  if   particle.status==1:            hist.Fill( 9) # status==1
-###  elif particle.status==23:           hist.Fill(10) # status==23
-###  elif particle.status==44:           hist.Fill(11) # status==44
-###  elif particle.status==51:           hist.Fill(12) # status==51
-###  elif particle.status==52:           hist.Fill(13) # status==52
-###  else:                               hist.Fill(14) # other status
-    
-
-
-def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
-    """Check if event has extra electrons or muons. (HTT definitions.)"""
-    
-    extramuon_veto = False
-    extraelec_veto = False
-    dilepton_veto  = False
-    
-    LooseMuons = [ ]
-    for imuon in range(event.nMuon):
-        if event.Muon_pt[imuon] < 10: continue
-        if abs(event.Muon_eta[imuon]) > 2.4: continue
-        if abs(event.Muon_dz[imuon]) > 0.2: continue
-        if abs(event.Muon_dxy[imuon]) > 0.045: continue
-        if event.Muon_pfRelIso04_all[imuon] > 0.3: continue
-        if event.Muon_mediumId[imuon] and (imuon not in muon_idxs):
-            extramuon_veto = True
-        if event.Muon_pt[imuon] > 15 and event.Muon_isPFcand[imuon]: #Muon_isGlobal[imuon] and Muon_isTracker[imuon]
-            LooseMuons.append(imuon)
-    
-    LooseElectrons = [ ]
-    for ielectron in range(event.nElectron):
-        if event.Electron_pt[ielectron] < 10: continue
-        if abs(event.Electron_eta[ielectron]) > 2.5: continue
-        if abs(event.Electron_dz[ielectron]) > 0.2: continue
-        if abs(event.Electron_dxy[ielectron]) > 0.045: continue
-        if event.Electron_pfRelIso03_all[ielectron] > 0.3: continue
-        if event.Electron_convVeto[ielectron] ==1 and ord(event.Electron_lostHits[ielectron]) <= 1 and event.Electron_mvaFall17V2Iso_WP90[ielectron] and (ielectron not in electron_idxs):
-            extraelec_veto = True
-        if event.Electron_pt[ielectron] > 15 and event.Electron_mvaFall17V2Iso_WPL[ielectron]:
-            LooseElectrons.append(ielectron)
-    
-    if channel=='mutau':
-      for idx1 in LooseMuons:
-        for idx2 in LooseMuons:
-            if idx1 >= idx2: continue 
-            dR = deltaR(event.Muon_eta[idx1], event.Muon_phi[idx1], 
-                        event.Muon_eta[idx2], event.Muon_phi[idx2])
-            if event.Muon_charge[idx1] * event.Muon_charge[idx2] < 0 and dR > 0.15:
-                dilepton_veto = True
-    
-    if channel=='eletau':
-      for idx1 in LooseElectrons:
-        for idx2 in LooseElectrons:
-            if idx1 >= idx2: continue 
-            dR = deltaR(event.Electron_eta[idx1], event.Electron_phi[idx1], 
-                        event.Electron_eta[idx2], event.Electron_phi[idx2])
-            if event.Electron_charge[idx1] * event.Electron_charge[idx2] < 0 and dR > 0.15:
-                dilepton_veto = True
-    
-    return extramuon_veto, extraelec_veto, dilepton_veto
-    
-
-
-def fillJetsBranches(self,event,tau1,tau2):
-    """Help function to select jets and b tags, after removing overlap with tau decay candidates,
-    and fill the jet variable branches."""
-    
-    jetIds, bjetIds = [ ], [ ]
-    nfjets, ncjets  = 0, 0
-    nbtag, nbtag50  = 0, 0
-    nbtag_loose, nbtag50_loose = 0, 0
-    
-    # REMOVE OVERLAP
-    jets = Collection(event,'Jet')
-    #jets = filter(self.jetSel,jets)
-    for ijet in range(event.nJet):
-        if event.Jet_pt[ijet] < self.jetCutPt: continue
-        if abs(event.Jet_eta[ijet]) > 4.7: continue
-        if tau1.DeltaR(jets[ijet].p4()) < 0.5: continue
-        if tau2.DeltaR(jets[ijet].p4()) < 0.5: continue
-        jetIds.append(ijet)
+        classname = self.__class__.__name__
+        print '\n'
+        print ' '*9+'#'*(len(classname)+8)
+        print ' '*9+"#   %s   #"%(classname)
+        print ' '*9+'#'*(len(classname)+8)+'\n'
         
-        if abs(event.Jet_eta[ijet]) > 2.4:
-          nfjets += 1
+        self.name             = name
+        self.isData           = dataType=='data'
+        self.channel          = channel
+        self.year             = kwargs.get('year',       2017 )
+        self.era              = kwargs.get('era',        ""   )
+        self.tes              = kwargs.get('tes',        1.0  )
+        self.ltf              = kwargs.get('ltf',        1.0  )
+        self.jtf              = kwargs.get('jtf',        1.0  )
+        self.doTTpt           = kwargs.get('doTTpt',     'TT' in name       )
+        self.doZpt            = kwargs.get('doZpt',      'DY' in name       )
+        self.doRecoil         = kwargs.get('doRecoil',   ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
+        self.doTight          = kwargs.get('doTight',    self.tes!=1 or self.ltf!=1 or self.jtf!=1)
+        self.doJEC            = kwargs.get('doJEC',      not self.doTight   ) #and False
+        self.doJECSys         = kwargs.get('doJECSys',   self.doJEC         ) and not self.isData and self.doJEC #and False
+        self.isVectorLQ       = kwargs.get('isVectorLQ', 'VectorLQ' in name )
+        self.jetCutPt         = 30
+        
+        # YEAR-DEPENDENT IDs
+        self.vlooseIso        = getVLooseTauIso(self.year)
+        self.met, metbranch   = getMET(self.year)
+        self.filter           = getMETFilters(self.year,self.isData)
+        
+        # CORRECTIONS
+        self.jeclabels    = [ ]
+        self.jecMETlabels = [ ]
+        if not self.isData:
+          self.puTool         = PileupWeightTool(year=self.year)
+          self.btagTool       = BTagWeightTool('DeepCSV','medium',channel=channel,year=self.year)
+          self.btagTool_loose = BTagWeightTool('DeepCSV','loose',channel=channel,year=self.year)
+          if self.doZpt:
+            self.zptTool      = ZptCorrectionTool(year=self.year)
+          if self.doRecoil:
+            self.recoilTool   = RecoilCorrectionTool(year=self.year)
+          if self.doJEC:
+            self.jmeTool      = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,systematics=self.doJECSys,updateEvent=False)
+            if self.doJECSys:
+              self.jeclabels    = [ u+v for u in ['jer','jes'] for v in ['Down','Up']]
+              self.jecMETlabels = [ u+v for u in ['jer','jes','unclEn'] for v in ['Down','Up']]
+        elif self.year in [2016,2018]:
+          self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,systematics=self.doJECSys,updateEvent=False,data=True,era=self.era)
         else:
-          ncjets += 1
+          self.doJEC = False
+        self.deepcsv_wp       = BTagWPs('DeepCSV',year=self.year)
         
-        if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.loose:
-          nbtag_loose += 1
-          if event.Jet_pt[ijet]>50:
-            nbtag50_loose += 1
-          if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.medium:
-            nbtag += 1
-            if event.Jet_pt[ijet]>50:
-              nbtag50 += 1
-            bjetIds.append(ijet)
     
-    # FILL BRANCHES JETS
-    self.out.njets[0]         = len(jetIds)
-    self.out.njets50[0]       = len([i for i in jetIds if event.Jet_pt[i]>50])
-    self.out.nfjets[0]        = nfjets
-    self.out.ncjets[0]        = ncjets
-    self.out.nbtag[0]         = nbtag
-    self.out.nbtag50[0]       = nbtag50
-    self.out.nbtag_loose[0]   = nbtag_loose
-    self.out.nbtag50_loose[0] = nbtag50_loose
+    def beginJob(self):
+        print '-'*80
+        print ">>> %-12s = '%s'"%('outputfile',self.name)
+        print ">>> %-12s = '%s'"%('channel',   self.channel)
+        print ">>> %-12s = %s"  %(  'isData',  self.isData)
+        print ">>> %-12s = %s"  %('year',      self.year)
+        print ">>> %-12s = '%s'"%('era',       self.era)
+        print ">>> %-12s = %s"  %('tes',       self.tes)
+        print ">>> %-12s = %s"  %('ltf',       self.ltf)
+        print ">>> %-12s = %s"  %('jtf',       self.jtf)
+        print ">>> %-12s = %s"  %('doTTpt',    self.doTTpt)
+        print ">>> %-12s = %s"  %('doZpt',     self.doZpt)
+        print ">>> %-12s = %s"  %('doRecoil',  self.doRecoil)
+        print ">>> %-12s = %s"  %('doJEC',     self.doJEC)
+        print ">>> %-12s = %s"  %('doJECSys',  self.doJECSys)
+        print ">>> %-12s = %s"  %('isVectorLQ',self.isVectorLQ)
+        print ">>> %-12s = %s"  %('doTight',   self.doTight)
+        print ">>> %-12s = %s"  %('jetCutPt',  self.jetCutPt)
+        pass
+        
     
-    if len(jetIds)>0:
-      self.out.jpt_1[0]       = event.Jet_pt[jetIds[0]]
-      self.out.jeta_1[0]      = event.Jet_eta[jetIds[0]]
-      self.out.jphi_1[0]      = event.Jet_phi[jetIds[0]]
-      self.out.jdeepb_1[0]    = event.Jet_btagDeepB[jetIds[0]]
-    else:
-      self.out.jpt_1[0]       = -1.
-      self.out.jeta_1[0]      = -9.
-      self.out.jphi_1[0]      = -9.
-      self.out.jdeepb_1[0]    = -9.
+    def endJob(self):
+        if not self.isData:
+          self.btagTool.setDirectory(self.out.outputfile,'btag')
+          self.btagTool_loose.setDirectory(self.out.outputfile,'btag')
+          if self.doJEC:
+            self.jmeTool.endJob()
+        self.out.endJob()
+        
     
-    if len(jetIds)>1:
-      self.out.jpt_2[0]       = event.Jet_pt[jetIds[1]]
-      self.out.jeta_2[0]      = event.Jet_eta[jetIds[1]]
-      self.out.jphi_2[0]      = event.Jet_phi[jetIds[1]]
-      self.out.jdeepb_2[0]    = event.Jet_btagDeepB[jetIds[1]]
-    else:
-      self.out.jpt_2[0]       = -1.
-      self.out.jeta_2[0]      = -9.
-      self.out.jphi_2[0]      = -9.
-      self.out.jdeepb_2[0]    = -9.
+    def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
+        sys.stdout.flush()
+        checkBranches(inputTree)
+        
     
-    if len(bjetIds)>0:
-      self.out.bpt_1[0]       = event.Jet_pt[bjetIds[0]]
-      self.out.beta_1[0]      = event.Jet_eta[bjetIds[0]]
-    else:
-      self.out.bpt_1[0]       = -1.
-      self.out.beta_1[0]      = -9.
+    def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
+        pass
+        
     
-    if len(bjetIds)>1:
-      self.out.bpt_2[0]       = event.Jet_pt[bjetIds[1]]
-      self.out.beta_2[0]      = event.Jet_eta[bjetIds[1]]
-    else:
-      self.out.bpt_2[0]       = -1.
-      self.out.beta_2[0]      = -9.
+    def analyze(self, event):
+        """Process event, return True (go to next module) or False (fail, go to next event)."""
+        pass
+        
     
-    return jetIds
+    def fillEventBranches(self,event):
+        """Help function to fill branches of common event variables."""
+        
+        # EVENT
+        self.out.isData[0]          = self.isData
+        self.out.run[0]             = event.run
+        self.out.lumi[0]            = event.luminosityBlock
+        self.out.event[0]           = event.event & 0xffffffffffffffff
+        self.out.npvs[0]            = event.PV_npvs
+        self.out.npvsGood[0]        = event.PV_npvsGood
+        self.out.metfilter[0]       = self.filter(event)
+        
+        if not self.isData:
+          ###self.out.ngentauhads[0]   = ngentauhads
+          ###self.out.ngentaus[0]      = ngentaus
+          self.out.genmet[0]        = event.GenMET_pt
+          self.out.genmetphi[0]     = event.GenMET_phi
+          self.out.nPU[0]           = event.Pileup_nPU
+          self.out.nTrueInt[0]      = event.Pileup_nTrueInt
+          try:
+            self.out.LHE_Njets[0]   = event.LHE_Njets
+          except RuntimeError:
+            self.out.LHE_Njets[0]   = -1
+          ###self.out.LHE_NpLO[0]      = event.LHE_NpLO
+          ###self.out.LHE_NpNLO[0]     = event.LHE_NpNLO
+          
+          ###if self.isVectorLQ:
+          ###  self.out.ntops[0]       = countTops(event)
+          
     
+    def fillJetBranches(self,event,tau1,tau2):
+        """Help function to select jets and b tags, after removing overlap with tau decay candidates,
+        and fill the jet variable branches."""
+        #print '-'*80
+        
+        # GET JEC correction and uncertainty variations
+        if self.doJEC:
+          jetIds_vars = { }
+          if self.isData:
+            jetpt_corr, met_corr = self.jmeTool.correctJetMET_Data(event)
+            jetpt_vars, met_vars = { 'nom': jetpt_corr }, { 'nom': met_corr }
+          else:
+            jetpt_vars, met_vars = self.jmeTool.correctJetMET_MC(event)
+            for label in self.jeclabels:
+              jetIds_vars[label] = [ ]
+        
+        # COUNTER
+        jetIds, bjetIds = [ ], [ ]
+        nfjets, ncjets  = 0, 0
+        nbtag, nbtag50  = 0, 0
+        nbtag_loose, nbtag50_loose = 0, 0
+        
+        # SELECT JET, remove overlap with selected objects
+        jets = Collection(event,'Jet')
+        #jets = filter(self.jetSel,jets)
+        for ijet in range(event.nJet):
+            #print event.Jet_pt[ijet], jetpt_vars['nom'][ijet]
+            if abs(event.Jet_eta[ijet]) > 4.7: continue
+            if tau1.DeltaR(jets[ijet].p4()) < 0.5: continue
+            if tau2.DeltaR(jets[ijet].p4()) < 0.5: continue
+            if event.Jet_jetId[ijet] < 2: continue
+            
+            if self.doJEC:
+              for label in self.jeclabels:
+                if jetpt_vars[label][ijet] < self.jetCutPt: continue
+                jetIds_vars[label].append(ijet)
+              jpt = jetpt_vars['nom'][ijet]
+            else:
+              jpt = event.Jet_pt[ijet]
+            if jpt < self.jetCutPt: continue
+            jetIds.append(ijet)
+            
+            if abs(event.Jet_eta[ijet]) > 2.4:
+              nfjets += 1
+            else:
+              ncjets += 1
+            
+            if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.loose:
+              nbtag_loose += 1
+              if jpt>50:
+                nbtag50_loose += 1
+              if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.medium:
+                nbtag += 1
+                if jpt>50:
+                  nbtag50 += 1
+                bjetIds.append(ijet)
+        
+        ## TOTAL MOMENTUM
+        #eventSum = TLorentzVector()
+        #for lep in muons :
+        #    eventSum += lep.p4()
+        #for lep in electrons :
+        #    eventSum += lep.p4()
+        #for j in filter(self.jetSel,jets):
+        #    eventSum += j.p4()
+        
+        # FILL JET BRANCHES
+        self.out.njets[0]         = len(jetIds)
+        self.out.njets50[0]       = len([i for i in jetIds if event.Jet_pt[i]>50])
+        self.out.nfjets[0]        = nfjets
+        self.out.ncjets[0]        = ncjets
+        self.out.nbtag[0]         = nbtag
+        self.out.nbtag50[0]       = nbtag50
+        self.out.nbtag_loose[0]   = nbtag_loose
+        self.out.nbtag50_loose[0] = nbtag50_loose
+        
+        # LEADING JET
+        jetIds.sort(key=lambda i: event.Jet_pt[i],reverse=True) # sort needed if JECs were applied
+        if len(jetIds)>0:
+          self.out.jpt_1[0]       = event.Jet_pt[jetIds[0]]
+          self.out.jeta_1[0]      = event.Jet_eta[jetIds[0]]
+          self.out.jphi_1[0]      = event.Jet_phi[jetIds[0]]
+          self.out.jdeepb_1[0]    = event.Jet_btagDeepB[jetIds[0]]
+        else:
+          self.out.jpt_1[0]       = -1.
+          self.out.jeta_1[0]      = -9.
+          self.out.jphi_1[0]      = -9.
+          self.out.jdeepb_1[0]    = -9.
+        
+        # SUBLEADING JET
+        if len(jetIds)>1:
+          self.out.jpt_2[0]       = event.Jet_pt[jetIds[1]]
+          self.out.jeta_2[0]      = event.Jet_eta[jetIds[1]]
+          self.out.jphi_2[0]      = event.Jet_phi[jetIds[1]]
+          self.out.jdeepb_2[0]    = event.Jet_btagDeepB[jetIds[1]]
+        else:
+          self.out.jpt_2[0]       = -1.
+          self.out.jeta_2[0]      = -9.
+          self.out.jphi_2[0]      = -9.
+          self.out.jdeepb_2[0]    = -9.
+        
+        # LEADING B JETS
+        if len(bjetIds)>0:
+          self.out.bpt_1[0]       = event.Jet_pt[bjetIds[0]]
+          self.out.beta_1[0]      = event.Jet_eta[bjetIds[0]]
+        else:
+          self.out.bpt_1[0]       = -1.
+          self.out.beta_1[0]      = -9.
+        
+        # SUBLEADING B JETS
+        if len(bjetIds)>1:
+          self.out.bpt_2[0]       = event.Jet_pt[bjetIds[1]]
+          self.out.beta_2[0]      = event.Jet_eta[bjetIds[1]]
+        else:
+          self.out.bpt_2[0]       = -1.
+          self.out.beta_2[0]      = -9.
+        
+        # FILL JET VARIATION BRANCHES
+        njets_vars = { }
+        if self.doJECSys:
+          for label in self.jeclabels:
+            jetIds_vars[label].sort(key=lambda i: jetpt_vars[label][i],reverse=True)
+            njets_vars[label]    = len(jetIds_vars[label])
+            jetIds_vars50        = [i for i in jetIds_vars[label]   if jetpt_vars[label][i]>50]
+            bjetIds_vars50_loose = [i for i in jetIds_vars50        if event.Jet_btagDeepB[i] > self.deepcsv_wp.loose]
+            bjetIds_vars50       = [i for i in bjetIds_vars50_loose if event.Jet_btagDeepB[i] > self.deepcsv_wp.medium]
+            getattr(self.out,"njets_"+label)[0]   = njets_vars[label]
+            getattr(self.out,"njets50_"+label)[0] = len(jetIds_vars50)
+            getattr(self.out,"nbtag50_"+label)[0] = len(bjetIds_vars50)
+            getattr(self.out,"nbtag50_loose_"+label)[0] = len(bjetIds_vars50_loose)
+            getattr(self.out,"jpt_1_"+label)[0]   = jetpt_vars[label][jetIds_vars[label][0]] if len(jetIds_vars[label])>0 else -1
+            getattr(self.out,"jpt_2_"+label)[0]   = jetpt_vars[label][jetIds_vars[label][1]] if len(jetIds_vars[label])>1 else -1
+        
+        # MET TLORENTZVECTOR
+        if self.doJEC:
+          met = met_vars['nom']
+        else:
+          met = self.met(event)
+          met_vars = { }
+        
+        return jetIds, met, njets_vars, met_vars
+        
+    
+    def applyCommonCorrections(self, event, jetIds, met, njets_var, met_vars):
+        """Help function to apply common corrections, and fill weight branches."""
+        
+        if self.doRecoil:
+          boson, boson_vis           = getBoson(event)
+          self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,len(jetIds))
+          self.out.m_genboson[0]     = boson.M()
+          self.out.pt_genboson[0]    = boson.Pt()
+          
+          for label in jecMETlabels:
+            self.recoilTool.CorrectPFMETByMeanResolution(met_vars[label],boson,boson_vis,njets_var.get(label,len(jetIds)))
+          
+          if self.doZpt:
+            self.out.zptweight[0]    = self.zptTool.getZptWeight(boson.Pt(),boson.M())
+        
+        elif self.doZpt:
+          zboson = getZBoson(event)
+          self.out.m_genboson[0]     = zboson.M()
+          self.out.pt_genboson[0]    = zboson.Pt()
+          self.out.zptweight[0]      = self.zptTool.getZptWeight(zboson.Pt(),zboson.M())
+        
+        elif self.doTTpt:
+          toppt1, toppt2             = getTTPt(event)
+          self.out.ttptweight[0]     = getTTptWeight(toppt1,toppt2)
+        
+        self.out.genweight[0]        = event.genWeight
+        self.out.puweight[0]         = self.puTool.getWeight(event.Pileup_nTrueInt)
+        self.out.btagweight[0]       = self.btagTool.getWeight(event,jetIds)
+        self.out.btagweight_loose[0] = self.btagTool_loose.getWeight(event,jetIds)
+        
+    
+    def fillMETAndDiLeptonBranches(self,event, tau1, tau2, met, met_vars):
+        """Help function to compute variable related to the MET and visible tau candidates,
+        and fill the corresponding branches."""
+        
+        # MET
+        self.out.met[0]       = met.Pt()
+        self.out.metphi[0]    = met.Phi()
+        self.out.pfmt_1[0]    = sqrt( 2 * self.out.pt_1[0] * met.Pt() * ( 1 - cos(deltaPhi(self.out.phi_1[0], met.Phi())) ))
+        self.out.pfmt_2[0]    = sqrt( 2 * self.out.pt_2[0] * met.Pt() * ( 1 - cos(deltaPhi(self.out.phi_2[0], met.Phi())) ))
+        ###self.out.puppimetpt[0]             = event.PuppiMET_pt
+        ###self.out.puppimetphi[0]            = event.PuppiMET_phi
+        ###self.out.metsignificance[0]        = event.MET_significance
+        ###self.out.metcovXX[0]               = event.MET_covXX
+        ###self.out.metcovXY[0]               = event.MET_covXY
+        ###self.out.metcovYY[0]               = event.MET_covYY
+        ###self.out.fixedGridRhoFastjetAll[0] = event.fixedGridRhoFastjetAll
+        
+        # PZETA
+        leg1                  = TVector3(tau1.Px(), tau1.Py(), 0.)
+        leg2                  = TVector3(tau2.Px(), tau2.Py(), 0.)
+        zetaAxis              = TVector3(leg1.Unit() + leg2.Unit()).Unit()
+        pzeta_vis             = leg1*zetaAxis + leg2*zetaAxis
+        pzeta_miss            = met.Vect()*zetaAxis
+        self.out.pzetamiss[0] = pzeta_miss
+        self.out.pzetavis[0]  = pzeta_vis
+        self.out.dzeta[0]     = pzeta_miss - 0.85*pzeta_vis
+        
+        # MET SYSTEMATICS
+        for label in self.jecMETlabels:
+          met_var = met_vars[label]
+          getattr(self.out,"met_"+label)[0]    = met_var.Pt()
+          getattr(self.out,"pfmt_1_"+label)[0] = sqrt( 2 * self.out.pt_1[0] * met_var.Pt() * ( 1 - cos(deltaPhi(self.out.phi_1[0], met_var.Phi())) ))
+          getattr(self.out,"dzeta_"+label)[0]  = met_var.Vect()*zetaAxis - 0.85*pzeta_vis
+        
+        # DILEPTON
+        self.out.m_vis[0]     = (tau1 + tau2).M()
+        self.out.pt_ll[0]     = (tau1 + tau2).Pt()
+        self.out.dR_ll[0]     = tau1.DeltaR(tau2)
+        self.out.dphi_ll[0]   = deltaPhi(self.out.phi_1[0], self.out.phi_2[0])
+        self.out.deta_ll[0]   = abs(self.out.eta_1[0] - self.out.eta_2[0])
+        
 
-
-def countTops(event):
-    """Count number of tops in a given event. (Used for LQ signal samples, with inclusive
-    decays containing a b or top quark.)"""
-    ntops = 0
-    for id in range(event.nGenPart):
-      if abs(event.GenPart_pdgId[id])==6 and hasBit(event.GenPart_statusFlags[id],13):
-        ntops += 1
-    return ntops
-    
 

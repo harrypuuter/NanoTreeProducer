@@ -1,11 +1,13 @@
 from TreeProducerCommon import *
 
 class TreeProducerTauTau(TreeProducerCommon):
+    """Class to create a custom output file & tree; as well as create and contain branches."""
 
     def __init__(self, name, dataType, **kwargs):
+        print 'TreeProducerTauTau is called for', name
+        super(TreeProducerTauTau,self).__init__(name,dataType,**kwargs)
         
-        super(TreeProducerTauTau, self).__init__(name,dataType,**kwargs)
-        print 'TreeProducerTauTau is called', name
+        self.doTight = kwargs.get('doTight', False)
         
         
         #############
@@ -89,4 +91,7 @@ class TreeProducerTauTau(TreeProducerCommon):
           self.addBranch('genvistaueta_2',           float, -9)
           self.addBranch('genvistauphi_2',           float, -9)
           self.addBranch('trigweightVT',             float, 1.)
+          if not self.doTight:
+            self.addBranch('trigweightUp',           float, 1.)
+            self.addBranch('trigweightDown',         float, 1.)
         

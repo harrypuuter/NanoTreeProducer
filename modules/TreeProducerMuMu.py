@@ -5,11 +5,11 @@ import numpy as num
 from TreeProducerCommon import *
 
 class TreeProducerMuMu(TreeProducerCommon):
+    """Class to create a custom output file & tree; as well as create and contain branches."""
 
     def __init__(self, name, dataType, **kwargs):
-
+        print 'TreeProducerMuMu is called for', name
         super(TreeProducerMuMu, self).__init__(name,dataType,**kwargs)
-        print 'TreeProducerMuMu is called', name
         
         
         ##############
@@ -59,7 +59,7 @@ class TreeProducerMuMu(TreeProducerCommon):
         self.addBranch('idIso_3',             int)
         
         if not self._isData:
-          self.addBranch('genPartFlav_1',       int, -1)
-          self.addBranch('genPartFlav_2',       int, -1)
-          self.addBranch('genPartFlav_3',       int, -1)
+          self.addBranch('genPartFlav_1',     int, -1)
+          self.addBranch('genPartFlav_2',     int, -1)
+          self.addBranch('genPartFlav_3',     int, -1)
         

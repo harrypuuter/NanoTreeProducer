@@ -4,10 +4,11 @@ import numpy as num
 from TreeProducerCommon import *
 
 class TreeProducerEleTau(TreeProducerCommon):
+    """Class to create a custom output file & tree; as well as create and contain branches."""
 
     def __init__(self, name, dataType, **kwargs):
+        print 'TreeProducerEleTau is called for', name
         super(TreeProducerEleTau, self).__init__(name,dataType,**kwargs)
-        print 'TreeProducerEleTau is called', name
         
         
         ################

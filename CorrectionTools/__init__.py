@@ -1,7 +1,7 @@
 import os
 from ROOT import TFile, TH1
 modulepath = os.path.dirname(__file__)
-print modulepath
+#print modulepath
 
 def ensureTFile(filename,option='READ'):
   """Open TFile, checking if the file in the given path exists."""
@@ -13,6 +13,18 @@ def ensureTFile(filename,option='READ'):
     print '>>> ERROR! ScaleFactorTool.ensureTFile Could not open file by name "%s"'%(filename)
     exit(1)
   return file
+  
+def ensureFile(*paths,**kwargs):
+  filepath = os.path.join(*paths)
+  stop     = kwargs.get('stop',True)
+  """Ensure file exists."""
+  if '*' in filepath or '?' in filepath:
+    exists = len(glob.glob(filepath))>0
+  else:
+    exists = os.path.isfile(filepath)
+  if not exists and stop:
+      raise OSError('File "%s" does not exist'%(filepath))
+  return filepath
   
 def extractTH1(file,histname):
   """Get histogram from a file, and do SetDirectory(0)."""

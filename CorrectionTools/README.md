@@ -12,14 +12,14 @@ Several tools to get corrections, efficiencies, scale factors (SFs), event weigh
 
 ## Pileup reweighting
 
-`PileupWeightTool.py` provides the pileup event weight based on the data and MC profiles in [`pileup/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/pileup).
+`PileupWeightTool.py` provides the pileup event weight based on the data and MC profiles in [`pileup/`](pileup).
 
 The data profile can be computed with the `brilcalc` tool on `lxplus`.
 The MC profile can be taken from the distribution of the `Pileup_nTrueInt` variable in nanoAOD, for each MC event:
 ```
     self.out.pileup.Fill(event.Pileup_nTrueInt)
 ```
-and then extracted with [`pileup/getPileupProfiles.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/pileup/getPileupProfiles.py). Comparisons are shown [here for 2017](https://ineuteli.web.cern.ch/ineuteli/pileup/2017/) and [here for 2018](https://ineuteli.web.cern.ch/ineuteli/pileup/2018/).
+and then extracted with [`pileup/getPileupProfiles.py`](pileup/getPileupProfiles.py). Comparisons are shown [here for 2017](https://ineuteli.web.cern.ch/ineuteli/pileup/2017/) and [here for 2018](https://ineuteli.web.cern.ch/ineuteli/pileup/2018/).
 
 
 
@@ -35,7 +35,7 @@ Several classes are available to get corrections for electrons, muons and hadron
 * `TauTriggerSFs.py` class to get ditau trigger SFs
 * `LeptonTauFakeSFs.py` class to get lepton to tau fake SFs
 
-`ROOT` files with efficiencies and SFs are saved in [`leptonEfficiencies`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/leptonEfficiencies) and [`tauEfficiencies`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/tauEfficiencies). 
+`ROOT` files with efficiencies and SFs are saved in [`leptonEfficiencies`](leptonEfficiencies) and [`tauEfficiencies`](tauEfficiencies). 
 Scale factors can be found here:
 * muon efficiencies and SFs: [Muon POG Run-II Recommendations](https://twiki.cern.ch/twiki/bin/view/CMS/MuonReferenceSelectionAndCalibrationsRun2) ([2016 Legacy](https://twiki.cern.ch/twiki/bin/view/CMS/MuonReferenceEffs2016LegacyRereco), [2017](https://twiki.cern.ch/twiki/bin/view/CMS/MuonReferenceEffs2017), [2018](https://twiki.cern.ch/twiki/bin/view/CMS/MuonReferenceEffs2018))
 * electron efficiencies and SFs: [Electron POG](https://twiki.cern.ch/twiki/bin/view/CMS/EgammaIDRecipesRun2) ([2017](https://twiki.cern.ch/twiki/bin/view/CMS/Egamma2017DataRecommendations))
@@ -51,7 +51,7 @@ git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
 
 ## B tagging tools
 
-`BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b tagging weights. These can be called during the initialization of you analysis module, e.g. in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
+`BTaggingTool.py` provides two classes: `BTagWPs` for saving the working points (WPs) per year and type of tagger, and `BTagWeightTool` to provide b tagging weights. These can be called during the initialization of you analysis module, e.g.:
 ```
 class MuTauProducer(Module):
     
@@ -78,12 +78,12 @@ class MuTauProducer(Module):
           self.out.btagweight[0] = self.btagTool.getWeight(event,jetIds)
 ```
 
-`BTagWeightTool` calculates b tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/btag).
+`BTagWeightTool` calculates b tagging reweighting based on the [SFs provided from the BTagging group](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation#Recommendation_for_13_TeV_Data) and analysis-dependent efficiencies measured in MC. These are saved in `ROOT` files in [`btag/`](btag).
 The event weight is calculated according to [this method](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagSFMethods#1a_Event_reweighting_using_scale).
 
 ### Computing the b tag efficiencies
 
-The b tag efficiencies are analysis-dependent. They can be computed from the analysis output run on MC samples. For each MC event, fill the numerator and denominator histograms with `fillEfficiencies`, after removing overlap with other selected objects, e.g. the muon and tau object in [`ModuleMuTau.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/modules/ModuleMuTau.py):
+The b tag efficiencies are analysis-dependent. They can be computed from the analysis output run on MC samples. For each MC event, fill the numerator and denominator histograms with `BTagWeightTool.fillEfficiencies`, after removing overlap with other selected objects, e.g. the muon and tau object in [`ModuleMuTau.py`](../modules/ModuleMuTau.py):
 <pre>
     def analyze(self event):
     
@@ -102,7 +102,7 @@ The b tag efficiencies are analysis-dependent. They can be computed from the ana
         
         ...
 </pre>
-Do this for as many MC samples as possible, to gain as much statistics as possible (also note that jets in Drell-Yan, W+jets and ttbar events typically have different jet flavor content). Then use [`btag/getBTagEfficiencies.py`](https://github.com/IzaakWN/NanoTreeProducer/blob/master/CorrectionTools/btag/getBTagEfficiencies.py) to extract all histograms from analysis output, add them together for maximum statistics, and compute the efficiencies. (You should edit this script to read in your analysis output.)
+Do this for as many MC samples as possible, to gain as much statistics as possible (also note that jets in Drell-Yan, W+jets and ttbar events typically have different jet flavor content). Then use [`btag/getBTagEfficiencies.py`](btag/getBTagEfficiencies.py) to extract all histograms from analysis output, add them together for maximum statistics, and compute the efficiencies. (You should edit this script to read in your analysis output.)
 Examples of efficiency maps per jet flavor, and as a function of jet pT versus jet eta for the mutau analysis in 2017 are shown [here](https://ineuteli.web.cern.ch/ineuteli/btag/2017/?match=mutau).
 
 
@@ -112,7 +112,7 @@ Examples of efficiency maps per jet flavor, and as a function of jet pT versus j
 `RecoilCorrectionTool.py` provides the tools for three different things:
 * **Z pT reweighting** of LO Drell-Yan events as a function of Z boson pT and mass:
   * `getZBoson`: compute the (full) Z boson's four-vector from its daugher leptons,
-  * `ZptCorrectionTool.getZptWeight`: get weights are stored in [`Zpt/`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/CorrectionTools/Zpt).
+  * `ZptCorrectionTool.getZptWeight`: get weights are stored in [`Zpt/`](Zpt).
 * **Top pT reweighting** of ttbar events as a function of the pT of both top quarks:
   * `getTTPt`: compute the generator-level top pT's,
   * `getTTptWeight`: get [SFs recommended by Top PAG](https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting).
@@ -146,11 +146,25 @@ Note that `zboson` and `boson` are equivalent.
 
 ## Jet/MET corrections
 
-Currently not available. Please see the official modules:
+`JetMETCorrectionTool.py` provides the methods to apply corrections to jets and the MET in simulated events. It uses
+* `JetCalibrationTool.py` for jet energy scale (JES) corrections,
+* `ROOT.JetCorrectionUncertainty` for uncertainties in the JES,
+* `JetSmearingTool.py` for applying jet energy resolution (JER).
+
+`JetMETCorrectionTool.correctJetMET` returns two dictionary for a given event, `jetpt_vars` and `met_vars`, with keywords for each systematic variation (`'nom'`, `'jesUp'`, `'jesDown'`, `'jerUp'`, `'jerDown'`, ...):
+* `jetpt_vars` contains a list of jet pT for the nominal values (`'nom'`) and for each systematic variation;
+* `met_vars` contains a `TLorentzVector` for the nominal MET (`'nom'`) and each systematic variation.
+
+The JES and JER files should be downloaded from
+* <https://github.com/cms-jet/JECDatabase/raw/master/tarballs/> (see <https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC>)
+* <https://github.com/cms-jet/JRDatabase/tree/master/textFiles/> (see <https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution>)
+
+Implementation is adapted from the official modules found in
 
 <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/modules/jme>  
 <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/data/jme>
 
+The `JetMETCorrectionTool.py` tool can be compared to the official method by comparing results from [`postprocessors/jme_test_custom.py`](../postprocessors/jme_test_custom.py) and [`postprocessors/jme_test_central.py`](../postprocessors/jme_test_central.py).
 
 
 ## Test SFs
