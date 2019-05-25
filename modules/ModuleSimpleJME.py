@@ -1,10 +1,9 @@
 # Author: Izaak Neutelings (May 2019)
-import sys
 from ROOT import TFile, TTree
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from TreeProducerCommon import TreeProducerCommon
-from corrections.JetMETCorrectionTool import JetMETCorrectionTool
+from CorrectionTools.JetMETCorrectionTool import JetMETCorrectionTool
 
 
 

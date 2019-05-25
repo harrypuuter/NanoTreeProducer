@@ -1,0 +1,12 @@
+# this is a comment
+keep * # start with all
+drop HLT_* 
+drop *SoftActivity*
+drop *Electron*
+drop *Photon*
+drop *GenJet*
+drop *GenPart*
+drop *LHEPart*
+drop *Dressed*
+drop *TrigObj*
+drop *SV*
