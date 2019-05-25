@@ -38,6 +38,8 @@ if __name__ == "__main__":
                                            help="select queue for submission" )
   parser.add_argument('-m', '--mock',      dest='mock', action='store_true', default=False,
                                            help="mock-submit jobs for debugging purposes" )
+  parser.add_argument(      '--test',      dest='testrun', action='store_true', default=False,
+                                           help="submit only one job per sample as a test run" )
   parser.add_argument('-v', '--verbose',   dest='verbose', default=False, action='store_true',
                                            help="set verbose" )
   args = parser.parse_args()
@@ -88,28 +90,43 @@ def split_seq(iterable, size):
         item = list(itertools.islice(it, size))
     
 
-def getFileListLocal(dataset):
+def getFileListLocal(dataset,blacklist=[ ]):
     """Get list of files from local directory."""
     filename = "filelist/filelist_%s.txt"%dataset.lstrip('/').replace('/','__')
     filelist = [ ]
     if os.path.exists(filename):
       with open(filename,'r') as file:
         for line in file:
-          if '#' not in line:
+          line = line.rstrip('\n')
+          if line and '#' not in line and line not in blacklist:
             filelist.append(line.rstrip('\n'))
     return filelist
     
 
-def saveFileListLocal(dataset,filelist):
+def getBlackList(filename):
+    """Get blacklist of files from local directory."""
+    #filename = "filelist/blacklist_%s.txt"%dataset.lstrip('/').replace('/','__')
+    blacklist = [ ]
+    if os.path.exists(filename):
+      with open(filename,'r') as file:
+        for line in file:
+          line = line.rstrip('\n')
+          if line and '#' not in line:
+            blacklist.append(line)
+    return blacklist
+    
+
+def saveFileListLocal(dataset,filelist,blacklist=[ ]):
     """Save a list of files to a local directory."""
     filename = "filelist/filelist_%s.txt"%dataset.replace('/','__')
     with open(filename,'w+') as file:
       for line in filelist:
-        file.write(line+'\n')
+        if line not in blacklist:
+          file.write(line+'\n')
     return filename
     
 
-def getFileListDAS(dataset):
+def getFileListDAS(dataset,blacklist=[ ]):
     """Get list of files from DAS."""
     dataset  = dataset.replace('__','/')
     instance = 'prod/global'
@@ -123,13 +140,13 @@ def getFileListDAS(dataset):
     tmpList  = cmd_out.split(os.linesep)
     filelist = [ ]
     for line in tmpList:
-      if '.root' in line:
+      if '.root' in line and line not in blacklist:
         #files.append("root://cms-xrd-global.cern.ch/"+line)   
         filelist.append("root://xrootd-cms.infn.it/"+line)    
     return filelist 
     
 
-def getFileListPNFS(dataset):
+def getFileListPNFS(dataset,blacklist=[ ]):
     """Get list of files from PSI T3's SE."""
     dataset  = dataset.replace('__','/')
     user     = 'ytakahas'
@@ -140,7 +157,7 @@ def getFileListPNFS(dataset):
     tmpList  = cmd_out.split(os.linesep)
     filelist = [ ]
     for line in tmpList:
-      if '.root' in line:
+      if '.root' in line and line not in blacklist:
         filelist.append("dcap://t3se01.psi.ch:22125/"+dataset+'/'+line.rstrip())
     return filelist
     
@@ -151,7 +168,7 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
     ltf     = kwargs.get('ltf',   1.)
     jtf     = kwargs.get('jtf',   1.)
     Zmass   = kwargs.get('Zmass', False)
-    cmd = 'python job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
+    cmd = 'python postprocessors/job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
     if tes!=1.:
       cmd += " --tes %.3f"%(tes)
     if ltf!=1.:
@@ -216,6 +233,7 @@ def main():
           if args.type=='data' and not any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           directories.append(line)
       #print directories
+      blacklist = getBlackList("filelist/blacklist.txt")
       
       for channel in channels:
         print header(year,channel,tag)
@@ -238,23 +256,25 @@ def main():
             files = [ ]
             name  = directory.split('/')[-3].replace('/','') + '__' + directory.split('/')[-2].replace('/','') + '__' + directory.split('/')[-1].replace('/','')
             if not args.useDAS:
-                files = getFileListLocal(directory)
+                files = getFileListLocal(directory,blacklist=blacklist)
             if not files:
               if not args.useDAS:
                 print "Getting file list from DAS/PNFS..."
               if 'pnfs' in directory:
-                files = getFileListPNFS(directory)
+                files = getFileListPNFS(directory,blacklist=blacklist)
               else:
-                files = getFileListDAS(directory)
+                files = getFileListDAS(directory,blacklist=blacklist)
               if files:
-                saveFileListLocal(name,files)
+                saveFileListLocal(name,files,blacklist=blacklist)
             if not files:
-              print bcolors.BOLD + bcolors.WARNING + "Warning!!! FILELIST empty" + bcolors.ENDC
+              print bcolors.BOLD + bcolors.WARNING + "Warning! EMPTY filelist for " + directory + bcolors.ENDC
               continue
             elif args.verbose:
               print "FILELIST = "+files[0]
               for file in files[1:]:
                 print "           "+file
+            if args.testrun:
+              files = files[:1]
             
             # JOB LIST
             ensureDirectory('joblist')

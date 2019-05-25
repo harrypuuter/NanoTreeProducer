@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
 # Description: This postprocessor is meant for actual processing of samples for analysis
-import os, sys, re
 import PhysicsTools
+from postprocessors import modulepath, getEra, ensureDirectory
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from argparse import ArgumentParser
 from checkFiles import ensureDirectory
@@ -26,14 +26,14 @@ parser.add_argument(      '--no-jec',  dest='doJEC',     action='store_false', d
 parser.add_argument(      '--jec-sys', dest='doJECSys',  action='store_true',  default=None)
 args = parser.parse_args()
 
+outdir        = ensureDirectory(args.outdir)
+outfile       = args.outfile
+nchunck       = args.nchunck
 channel       = args.channel
 year          = args.year
 era           = args.era
 dataType      = args.type
 infiles       = args.infiles
-outdir        = args.outdir
-outfile       = args.outfile
-nchunck       = args.nchunck
 args.doJECSys = (args.tes==1 and args.ltf==1 and args.jtf==1) if args.doJECSys==None else args.doJECSys
 kwargs        = {
   'year':        args.year,
@@ -70,14 +70,7 @@ if dataType=='data':
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
 
 if dataType=='data' and era=="" and infiles:
-  matches = re.findall(r"Run(201[678])([A-Z]+)",infiles[0])
-  if not matches:
-    print "Warning! Could not find an era in %s"%infiles[0]
-  elif year!=int(matches[0][0])
-    print "Warning! Given year does not match the data file %s"%infiles[0]
-  else:
-    era = matches[0][1]
-    kwargs['era'] = era
+  kwargs['era'] = getEra(infiles[0],year)
 
 tag = ""
 if args.tes!=1: tag +="_TES%.3f"%(args.tes)
@@ -96,7 +89,6 @@ print ">>> %-12s = '%s'"%('channel',channel)
 print ">>> %-12s = %s"  %('year',kwargs['year'])
 print ">>> %-12s = '%s'"%('era',kwargs['era'])
 print ">>> %-12s = '%s'"%('dataType',dataType)
-print ">>> %-12s = %s"  %('Zmass',kwargs['Zmass'])
 print '-'*80
 
 module2run = None
@@ -121,12 +113,11 @@ elif channel=='elemu':
     module2run = lambda: EleMuProducer(postfix, dataType)
 else:
     print 'Unkown channel !!!'
-    sys.exit(0)
+    exit(0)
 
 print "job.py: creating PostProcessor..."
 p = PostProcessor(outdir, infiles, None, noOut=True, modules=[module2run()], provenance=False, fwkJobReport=False,
                   jsonInput=json, postfix=postfix)
-
 print "job.py: going to run PostProcessor..."
 p.run()
 print "DONE"
