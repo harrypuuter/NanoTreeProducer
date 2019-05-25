@@ -48,6 +48,7 @@ You need to change the **analyse code** in the modules and **tree branches** for
 These are the examples for an analysis selecting for a muon and tau:
 ```
 ModuleMuTau.py
+ModuleCommon.py
 TreeProducerMuTau.py
 TreeProducerCommon.py
 ```
