@@ -12,9 +12,7 @@ For a **local run**, do something like
 `job.py` is meant for job submission with [submit.py](../submit.py).
 
 
-## Reduced examples
-
-### Simple analysis example
+## Simple analysis example
 
 A simple example of a postprocessor with a simple analysis code in [modules/ModuleSimple.py](modules/ModuleSimple.py) can be run as
 ```
@@ -22,7 +20,7 @@ A simple example of a postprocessor with a simple analysis code in [modules/Modu
 ```
 
 
-### Simple example of skimming
+## Simple example of skimming
 
 A simple example of a postprocessor that skims a nanoAOD file, by applying a simple preselection and selecting branches, can be found in
 ```
@@ -30,6 +28,6 @@ A simple example of a postprocessor that skims a nanoAOD file, by applying a sim
 ```
 
 
-### Official examples
+## Official examples
 
 Official examples can by found in <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/examples>
