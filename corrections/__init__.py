@@ -15,9 +15,9 @@ def ensureTFile(filename,option='READ'):
   return file
   
 def ensureFile(*paths,**kwargs):
+  """Ensure file exists."""
   filepath = os.path.join(*paths)
   stop     = kwargs.get('stop',True)
-  """Ensure file exists."""
   if '*' in filepath or '?' in filepath:
     exists = len(glob.glob(filepath))>0
   else:
@@ -46,3 +46,4 @@ def warning(string,**kwargs):
   if title: pre = "%s%s: "%(pre,title)
   string = "%s%s\033[0m"%(pre,string)
   print string.replace('\n','\n'+' '*(len(pre)-18))
+
