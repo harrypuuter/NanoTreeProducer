@@ -33,6 +33,13 @@ git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilC
 scram b
 ```
 
+Each time you want to run the code in a new shell, do
+```
+cd CMSSW_9_4_6/src
+cmsenv
+source setupEnv.sh
+```
+
 
 
 ## Analysis
