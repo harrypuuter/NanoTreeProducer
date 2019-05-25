@@ -155,14 +155,13 @@ Note that `zboson` and `boson` are equivalent.
 * `jetpt_vars` contains a list of jet pT for the nominal values (`'nom'`) and for each systematic variation;
 * `met_vars` contains a `TLorentzVector` for the nominal MET (`'nom'`) and each systematic variation.
 
-The JES and JER files should be downloaded from
+The JES and JER files should be tarballs (`.tar.gz` or `.tgz`) with files downloaded from
 * <https://github.com/cms-jet/JECDatabase/raw/master/tarballs/> (see <https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC>)
 * <https://github.com/cms-jet/JRDatabase/tree/master/textFiles/> (see <https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution>)
 
 Implementation is adapted from the official modules found in
 
-<https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/modules/jme>  
-<https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/data/jme>
+<https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/modules/jme>
 
 The `JetMETCorrectionTool.py` tool can be compared to the official method by comparing results from [`postprocessors/jme_test_custom.py`](../postprocessors/jme_test_custom.py) and [`postprocessors/jme_test_central.py`](../postprocessors/jme_test_central.py).
 
