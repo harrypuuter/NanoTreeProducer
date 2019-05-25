@@ -3,7 +3,7 @@
 # https://twiki.cern.ch/twiki/bin/view/CMS/Egamma2017DataRecommendations#Efficiency_Scale_Factors
 # https://github.com/CMS-HTT/LeptonEfficiencies/tree/master/Electron/
 # 2018: https://hypernews.cern.ch/HyperNews/CMS/get/higgstautau/1132.html
-from CorrectionTools import modulepath
+from corrections import modulepath
 from ROOT import TFile
 from ScaleFactorTool import ScaleFactor, ScaleFactorHTT
 pathPOG = modulepath+"/leptonEfficiencies/EGammaPOG/"

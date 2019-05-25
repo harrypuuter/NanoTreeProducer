@@ -5,7 +5,7 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
-from CorrectionTools import modulepath, ensureTFile, warning
+from corrections import modulepath, ensureTFile, warning
 from array import array
 import ROOT
 #ROOT.gROOT.ProcessLine('.L ./BTagCalibrationStandalone.cpp+')
@@ -129,7 +129,7 @@ class BTagWeightTool:
         if default:
           warning("Made use of default efficiency histograms! The b tag weights from this module should be regarded as placeholders only,\n"+\
                   "and should NOT be used for analyses. B (mis)tag efficiencies in MC are analysis dependent. Please create your own\n"+\
-                  "efficiency histogram with CorrectionTools/btag/getBTagEfficiencies.py after running all MC samples with BTagWeightTool.",title="BTagWeightTool")
+                  "efficiency histogram with corrections/btag/getBTagEfficiencies.py after running all MC samples with BTagWeightTool.",title="BTagWeightTool")
         
         self.tagged  = tagged
         self.calib   = calib

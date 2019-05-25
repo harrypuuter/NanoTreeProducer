@@ -51,7 +51,7 @@ TreeProducerCommon.py
 ### Locally
 For a **local run**, do something like
 ```
-./local.py -c mutau -y 2017
+./postprocessors/local.py -c mutau -y 2017
 ```
 
 
@@ -107,9 +107,12 @@ More [notes](https://www.evernote.com/l/Ac8PKYGpaJxJArj4eng5ed95_wvpzwSNTgc).
 
 JSON files are copied to the [`json`](https://github.com/IzaakWN/NanoTreeProducer/tree/master/json) directory to prevent issues with connection to `/afs`.
 
-### Pileup 
+### Pileup
 
 * **2017**: [profiles](https://ineuteli.web.cern.ch/ineuteli/pileup/2017/)
 * **2018**: [profiles](https://ineuteli.web.cern.ch/ineuteli/pileup/2018/)
 
+### Corrections
+
+Tools to apply corrections are available in [corrections](corrections).
 

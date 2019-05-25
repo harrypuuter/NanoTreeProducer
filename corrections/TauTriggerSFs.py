@@ -4,7 +4,7 @@
 # Run2: https://github.com/cms-tau-pog/TauTriggerSFs/blob/run2_SFs/python/getTauTriggerSFs.py
 import os
 from math import sqrt, pi
-from CorrectionTools import modulepath, ensureTFile, extractTH1
+from corrections import modulepath, ensureTFile, extractTH1
 from ROOT import TMath
 path = modulepath+"/tauEfficiencies/"
         

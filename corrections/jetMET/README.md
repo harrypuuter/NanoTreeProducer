@@ -1,6 +1,6 @@
 ## JEC and JER files
 
-Instructions to use these files are given in the parent directory [`CorrectionTools`](..#jetmet-corrections).
+Instructions to use these files are given in the parent directory [`corrections`](..#jetmet-corrections).
 
 The JES and JER files can be downloaded from
 * <https://github.com/cms-jet/JECDatabase/raw/master/tarballs/>, see <https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC>

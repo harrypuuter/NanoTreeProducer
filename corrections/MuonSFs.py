@@ -2,7 +2,7 @@
 # /shome/ytakahas/work/Leptoquark/CMSSW_9_4_4/src/PhysicsTools/NanoAODTools/NanoTreeProducer/leptonSF
 # HTT: https://github.com/CMS-HTT/LeptonEfficiencies
 # https://twiki.cern.ch/twiki/bin/view/CMS/MuonReferenceEffs2017
-from CorrectionTools import modulepath
+from corrections import modulepath
 from ScaleFactorTool import ScaleFactor, ScaleFactorHTT
 pathPOG = modulepath+"/leptonEfficiencies/MuonPOG/"
 pathHTT = modulepath+"/leptonEfficiencies/HTT/Muon/"

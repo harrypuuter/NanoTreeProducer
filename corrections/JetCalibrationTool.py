@@ -4,7 +4,7 @@
 #   https://github.com/cms-nanoAOD/nanoAOD-tools/blob/master/python/postprocessing/modules/jme/JetReCalibrator.py
 # Sources:
 #   https://github.com/cms-jet/JECDatabase/raw/master/tarballs/
-from CorrectionTools import modulepath, ensureFile
+from corrections import modulepath, ensureFile
 import os, re
 from ROOT import gSystem, vector, JetCorrectorParameters, JetCorrectionUncertainty, FactorizedJetCorrector
 pathJEC = modulepath+"/JetMET/"

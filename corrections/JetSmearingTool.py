@@ -6,7 +6,7 @@
 #   https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyResolution
 #   https://github.com/cms-jet/JRDatabase/tree/master/textFiles/
-from CorrectionTools import modulepath, ensureFile
+from corrections import modulepath, ensureFile
 import math, os, tarfile, tempfile
 import numpy as np
 from ROOT import gSystem, TRandom3, PyJetParametersWrapper, PyJetResolutionWrapper, PyJetResolutionScaleFactorWrapper

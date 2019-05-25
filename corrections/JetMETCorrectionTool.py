@@ -3,7 +3,7 @@
 #   nanoAOD-tools/python/postprocessing/modules/jme/jetmetUncertainties.py
 #   https://github.com/cms-nanoAOD/nanoAOD-tools/blob/master/python/postprocessing/modules/jme/jetmetUncertainties.py
 #   https://github.com/cms-nanoAOD/nanoAOD-tools/blob/master/python/postprocessing/modules/jme/jetRecalib.py (data)
-from CorrectionTools import modulepath, ensureFile
+from corrections import modulepath, ensureFile
 from ROOT import gSystem, TLorentzVector, vector, JetCorrectorParameters, JetCorrectionUncertainty, FactorizedJetCorrector
 import math, os, glob, tarfile, tempfile
 import numpy as np

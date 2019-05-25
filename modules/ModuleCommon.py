@@ -3,10 +3,10 @@ import sys, re
 from math import sqrt, sin, cos, pi
 from ROOT import TH1D, TH2D, TLorentzVector, TVector3
 from ModuleTools import *
-from CorrectionTools.PileupWeightTool import *
-from CorrectionTools.RecoilCorrectionTool import *
-from CorrectionTools.BTaggingTool import BTagWeightTool, BTagWPs
-from CorrectionTools.JetMETCorrectionTool import JetMETCorrectionTool
+from corrections.PileupWeightTool import *
+from corrections.RecoilCorrectionTool import *
+from corrections.BTaggingTool import BTagWeightTool, BTagWPs
+from corrections.JetMETCorrectionTool import JetMETCorrectionTool
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Event
 __metaclass__ = type # to use super() with subclasses from CommonProducer

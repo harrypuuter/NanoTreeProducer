@@ -1,8 +1,8 @@
 import sys
 from ModuleCommon import *
 from TreeProducerMuTau import *
-from CorrectionTools.MuonSFs import *
-from CorrectionTools.LeptonTauFakeSFs import *
+from corrections.MuonSFs import *
+from corrections.LeptonTauFakeSFs import *
 
 
 class MuTauProducer(CommonProducer):

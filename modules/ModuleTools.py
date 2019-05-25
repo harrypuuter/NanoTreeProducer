@@ -1,7 +1,7 @@
 from math import sqrt, sin, cos, pi
 from ROOT import TLorentzVector
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Event
-from CorrectionTools.RecoilCorrectionTool import hasBit
+from corrections.RecoilCorrectionTool import hasBit
 
 
 

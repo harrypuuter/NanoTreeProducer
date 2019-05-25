@@ -1,7 +1,7 @@
 import sys
 from ModuleCommon import *
 from TreeProducerMuMu import *
-from CorrectionTools.MuonSFs import *
+from corrections.MuonSFs import *
 
 
 class MuMuProducer(CommonProducer):

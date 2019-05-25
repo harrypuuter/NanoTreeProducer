@@ -4,7 +4,7 @@
 import os, sys
 from argparse import ArgumentParser
 import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
-from ROOT import gROOT, gStyle, gPad, TFile, TTree, TH2F, TCanvas, kRed, TLatex
+from ROOT import gROOT, gStyle, gPad, gDirectory, TFile, TTree, TH2F, TCanvas, TLegend, TLatex, kBlue, kRed, kOrange
 gStyle.SetOptStat(False)
 gROOT.SetBatch(True)
 
@@ -93,6 +93,7 @@ def getBTagEfficiencies(tagger,wp,outfilename,samples,year,channel,plot=False):
       hist_all.Write(histname_all,TH2F.kOverwrite)
       hist_eff.Write(histname_eff,TH2F.kOverwrite)
       if plot:
+        plot1D(histname_eff+"_vs_pt",hist,hist_all,year,channel,title=hist_eff.GetTitle(),log=True)
         plot2D(histname_eff,hist_eff,year,channel,log=True)
         plot2D(histname_eff,hist_eff,year,channel,log=False)
     file.Close()
@@ -100,7 +101,7 @@ def getBTagEfficiencies(tagger,wp,outfilename,samples,year,channel,plot=False):
   
 
 def plot2D(histname,hist,year,channel,log=False):
-    """Plot efficiency."""
+    """Plot 2D efficiency."""
     dir    = ensureDirectory('plots/%d'%year)
     name   = "%s/%s_%s"%(dir,histname,channel)
     if log:
@@ -109,6 +110,8 @@ def plot2D(histname,hist,year,channel,log=False):
     ytitle = 'jet #eta'
     ztitle = 'b tag efficiencies' if '_b_' in histname else 'b mistag rate'
     xmin, xmax = 20, hist.GetXaxis().GetXmax()
+    zmin, zmax = 5e-3 if log else 0.0, 1.0
+    angle  = 22 if log else 77
     
     canvas = TCanvas('canvas','canvas',100,100,800,700)
     canvas.SetFillColor(0)
@@ -125,7 +128,6 @@ def plot2D(histname,hist,year,channel,log=False):
       canvas.SetLogz()
     canvas.cd()
     
-    hist.Draw('COLZTEXT%d'%(22 if log else 77))
     hist.GetXaxis().SetTitle(xtitle)
     hist.GetYaxis().SetTitle(ytitle)
     hist.GetZaxis().SetTitle(ztitle)
@@ -141,8 +143,9 @@ def plot2D(histname,hist,year,channel,log=False):
     hist.GetXaxis().SetLabelOffset(-0.004 if log else 0.005)
     hist.GetZaxis().SetLabelOffset(-0.005 if log else 0.005)
     hist.GetXaxis().SetRangeUser(xmin,xmax)
-    hist.SetMinimum(0.01 if log else 0.0)
-    hist.SetMaximum(1.0)
+    hist.SetMinimum(zmin)
+    hist.SetMaximum(zmax)
+    hist.Draw('COLZTEXT%d'%angle)
     
     gStyle.SetPaintTextFormat('.2f')
     hist.SetMarkerColor(kRed)
@@ -160,6 +163,113 @@ def plot2D(histname,hist,year,channel,log=False):
     canvas.SaveAs(name+'.pdf')
     canvas.SaveAs(name+'.png')
     canvas.Close()
+    
+
+def plot1D(histname,histnum2D,histden2D,year,channel,title="",log=False):
+    """Plot efficiency."""
+    dir      = ensureDirectory('plots/%d'%year)
+    name     = "%s/%s_%s"%(dir,histname,channel)
+    if log:
+      name  += "_log"
+    header   = ""
+    xtitle   = 'jet p_{T} [GeV]'
+    ytitle   = 'b tag efficiencies' if '_b_' in histname else 'b mistag rate'
+    xmin, xmax = 20 if log else 10, histnum2D.GetXaxis().GetXmax()
+    ymin, ymax = 5e-3 if log else 0.0, 2.0
+    colors   = [kBlue, kRed, kOrange]
+    x1, y1   = (0.27, 0.44) if '_b_' in histname else (0.55, 0.80)
+    width, height = 0.3, 0.16
+    x2, y2   = x1 + width, y1 - height
+    hists    = createEff1D(histnum2D,histden2D)
+    
+    canvas = TCanvas('canvas','canvas',100,100,800,700)
+    canvas.SetFillColor(0)
+    canvas.SetBorderMode(0)
+    canvas.SetFrameFillStyle(0)
+    canvas.SetFrameBorderMode(0)
+    canvas.SetTopMargin(  0.04 ); canvas.SetBottomMargin( 0.13 )
+    canvas.SetLeftMargin( 0.12 ); canvas.SetRightMargin(  0.05 )
+    canvas.SetTickx(0); canvas.SetTicky(0)
+    canvas.SetGrid()
+    gStyle.SetOptTitle(0)
+    if log:
+      canvas.SetLogx()
+      canvas.SetLogy()
+    canvas.cd()
+    
+    frame = hists[0]
+    for i, hist in enumerate(hists):
+      hist.SetLineColor(colors[i%len(colors)])
+      hist.SetMarkerColor(colors[i%len(colors)])
+      hist.SetLineWidth(2)
+      hist.SetMarkerSize(2)
+      hist.SetMarkerStyle(1)
+      hist.Draw('PE0SAME')
+    frame.GetXaxis().SetTitle(xtitle)
+    frame.GetYaxis().SetTitle(ytitle)
+    frame.GetXaxis().SetLabelSize(0.048)
+    frame.GetYaxis().SetLabelSize(0.048)
+    frame.GetXaxis().SetTitleSize(0.058)
+    frame.GetYaxis().SetTitleSize(0.058)
+    frame.GetXaxis().SetTitleOffset(1.03)
+    frame.GetYaxis().SetTitleOffset(1.04)
+    frame.GetXaxis().SetLabelOffset(-0.004 if log else 0.005)
+    frame.GetXaxis().SetRangeUser(xmin,xmax)
+    frame.SetMinimum(ymin)
+    frame.SetMaximum(ymax)
+    
+    if title:    
+      latex = TLatex()
+      latex.SetTextSize(0.04)
+      latex.SetTextAlign(13)
+      latex.SetTextFont(62)
+      latex.SetNDC(True)
+      latex.DrawLatex(0.15,0.94,title)
+    
+    legend = TLegend(x1,y1,x2,y2)
+    legend.SetTextSize(0.04)
+    legend.SetBorderSize(0)
+    legend.SetFillStyle(0)
+    legend.SetFillColor(0)
+    if header:
+      legend.SetTextFont(62)
+      legend.SetHeader(header)
+    legend.SetTextFont(42)
+    for hist in hists:
+      legend.AddEntry(hist,hist.GetTitle(),'lep')
+    legend.Draw()
+    
+    canvas.SaveAs(name+'.pdf')
+    canvas.SaveAs(name+'.png')
+    canvas.Close()
+    
+
+def createEff1D(histnum2D,histden2D):
+  """Create 1D histogram of efficiency vs. pT for central and forward eta bins."""
+  etabins = {
+    "|#eta| < 2.5":       [(0,5)],
+    "|#eta| < 1.5":       [(2,3)],
+    "1.5 < |#eta| < 2.5": [(1,1),(4,4)],
+  }
+  hists = [ ]
+  for etatitle, bins in etabins.iteritems():
+    histnum  = None
+    histden  = None
+    for bin1, bin2 in bins:
+      if histnum==None or histden==None:
+        histnum  = histnum2D.ProjectionX("%s_%d"%(histnum2D.GetName(),bin1),bin1,bin2)
+        histden  = histden2D.ProjectionX("%s_%d"%(histden2D.GetName(),bin1),bin1,bin2)
+      else:
+        histnum.Add(histnum2D.ProjectionX("%s_%d"%(histnum2D.GetName(),bin1),bin1,bin2))
+        histden.Add(histden2D.ProjectionX("%s_%d"%(histden2D.GetName(),bin1),bin1,bin2))
+    histnum.Sumw2()
+    histnum.Divide(histden)
+    histnum.SetTitle(etatitle)
+    hists.append(histnum)
+    gDirectory.Delete(histden.GetName())
+    #for i in xrange(0,histnum.GetXaxis().GetNbins()+1):
+    #  print i, histnum.GetBinContent(i)
+  return hists
   
 
 def makeTitle(tagger,wp,flavor,channel,year):

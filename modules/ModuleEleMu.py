@@ -1,8 +1,8 @@
 import sys
 from ModuleCommon import *
 from TreeProducerEleMu import *
-from CorrectionTools.MuonSFs import *
-from CorrectionTools.ElectronSFs import *
+from corrections.MuonSFs import *
+from corrections.ElectronSFs import *
 
 
 class EleMuProducer(CommonProducer):

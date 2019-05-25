@@ -1,8 +1,8 @@
 import sys
 from ModuleCommon import *
 from TreeProducerTauTau import *
-from CorrectionTools.TauTriggerSFs import *
-from CorrectionTools.LeptonTauFakeSFs import *
+from corrections.TauTriggerSFs import *
+from corrections.LeptonTauFakeSFs import *
 
 
 class TauTauProducer(CommonProducer):

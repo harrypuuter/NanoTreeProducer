@@ -1,5 +1,5 @@
 # Author: Izaak Neutelings (November 2018)
-from CorrectionTools import modulepath, ensureTFile
+from corrections import modulepath, ensureTFile
 from ROOT import TFile
 path = modulepath+"/pileup/"
 

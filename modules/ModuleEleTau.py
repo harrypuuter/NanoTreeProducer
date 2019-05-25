@@ -1,8 +1,8 @@
 import sys
 from ModuleCommon import *
 from TreeProducerEleTau import *
-from CorrectionTools.ElectronSFs import *
-from CorrectionTools.LeptonTauFakeSFs import *
+from corrections.ElectronSFs import *
+from corrections.LeptonTauFakeSFs import *
 
 
 class EleTauProducer(CommonProducer):

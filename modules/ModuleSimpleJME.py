@@ -4,7 +4,7 @@ from ROOT import TFile, TTree
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from TreeProducerCommon import TreeProducerCommon
-from CorrectionTools.JetMETCorrectionTool import JetMETCorrectionTool
+from corrections.JetMETCorrectionTool import JetMETCorrectionTool
 
 
 
