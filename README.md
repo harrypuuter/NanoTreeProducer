@@ -20,7 +20,12 @@ Then, install this `NanoTreeProducer`:
 git clone https://github.com/IzaakWN/NanoTreeProducer
 ```
 
-In case you use [lepton scale factors and efficiencies from the HTT group](https://github.com/CMS-HTT/LeptonEfficiencies), you will also need to get
+In case you use [lepton scale factors and efficiencies from the HTT group](https://github.com/CMS-HTT/LeptonEfficiencies), it available as the submodule [`corrections/leptonEfficiencies/HTT`](corrections/leptonEfficiencies/HTT). Tyou will also need to make sure you have the latest version with
+```
+git submodule update --remote --merge
+```
+Otherwise, install manually with
+
 ```
 cd corrections/leptonEfficiencies
 git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
