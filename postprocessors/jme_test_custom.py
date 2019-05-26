@@ -7,8 +7,6 @@
 #   https://gitlab.cern.ch/Zurich_ttH/tthbb13/blob/FHv2/MEAnalysis/python/nano_postproc.py#L34
 #   https://gitlab.cern.ch/Zurich_ttH/tthbb13/blob/FHv2/MEAnalysis/python/nano_config.py
 import os, sys
-sys.path.append('python')
-sys.path.append('..')
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
 #from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puAutoWeight
 #from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties import jetmetUncertainties2017All
