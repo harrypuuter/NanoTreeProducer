@@ -25,7 +25,6 @@ In case you use [lepton scale factors and efficiencies from the HTT group](https
 git submodule update --remote --merge
 ```
 Otherwise, install manually with
-
 ```
 cd corrections/leptonEfficiencies
 git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
