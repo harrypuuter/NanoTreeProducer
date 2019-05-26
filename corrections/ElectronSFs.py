@@ -18,10 +18,11 @@ class ElectronSFs:
         assert year in [2016,2017,2018], "ElectronSFs: You must choose a year from: 2016, 2017, or 2018."
         
         if year==2016:
-          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016BtoH/Electron_Ele27Loose_OR_Ele25Tight_eff.root",'ZMass','ele_trig')
+          #self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016BtoH/Electron_Ele27Loose_OR_Ele25Tight_eff.root",'ZMass','ele_trig')
+          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016_legacy/Electron_Run2016_legacy_Ele25.root",'ZMass','ele_trig')
           self.sftool_reco  = ScaleFactor(pathPOG+"2016/EGM2D_BtoH_GT20GeV_RecoSF_Legacy2016.root",'EGamma_SF2D','ele_reco')
-          self.sftool_idiso = ScaleFactor(pathPOG+"2016/2016LegacyReReco_ElectronMVA90noiso_Fall17V2.root",'EGamma_SF2D','ele_id')
-          #self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016BtoH/Electron_IdIso_IsoLt0p1_eff.root",'ZMass','ele_idiso')
+          #self.sftool_idiso = ScaleFactor(pathPOG+"2016/2016LegacyReReco_ElectronMVA90noiso_Fall17V2.root",'EGamma_SF2D','ele_id')
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016_legacy/Electron_Run2016_legacy_IdIso.root",'ZMass','ele_idiso')
         elif year==2017:
           self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2017/Electron_Ele32orEle35.root",'ZMass','ele_trig')
           self.sftool_reco  = ScaleFactor(pathPOG+"2017/egammaEffi.txt_EGM2D_runBCDEF_passingRECO.root",'EGamma_SF2D','ele_reco')

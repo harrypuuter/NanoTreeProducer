@@ -16,8 +16,8 @@ class MuonSFs:
         assert year in [2016,2017,2018], "MuonSFs: You must choose a year from: 2016, 2017, or 2018."
         
         if year==2016:
-          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root",'ZMass','mu_trig')
-          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016BtoH/Muon_IdIso_IsoLt0p15_2016BtoH_eff.root",'ZMass','mu_idiso')
+          self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root",'ZMass','mu_trig')
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016_legacy/Muon_Run2016_legacy_IdIso.root",'ZMass','mu_idiso')
         elif year==2017:
           #self.sftool_trig  = ScaleFactor(pathPOG+"Run2017/EfficienciesAndSF_RunBtoF_Nov17Nov2017.root","IsoMu27_PtEtaBins/abseta_pt_ratio",'mu_trig')
           self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2017/Muon_IsoMu24orIsoMu27.root",'ZMass','mu_idiso')
