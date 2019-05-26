@@ -71,6 +71,7 @@ class ScaleFactorHTT(ScaleFactor):
     
     def getSF(self, pt, eta):
         """Get SF for a given pT, eta."""
+        #print pt, eta
         abseta = abs(eta)
         etabin = self.hist_eta.GetXaxis().GetBinLabel(min(self.hist_eta.GetXaxis().GetNbins(),self.hist_eta.GetXaxis().FindBin(abseta)))
         data   = self.effs_data[etabin].Eval(pt)
