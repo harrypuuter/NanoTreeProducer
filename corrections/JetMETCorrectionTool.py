@@ -20,7 +20,9 @@ pathJME_local = modulepath+"/jetMET/"
 
 def ensureJMEFiles(globalTag,path=None,tarbalpath=pathJME_local,JER=False):
     """Help function to ensure the JEC files are available in a given path. If not, look for a tar ball."""
+    # https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC
     # https://github.com/cms-jet/JECDatabase/raw/master/tarballs/
+    # https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
     # https://github.com/cms-jet/JRDatabase/tree/master/textFiles/
     
     if path==None:
