@@ -163,7 +163,7 @@ class MuTauProducer(CommonProducer):
         
         
         # VETOS
-        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event, [ltau.id1], [-1], self.channel)
+        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event,[ ],[ltau.id1],[ltau.id2],self.channel)
         self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
         if self.doTight and (self.out.lepton_vetos[0] or event.Muon_pfRelIso04_all[ltau.id1]>0.15 or\
                              ord(event.Tau_idAntiMu[ltau.id2])<2 or ord(event.Tau_idAntiEle[ltau.id2])<1):

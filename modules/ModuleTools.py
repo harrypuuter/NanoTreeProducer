@@ -5,10 +5,8 @@ from modules import hasBit
 
 
 
-def checkBranches(tree,year
-):
+def checkBranches(tree,year):
   """Check if these branches are available in the tree branch list. If not redirect them."""
-  print hasBit
   branches = [
     ('Electron_mvaFall17V2Iso',        'Electron_mvaFall17Iso'        ),
     ('Electron_mvaFall17V2Iso_WPL',    'Electron_mvaFall17Iso_WPL'    ),
@@ -329,40 +327,45 @@ def hasTop(event):
     
 
 
-def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
+def extraLeptonVetos(event, electron_idxs, muon_idxs, tau_idxs, channel):
     """Check if event has extra electrons or muons. (HTT definitions.)"""
     
     extramuon_veto = False
     extraelec_veto = False
     dilepton_veto  = False
     
-    LooseMuons = [ ]
+    looseMuons = [ ]
     for imuon in range(event.nMuon):
         if event.Muon_pt[imuon] < 10: continue
         if abs(event.Muon_eta[imuon]) > 2.4: continue
         if abs(event.Muon_dz[imuon]) > 0.2: continue
         if abs(event.Muon_dxy[imuon]) > 0.045: continue
         if event.Muon_pfRelIso04_all[imuon] > 0.3: continue
+        if event.Muon_pfRelIso04_all[imuon] > 0.3: continue
+        if any(deltaR(event.Muon_eta[imuon],event.Muon_phi[imuon], 
+                      event.Tau_eta[itau],  event.Tau_phi[itau])<0.4 for itau in tau_idxs): continue
         if event.Muon_mediumId[imuon] and (imuon not in muon_idxs):
             extramuon_veto = True
         if event.Muon_pt[imuon] > 15 and event.Muon_isPFcand[imuon]: #Muon_isGlobal[imuon] and Muon_isTracker[imuon]
-            LooseMuons.append(imuon)
+            looseMuons.append(imuon)
     
-    LooseElectrons = [ ]
-    for ielectron in range(event.nElectron):
-        if event.Electron_pt[ielectron] < 10: continue
-        if abs(event.Electron_eta[ielectron]) > 2.5: continue
-        if abs(event.Electron_dz[ielectron]) > 0.2: continue
-        if abs(event.Electron_dxy[ielectron]) > 0.045: continue
-        if event.Electron_pfRelIso03_all[ielectron] > 0.3: continue
-        if event.Electron_convVeto[ielectron] ==1 and ord(event.Electron_lostHits[ielectron]) <= 1 and event.Electron_mvaFall17V2Iso_WP90[ielectron] and (ielectron not in electron_idxs):
+    looseElectrons = [ ]
+    for iele in range(event.nElectron):
+        if event.Electron_pt[iele] < 10: continue
+        if abs(event.Electron_eta[iele]) > 2.5: continue
+        if abs(event.Electron_dz[iele]) > 0.2: continue
+        if abs(event.Electron_dxy[iele]) > 0.045: continue
+        if event.Electron_pfRelIso03_all[iele] > 0.3: continue
+        if any(deltaR(event.Electron_eta[iele],event.Electron_phi[iele], 
+                      event.Tau_eta[itau],     event.Tau_phi[itau])<0.4 for itau in tau_idxs): continue
+        if event.Electron_convVeto[iele]==1 and ord(event.Electron_lostHits[iele])<=1 and event.Electron_mvaFall17V2Iso_WP90[iele] and (iele not in electron_idxs):
             extraelec_veto = True
-        if event.Electron_pt[ielectron] > 15 and event.Electron_mvaFall17V2Iso_WPL[ielectron]:
-            LooseElectrons.append(ielectron)
+        if event.Electron_pt[iele] > 15 and event.Electron_mvaFall17V2Iso_WPL[iele]:
+            looseElectrons.append(iele)
     
     if channel=='mutau':
-      for idx1 in LooseMuons:
-        for idx2 in LooseMuons:
+      for idx1 in looseMuons:
+        for idx2 in looseMuons:
             if idx1 >= idx2: continue
             dR = deltaR(event.Muon_eta[idx1], event.Muon_phi[idx1], 
                         event.Muon_eta[idx2], event.Muon_phi[idx2])
@@ -370,8 +373,8 @@ def extraLeptonVetos(event, muon_idxs, electron_idxs, channel):
                 dilepton_veto = True
     
     if channel=='eletau':
-      for idx1 in LooseElectrons:
-        for idx2 in LooseElectrons:
+      for idx1 in looseElectrons:
+        for idx2 in looseElectrons:
             if idx1 >= idx2: continue
             dR = deltaR(event.Electron_eta[idx1], event.Electron_phi[idx1], 
                         event.Electron_eta[idx2], event.Electron_phi[idx2])

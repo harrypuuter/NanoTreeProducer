@@ -217,7 +217,7 @@ class TauTauProducer(CommonProducer):
         
         
         # VETOS
-        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0]  = extraLeptonVetos(event, [-1], [-1], self.name)
+        self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event,[ ],[ ],[ditau.id1,ditau.id2],self.name)
         self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] #or self.out.dilepton_veto[0]
         
         
