@@ -1,4 +1,5 @@
 #! /bin/bash
+## Script to run on a Sun Grid Engine batch system
 ## make sure the right shell will be used
 #$ -S /bin/bash
 ## Black list nodes
@@ -21,13 +22,14 @@
 echo job start at `date`
 echo "Running job on machine $((uname -a))"
 
-TASKID=$((SGE_TASK_ID))
+export TASKID=$((SGE_TASK_ID))
 JOBLIST=$1
 echo "SGE_TASK_ID=$TASKID"
 echo "JOBLIST=$JOBLIST"
 TASKCMD=$(cat $JOBLIST | sed "${TASKID}q;d")
 
 #eval $(scramv1 runtime -sh);
+pwd
 echo "Going to execute"
 echo "  $TASKCMD"
 eval $TASKCMD

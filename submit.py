@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+# Authors: Yuta Takahashi & Izaak Neutelings (2018)
 import os, re, glob
 from commands import getoutput
 from fnmatch import fnmatch
@@ -183,7 +183,7 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
     return 1
     
 
-def submitJobs(jobName, jobList, nchunks, outdir, batchSystem):
+def submitJobs(jobName, jobList, nchunks, outdir, batchscript):
     """Submit job."""
     if args.verbose:
       print 'Reading joblist...'
@@ -192,7 +192,7 @@ def submitJobs(jobName, jobList, nchunks, outdir, batchSystem):
     if args.queue:
       extraopts += " -q %s"%(args.queue)
     #subCmd = 'qsub -t 1-%s -o logs nafbatch_runner_GEN.sh %s' %(nchunks,jobList)
-    subCmd = 'qsub %s %s %s'%(extraopts,batchSystem,jobList)
+    subCmd = 'qsub %s %s %s'%(extraopts,batchscript,jobList)
     subCmd = subCmd.rstrip()
     print bcolors.BOLD + bcolors.OKBLUE + "Submitting %d jobs with \n    %s"%(nchunks,subCmd) + bcolors.ENDC
     if not args.mock:
@@ -208,7 +208,7 @@ def main():
     ltf         = args.ltf
     jtf         = args.jtf
     Zmass       = args.Zmass
-    batchSystem = 'psibatch_runner.sh'
+    batchscript = 'submit_SGE.sh'
     tag         = ""
     
     if tes!=1.: tag += "_TES%.3f"%(tes)
@@ -254,7 +254,8 @@ def main():
             
             # FILE LIST
             files = [ ]
-            name  = directory.split('/')[-3].replace('/','') + '__' + directory.split('/')[-2].replace('/','') + '__' + directory.split('/')[-1].replace('/','')
+            parts = directory.split('/')
+            name  = parts[-3].replace('/','') + '__' + parts[-2].replace('/','') + '__' + parts[-1].replace('/','')
             if not args.useDAS:
                 files = getFileListLocal(directory,blacklist=blacklist)
             if not files:
@@ -311,7 +312,7 @@ def main():
             
             # SUBMIT
             if args.force:
-              submitJobs(jobName,jobList,nChunks,outdir,batchSystem)
+              submitJobs(jobName,jobList,nChunks,outdir,batchscript)
             else:
               submit = raw_input("Do you also want to submit %d jobs to the batch system? [y/n] "%(nChunks))
               if submit.lower()=='force':
@@ -320,7 +321,7 @@ def main():
               if submit.lower()=='quit':
                 exit(0)
               if submit.lower()=='y':
-                submitJobs(jobName,jobList,nChunks,outdir,batchSystem)
+                submitJobs(jobName,jobList,nChunks,outdir,batchscript)
               else:
                 print "Not submitting jobs"
             print

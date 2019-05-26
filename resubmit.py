@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+# Authors: Yuta Takahashi & Izaak Neutelings (2018)
 import os, glob, sys, shlex, re
 from commands import getoutput
 from argparse import ArgumentParser
@@ -53,7 +53,7 @@ def main():
     ltf          = args.ltf
     jtf          = args.jtf
     Zmass        = args.Zmass
-    batchSystem  = 'psibatch_runner.sh'
+    batchSystem  = 'submit_SGE.sh'
     tag          = ""
     
     if tes!=1.: tag += "_TES%.3f"%(tes)
