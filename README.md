@@ -20,7 +20,7 @@ Then, install this `NanoTreeProducer`:
 git clone https://github.com/IzaakWN/NanoTreeProducer
 ```
 
-In case you use [lepton scale factors and efficiencies from the HTT group](https://github.com/CMS-HTT/LeptonEfficiencies), it available as the submodule [`corrections/leptonEfficiencies/HTT`](corrections/leptonEfficiencies/HTT). Tyou will also need to make sure you have the latest version with
+In case you use [lepton scale factors and efficiencies from the HTT group](https://github.com/CMS-HTT/LeptonEfficiencies), it available as the submodule [`corrections/leptonEfficiencies/HTT`](corrections/leptonEfficiencies/HTT). You will also need to make sure you have the latest version with
 ```
 git submodule update --remote --merge
 ```
@@ -33,7 +33,7 @@ git clone https://github.com/CMS-HTT/LeptonEfficiencies HTT
 
 And if you want to use [recoil corrections of the MET](https://github.com/CMS-HTT/RecoilCorrections/blob/master/instructions.txt) for W/Z/Higgs samples:
 ```
-cd ${CMSSW_BASE}/src
+cd $CMSSW_BASE/src
 git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections 
 scram b
 ```
