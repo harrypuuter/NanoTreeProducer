@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
 # Description: This postprocessor is used for local runs, to test the framework
-from postprocessors import modulepath, getEra, ensureDirectory
+from postprocessors import modulepath, ensureDirectory
+from postprocessors.config_jme import getEra
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
 from argparse import ArgumentParser
 
@@ -346,5 +347,5 @@ elif channel=='elemu':
 else:
     print 'Invalid channel name'
 
-p = PostProcessor(".", infiles, None, noOut=True, modules=[module2run()], provenance=False, postfix=postfix, maxEntries=maxEvts)
+p = PostProcessor(".", infiles, None, noOut=True, modules=[module2run()], postfix=postfix, maxEntries=maxEvts)
 p.run()

@@ -2,7 +2,8 @@
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
 # Description: This postprocessor is meant for actual processing of samples for analysis
 import PhysicsTools
-from postprocessors import modulepath, getEra, ensureDirectory
+from postprocessors import modulepath, ensureDirectory
+from postprocessors.config_jme import getEra
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from argparse import ArgumentParser
 from checkFiles import ensureDirectory
@@ -58,15 +59,16 @@ if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in in
 
 json = None
 if dataType=='data':
-  JSON = '/shome/ineuteli/analysis/LQ_legacy/NanoTreeProducer/json/'
+  jsonpath = '/work/ineuteli/analysis/LQ_legacy/NanoTreeProducer/json/'
   if year==2016:
-    json = JSON+'Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
+    json = jsonpath+'Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
+    #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Final/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt'
   elif year==2017:
-    json = JSON+'Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt'
+    json = jsonpath+'Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Final/Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt'
   else:
-    json = JSON+'Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
+    json = jsonpath+'Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
 
 if dataType=='data' and era=="" and infiles:
@@ -116,8 +118,7 @@ else:
     exit(0)
 
 print "job.py: creating PostProcessor..."
-p = PostProcessor(outdir, infiles, None, noOut=True, modules=[module2run()], provenance=False, fwkJobReport=False,
-                  jsonInput=json, postfix=postfix)
-print "job.py: going to run PostProcessor..."
+p = PostProcessor(outdir, infiles, None, noOut=True, modules=[module2run()], jsonInput=json, postfix=postfix)
+print "job.py: running PostProcessor..."
 p.run()
 print "DONE"
