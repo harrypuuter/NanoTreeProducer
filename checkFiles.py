@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+# Authors: Yuta Takahashi & Izaak Neutelings (2018)
 import os, glob, sys, shlex, re
 #import time
 from fnmatch import fnmatch
@@ -221,7 +221,7 @@ def main(args):
               print "infiles   = %s"%(infiles)
             
             #if directory.find('W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8__ytakahas-NanoTest_20180507_W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8-a7a5b67d3e3590e4899e147be08660be__USER')==-1: continue
-            filelist = glob.glob(infiles)
+            filelist = sorted(glob.glob(infiles),key=naturalSort)
             if not filelist: continue
             #running = [f for f in filelist if any(j.outfile in f for j in submitted)]
             
@@ -347,7 +347,8 @@ def isValidSample(pattern):
 
 
 indexpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?(?:_Zmass)?\.root")
-def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False):
+def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False,treename='tree'):
+    """Check if the file is valid."""
     if args.verbose:
       print "checkFiles: %s, %s"%(filelist,directory)
     if isinstance(filelist,str):
@@ -356,27 +357,33 @@ def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False):
     bugfiles = [ ]
     ifound   = [ ]
     nfiles   = len(filelist)
+    #total_processed = 0
     for filename in filelist:
-      file  = TFile(filename, 'READ')
+      match = indexpattern.search(filename)
+      if match: ifound.append(int(match.group(1)))
+      file  = TFile.Open(filename, 'READ')
       isbad = False
-      if file.IsZombie():
+      if file==None:
+        print bcolors.FAIL + '[NG] file %s is None'%(filename) + bcolors.ENDC
+        badfiles.append(filename)
+        continue
+      elif file.IsZombie():
         print bcolors.FAIL + '[NG] file %s is a zombie'%(filename) + bcolors.ENDC
         badfiles.append(filename)
       else:
-        tree = file.Get('tree')
+        tree = file.Get(treename)
         if not isinstance(tree,TTree):
           print bcolors.FAIL + '[NG] no tree found in ' + filename + bcolors.ENDC
           badfiles.append(filename)
-        elif not isinstance(file.Get('cutflow'),TH1):
+        if not isinstance(file.Get('cutflow'),TH1):
           print bcolors.FAIL + '[NG] no cutflow found in ' + filename + bcolors.ENDC
           badfiles.append(filename)
         elif any(s in filename for s in ['DYJets','WJets']) and tree.GetMaximum('LHE_Njets')>10:
           print bcolors.BOLD + bcolors.WARNING + '[WN] %d/%d events have LHE_Njets = %d > 10 in %s'%(tree.GetEntries(),tree.GetEntries("LHE_Njets>10"),tree.GetMaximum('LHE_Njets'),filename) + bcolors.ENDC
           bugfiles.append(filename)
-      
+        #if isinstance(tree,TTree):
+        #  total_processed += tree.GetEntries()
       file.Close()
-      match = indexpattern.search(filename)
-      if match: ifound.append(int(match.group(1)))
     
     if len(badfiles)>0:
       print bcolors.BOLD + bcolors.FAIL + "[NG] %s:   %d out of %d files %s no tree!"%(directory,len(badfiles),len(filelist),"have" if len(badfiles)>1 else "has") + bcolors.ENDC
@@ -395,13 +402,13 @@ def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False):
           print "\n  Bad files:"
           for filename in cleanlist:
             print "    %s"%filename
-          submit = raw_input("  Do you really want to remove these? [y/n] ")
-          if submit.lower()=='force':
-            submit = 'y'
+          remove = raw_input("  Do you really want to remove these? [y/n] ")
+          if remove.lower()=='force':
+            remove = 'y'
             force = True
-          if submit.lower()=='quit':
+          if remove.lower()=='quit':
             exit(0)
-          if submit.lower()=='y':
+          if remove.lower()=='y':
             for filename in cleanlist:
               print "removing %s..."%filename
               os.system("rm %s"%filename)
@@ -421,32 +428,48 @@ def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False):
     
     return len(badfiles)==0
     
-def compareEventsToDAS(filenames,dasname):
+def compareEventsToDAS(inputarg,dasname,histname='cutflow',treename=""):
     """Compare a number of processed events in an output file to the available number of events in DAS."""
     dasname = dasname.replace('__', '/')
+    if dasname[0]!='/': dasname = '/'+dasname
     if args.verbose:
       print "compareEventsToDAS: %s, %s"%(filenames,dasname)
       #start = time.time()
-    if isinstance(filenames,str):
-      filenames = [filenames]
+    
+    # COUNT EVENTS
+    nfiles = ""
     total_processed = 0
-    nfiles = len(filenames)
-    for filename in filenames:
-      file = TFile(filename, 'READ')
-      if file.IsZombie():
-        continue
-      hist = file.Get('cutflow')
-      if hist:
-        events_processed = hist.GetBinContent(1)
-        if args.verbose:
-          print "%12d events processed in %s "%(events_processed,filename)
-        total_processed += events_processed
-      #else:
-      #  print bcolors.FAIL + '[NG] compareEventsToDAS: no cutflow found in ' + filename + bcolors.ENDC
-      file.Close()
+    if isinstance(inputarg,list) or isinstance(inputarg,str):
+      filenames = inputarg
+      if isinstance(filenames,str):
+        filenames = [filenames]
+      nfiles = len(filenames)
+      for filename in filenames:
+          file = TFile.Open(filename, 'READ')
+          events_processed = 0
+          if file==None:
+            continue
+          elif file.IsZombie():
+            file.Close()
+            continue
+          elif treename:
+            tree = file.Get(treename)
+            if tree: events_processed = tree.GetEntries()
+          else:
+            hist = file.Get(histname)
+            if hist: events_processed = hist.GetBinContent(1)
+          if args.verbose:
+            print "%12d events processed in %s "%(events_processed,filename)
+          total_processed += events_processed
+          file.Close()
+      nfiles = ", %d files"%(nfiles) if nfiles>1 else ""
+    elif isinstance(inputarg,long) or isinstance(inputarg,int) or isinstance(inputarg,float):
+      total_processed = inputarg
+    else:
+      print bcolors.BOLD + bcolors.FAIL + '   [NG] Did recognize input for "%s": %s'%(dasname,inputarg) + bcolors.ENDC
     
     instance = 'prod/phys03' if 'USER' in dasname else 'prod/global'
-    dascmd   = 'das_client --limit=0 --query=\"summary dataset=/%s instance=%s\"'%(dasname,instance)
+    dascmd   = 'das_client --limit=0 --query=\"summary dataset=%s instance=%s\"'%(dasname,instance)
     if args.verbose:
       print dascmd
     dasargs  = shlex.split(dascmd)
@@ -459,7 +482,6 @@ def compareEventsToDAS(filenames,dasname):
     total_das = Double(output.split('"nevents":')[1].split(',')[0])
     fraction = total_processed/total_das
     
-    nfiles = ", %d files"%(nfiles) if nfiles>1 else ""
     if fraction > 1.001:
         print bcolors.BOLD + bcolors.FAIL + '   [NG] DAS entries = %d, Processed in tree = %d (frac = %.2f > 1%s)'%(total_das,total_processed,fraction,nfiles) + bcolors.ENDC
     elif fraction > 0.8:
@@ -521,16 +543,20 @@ def ensureDirectory(dirname):
   return dirname
   
 headeri = 0
-def header(year,channel,tag=""):
+def header(*strings):
   global headeri
-  title  = "%s, %s"%(year,channel)
-  if tag: title += ", %s"%(tag.lstrip('_'))
+  title  = ', '.join([str(s).lstrip('_') for s in strings])
   string = ("\n\n" if headeri>0 else "") +\
            "   ###%s\n"    % ('#'*(len(title)+3)) +\
            "   #  %s  #\n" % (title) +\
            "   ###%s\n"    % ('#'*(len(title)+3))
   headeri += 1
   return string
+    
+def naturalSort(string):
+  """Key for sorting strings according to numerical order.""" 
+  return [ int(s) if s.isdigit() else s for s in re.split(r'(\d+)',string) ]
+  
 
 
 if __name__ == '__main__':

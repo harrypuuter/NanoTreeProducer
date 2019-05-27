@@ -22,8 +22,10 @@
 echo job start at `date`
 echo "Running job on machine $((uname -a))"
 
+export JOB_ID
 export TASKID=$((SGE_TASK_ID))
 JOBLIST=$1
+echo "JOB_ID=$JOB_ID"
 echo "SGE_TASK_ID=$TASKID"
 echo "JOBLIST=$JOBLIST"
 TASKCMD=$(cat $JOBLIST | sed "${TASKID}q;d")

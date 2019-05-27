@@ -1,0 +1,15 @@
+keep * # start with all
+drop HLT_* 
+keep HLT_Iso*Mu*
+#keepmatch HLT_(Iso)?Mu\d+
+keep HLT_Ele*
+keep HLT_Double*Tau*
+keep HLT_PFMET*
+keep HLT_MonoCentral*
+drop *_cleanmask
+drop *SoftActivity*
+drop *Photon*
+#drop *LHEPart*
+drop *Dressed*
+drop *TrigObj*
+drop *SV*

@@ -3,7 +3,7 @@
 # Description: Skim branch list of samples
 # Inspiration:
 #   https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/examples
-import PhysicsTools
+import sys
 from postprocessors import modulepath, ensureDirectory
 from postprocessors.config_jme import getEra, getJetCalibrationData, getJetCalibrationMC
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
@@ -11,7 +11,6 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
 #from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties import jetmetUncertainties2016, jetmetUncertainties2017, jetmetUncertainties2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib import *
 from argparse import ArgumentParser
-from checkFiles import ensureDirectory
 
 infiles = "root://cms-xrd-global.cern.ch//store/user/arizzi/Nano01Fall17/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAOD-94X-Nano01Fall17/180205_160029/0000/test94X_NANO_70.root"
 parser = ArgumentParser()
@@ -28,25 +27,28 @@ args = parser.parse_args()
 maxEvts       = None #int(1e3)
 postfix       = '_skimmed'+args.tag
 presel        = None #"Muon_pt[0] > 50"
-branchsel     = "%s/keep_and_drop_skim.txt"%modulepath
+branchsel     = "%s/keep_and_drop_skim_diboson.txt"%modulepath
 modules       = [ ]
 outdir        = ensureDirectory(args.outdir)
 year          = args.year
 era           = args.era
 dataType      = args.type
 infiles       = args.infiles
-doJEC         = args.doJEC
-doJECSys      = args.doJECSys
 
 if isinstance(infiles,str):
   infiles = infiles.split(',')
+
+if any(s in infiles[0] for s in ["/Tau/","JetsToL"]):
+  branchsel = "%s/keep_and_drop_skim.txt"%modulepath
 
 if dataType==None:
   dataType = 'mc'
 if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in infiles[0] or 'EGamma' in infiles[0]:
   dataType = 'data'
 
-json = None
+json     = None
+doJEC    = args.doJEC and dataType=='data'
+doJECSys = args.doJECSys
 if dataType=='data':
   if doJEC:
     if era=="" and infiles:
@@ -69,10 +71,14 @@ print ">>> %-12s = %s"  %('year',year)
 print ">>> %-12s = '%s'"%('era',era)
 print ">>> %-12s = '%s'"%('dataType',dataType)
 print ">>> %-12s = '%s'"%('branchsel',branchsel)
-print ">>> %-12s = '%s'"%('modules',modules)
+print ">>> %-12s = '%s'"%('json',json)
+print ">>> %-12s = %s"  %('modules',modules)
+print ">>> %-12s = %s"  %('doJEC',doJEC)
+print ">>> %-12s = %s"  %('doJECSys',doJECSys)
 print '-'*80
 
 print "skim.py: creating PostProcessor..."
+sys.stdout.flush()
 p = PostProcessor(outdir, infiles, presel, branchsel, outputbranchsel=branchsel, noOut=False,
                   modules=modules, jsonInput=json, postfix=postfix, maxEntries=maxEvts)
 print "skim.py: running PostProcessor..."

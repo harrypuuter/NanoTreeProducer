@@ -17,7 +17,7 @@ YEAR="$1"
 SAMPLE="$2"
 INFILES="$3"
 OUTDIR="$4"
-TAG="_${TASKID}"
+TAG=""
 [ "$YEAR"    = "" ] && echo ">>> ERROR! Year is not given!" && exit 1
 [ "$SAMPLE"  = "" ] && echo ">>> ERROR! Sample is not given!" && exit 1
 [ "$INFILES" = "" ] && echo ">>> ERROR! Input files is not given!" && exit 1
@@ -28,6 +28,7 @@ DBG=2
 SCRIPT="postprocessors/skim.py"
 XROOTD="root://t3dcachedb.psi.ch:1094"
 GFAL="gsiftp://t3se01.psi.ch"
+OUTDIR="$OUTDIR/${JOB_ID}-${TASKID}"
 SEHOME="/pnfs/psi.ch/cms/trivcat/store/user/$USER"
 SERESULTDIR="$SEHOME/samples/NANOAOD_${YEAR}/$SAMPLE"
 RESULTFILES="$OUTDIR/*${TAG}.root"
@@ -43,7 +44,7 @@ fi
 
 # MAIN FUNCTIONALITY
 printf "\n# MAIN FUNCTIONALITY\n"
-peval "python $SCRIPT -y $YEAR -i '$INFILES' -o $OUTDIR --tag $TAG"
+peval "python $SCRIPT -y $YEAR -i '$INFILES' -o $OUTDIR --tag '$TAG'"
 peval "ls -hlt $OUTDIR"
 
 # COPY RESULTS
@@ -67,5 +68,5 @@ done
 
 # CLEANING
 printf "\n# CLEANING\n"
-peval "rm $RESULTFILES"
+peval "rm -r $OUTDIR"
 

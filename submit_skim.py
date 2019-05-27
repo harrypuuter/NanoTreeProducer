@@ -5,7 +5,7 @@ from commands import getoutput
 from fnmatch import fnmatch
 import itertools
 from argparse import ArgumentParser
-from submit import getFileListDAS, getFileListLocal, saveFileListLocal, getBlackList, split_seq, checkExistingFiles
+from submit import getFileListDAS, getFileListLocal, saveFileListLocal, getBlackList, chunkify, checkExistingFiles
 import checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header, ensureDirectory
 
@@ -58,7 +58,7 @@ nFilesPerJob_defaults = [
 
 
 
-def createJobs(jobsfile, year, name, infiles, outdir):
+def createSkimJobs(jobsfile, year, name, infiles, outdir):
     """Create file with commands to execute per job."""
     cmd = 'bash submit_skim.sh %s %s %s %s'%(year,name,','.join(infiles),outdir)
     if args.verbose:
@@ -67,7 +67,7 @@ def createJobs(jobsfile, year, name, infiles, outdir):
     return 1
     
 
-def submitJobs(jobName, jobList, nchunks, logdir, batchscript):
+def submitSkimJobs(jobName, jobList, nchunks, logdir, batchscript):
     """Submit job."""
     if args.verbose:
       print 'Reading joblist...'
@@ -107,6 +107,8 @@ def main():
           if args.type=='mc' and any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           if args.type=='data' and not any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           directories.append(line)
+      if args.testrun:
+        directories = directories[:1]
       blacklist = [ ] #getBlackList("filelist/blacklist.txt")
       
       print header(year,tag)
@@ -150,9 +152,8 @@ def main():
           print "Creating job file %s..."%(jobList)
           jobName  = getSampleShortName(directory)[1]
           jobName += "_%s_skim"%(year)+tag
-          jobs     = open(jobList,'w')
           outdir   = "%s/output_%s/%s"%(outbasedir,year,name)
-          logdir   = ensureDirectory("logs_skim_%s/%s"%(year,name))
+          logdir   = ensureDirectory("skim_logs_%s/%s"%(year,name))
           
           # NFILESPERJOBS
           nFilesPerJob = args.nFilesPerJob
@@ -165,18 +166,18 @@ def main():
               nFilesPerJob = 4 # default
           if args.verbose:
             print "nFilesPerJob = %s"%nFilesPerJob
-          filelists = list(split_seq(files,nFilesPerJob))
+          filelists = chunkify(files,nFilesPerJob)
           
           # CREATE JOBS
-          nChunks = 0
-          for filelist in filelists:
-              createJobs(jobs,year,name,filelist,outdir)
-              nChunks = nChunks+1
-          jobs.close()
+          with open(jobList,'w') as jobs:
+            nChunks = 0
+            for filelist in filelists:
+                createSkimJobs(jobs,year,name,filelist,outdir)
+                nChunks = nChunks+1
           
           # SUBMIT
           if args.force:
-            submitJobs(jobName,jobList,nChunks,logdir,batchscript)
+            submitSkimJobs(jobName,jobList,nChunks,logdir,batchscript)
           else:
             submit = raw_input("Do you also want to submit %d jobs to the batch system? [y/n] "%(nChunks))
             if submit.lower()=='force':
@@ -185,7 +186,7 @@ def main():
             if submit.lower()=='quit':
               exit(0)
             if submit.lower()=='y':
-              submitJobs(jobName,jobList,nChunks,logdir,batchscript)
+              submitSkimJobs(jobName,jobList,nChunks,logdir,batchscript)
             else:
               print "Not submitting jobs"
           print

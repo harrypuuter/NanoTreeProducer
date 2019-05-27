@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
 # Description: This postprocessor is meant for actual processing of samples for analysis
-import PhysicsTools
+import sys
 from postprocessors import modulepath, ensureDirectory
 from postprocessors.config_jme import getEra
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from argparse import ArgumentParser
-from checkFiles import ensureDirectory
+from postprocessors import ensureDirectory
 
 infiles = "root://cms-xrd-global.cern.ch//store/user/arizzi/Nano01Fall17/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAOD-94X-Nano01Fall17/180205_160029/0000/test94X_NANO_70.root"
 
@@ -118,6 +118,7 @@ else:
     exit(0)
 
 print "job.py: creating PostProcessor..."
+sys.stdout.flush()
 p = PostProcessor(outdir, infiles, None, noOut=True, modules=[module2run()], jsonInput=json, postfix=postfix)
 print "job.py: running PostProcessor..."
 p.run()

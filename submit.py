@@ -82,12 +82,14 @@ def checkExistingFiles(outdir,channel,njob):
         print "Not removing extra files. Please make sure to delete the %d last files before hadd'ing."%(nfiles-njob)
     
 
-def split_seq(iterable, size):
-    it = iter(iterable)
-    item = list(itertools.islice(it, size))
+def chunkify(iterable, size):
+    it     = iter(iterable)
+    item   = list(itertools.islice(it,size))
+    chunks = [ ]
     while item:
-        yield item
-        item = list(itertools.islice(it, size))
+      chunks.append(item)
+      item = list(itertools.islice(it,size))
+    return chunks
     
 
 def getFileListLocal(dataset,blacklist=[ ]):
@@ -128,8 +130,10 @@ def saveFileListLocal(dataset,filelist,blacklist=[ ]):
 
 def getFileListDAS(dataset,blacklist=[ ]):
     """Get list of files from DAS."""
-    dataset  = dataset.replace('__','/')
-    instance = 'prod/global'
+    dataset   = dataset.replace('__','/')
+    if dataset[0]!='/':
+      dataset = '/'+dataset
+    instance  = 'prod/global'
     if 'USER' in dataset:
         instance = 'prod/phys03'
     #cmd='das_client --limit=0 --query="file dataset=%s instance=%s"'%(dataset,instance)
@@ -232,6 +236,8 @@ def main():
           if args.type=='mc' and any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           if args.type=='data' and not any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           directories.append(line)
+      if args.testrun:
+        directories = directories[:1]
       #print directories
       blacklist = getBlackList("filelist/blacklist.txt")
       
@@ -298,12 +304,12 @@ def main():
                 nFilesPerJob = 4 # default
             if args.verbose:
               print "nFilesPerJob = %s"%nFilesPerJob
-            filelists = list(split_seq(files,nFilesPerJob))
+            filelists = chunkify(files,nFilesPerJob)
             
             # CREATE JOBS
             nChunks = 0
             checkExistingFiles(outdir,channel,len(filelists))
-            #filelists = list(split_seq(files,1))
+            #filelists = chunkify(files,1)
             for file in filelists:
             #print "FILES = ",f
                 createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)

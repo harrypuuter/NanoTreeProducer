@@ -5,7 +5,7 @@ from commands import getoutput
 from argparse import ArgumentParser
 import submit, checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header
-from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getBlackList, getFileListLocal, saveFileListLocal, getFileListPNFS, getFileListDAS, submitJobs, split_seq
+from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getBlackList, getFileListLocal, saveFileListLocal, getFileListPNFS, getFileListDAS, submitJobs, chunkify
 import itertools
 import subprocess
 from ROOT import TFile, Double
@@ -129,7 +129,7 @@ def main():
                 nFilesPerJob = 4
             if args.verbose:
               print "nFilesPerJob = %s"%nFilesPerJob
-            infilelists = list(split_seq(infiles,nFilesPerJob))
+            infilelists = chunkify(infiles,nFilesPerJob)
             
             # JOB LIST
             badchunks   = [ ]
@@ -177,7 +177,7 @@ def main():
             # RESUBMIT
             nChunks = len(badchunks)+len(misschunks)
             if nChunks==0:
-                print bcolors.BOLD + bcolors.OKBLUE + '[OK] ' + directory + bcolors.ENDC
+                print bcolors.BOLD + bcolors.OKGREEN + '[OK] ' + directory + bcolors.ENDC
             elif args.force:
                 submitJobs(jobName,jobList,nChunks,outdir,batchSystem)
             else:
