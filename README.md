@@ -58,7 +58,7 @@ TreeProducerCommon.py
 ```
 
 
-## Run
+## Run the postprocessor
 
 ### Locally
 For a **local run**, do something like
@@ -96,17 +96,7 @@ Note: this submission works for the Sun Grid Engine (SGE) system of PSI Tier3 wi
 
 ### Examples
 
-A simple example of a postprocessor with a simple analysis code in [modules/ModuleSimple.py](modules/ModuleSimple.py) can be run as
-```
-./postprocessors/simple_example.py
-```
-
-A simple example of a postprocessor that skims a nanoAOD file, by applying a simple preselection and selecting branches, can be found in
-```
-./postprocessors/skim_example.py
-```
-
-Official examples can by found in <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/examples>
+More examples for running postprocessors are given in [`postprocessors`](postprocessors).
 
 
 ## Notes
