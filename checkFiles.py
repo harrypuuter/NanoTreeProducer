@@ -545,7 +545,7 @@ def ensureDirectory(dirname):
 headeri = 0
 def header(*strings):
   global headeri
-  title  = ', '.join([str(s).lstrip('_') for s in strings])
+  title  = ', '.join([str(s).lstrip('_') for s in strings if s])
   string = ("\n\n" if headeri>0 else "") +\
            "   ###%s\n"    % ('#'*(len(title)+3)) +\
            "   #  %s  #\n" % (title) +\

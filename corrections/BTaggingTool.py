@@ -152,11 +152,15 @@ class BTagWeightTool:
           weight = SF
         else:
           eff = self.getEfficiency(pt,eta,flavor)
-          weight = (1-SF*eff)/(1-eff)
+          if eff==1:
+            print "Warning! BTagWeightTool.getSF: MC efficiency is 1 for pt=%s, eta=%s, flavor=%s, SF=%s"%(pt,eta,flavor,SF)
+            return 1
+          else:
+            weight = (1-SF*eff)/(1-eff)
         return weight
         
     def getEfficiency(self,pt,eta,flavor):
-        """Get b tag SF for a single jet."""
+        """Get b tag efficiency for a single jet in MC."""
         flavor = flavorToString(flavor)
         hist   = self.effmaps[flavor]
         xbin   = hist.GetXaxis().FindBin(pt)
@@ -165,8 +169,10 @@ class BTagWeightTool:
         elif xbin>hist.GetXaxis().GetNbins(): xbin -= 1
         if ybin==0: ybin = 1
         elif ybin>hist.GetYaxis().GetNbins(): ybin -= 1
-        sf     = hist.GetBinContent(xbin,ybin)
-        return sf
+        eff    = hist.GetBinContent(xbin,ybin)
+        #if eff==1:
+        #  print "Warning! BTagWeightTool.getEfficiency: MC efficiency is 1 for pt=%s, eta=%s, flavor=%s, SF=%s"%(pt,eta,flavor,SF)
+        return eff
         
     def fillEfficiencies(self,event,jetids):
         """Fill histograms to make efficiency map for MC, split by true jet flavor, and

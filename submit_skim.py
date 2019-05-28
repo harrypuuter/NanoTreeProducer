@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Author
+# Author: Izaak Neutelings (May 2019)
 import os, re, glob
 from commands import getoutput
 from fnmatch import fnmatch

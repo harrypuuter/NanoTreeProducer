@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Authors: Yuta Takahashi & Izaak Neutelings (2018)
+# Authors: Izaak Neutelings (May 2019)
 import os, glob, sys, shlex, re
 #import time
 from fnmatch import fnmatch
@@ -116,15 +116,18 @@ def main(args):
         
         # FILE LIST FOR RESUBMISSION
         nevents, resubmitfiles = checkFiles(filelist,infilelist,directory,clean=args.removeBadFiles,force=args.force,cleanBug=args.removeBuggedFiles)
-        if len(resubmitfiles)==len(infilelist):
+        if len(resubmitfiles)==0:
           print bcolors.BOLD + bcolors.OKGREEN + '[OK] %s is complete ! '%sample + bcolors.ENDC
-        elif len(resubmitfiles)<len(infilelist):
-          print bcolors.BOLD + bcolors.WARNING + '[WN] %s has only %d / %d output files !'%(sample,len(resubmitfiles),len(infilelist)) + bcolors.ENDC
-        else:
+        elif len(resubmitfiles)>len(infilelist):
           print bcolors.BOLD + bcolors.FAIL + 'WARNING! %s has more output files %d than %d input files from DAS!'%(sample,len(resubmitfiles),len(infilelist)) + bcolors.ENDC
+        else:
+          print bcolors.BOLD + bcolors.WARNING + '[WN] %d / %d of %s need to be resubmitted...'%(len(resubmitfiles),len(infilelist),sample) + bcolors.ENDC
         
         if not any(s in directory for s in ['LQ3','LQ_']):
           compareEventsToDAS(nevents,sample,treename='Events')
+        if len(resubmitfiles)==0:
+          print
+          continue
         
         # JOB LIST
         ensureDirectory('joblist')
@@ -222,7 +225,7 @@ def checkFiles(filelist,infilelist,directory,clean=False,force=False,cleanBug=Fa
       filekey   = filename.split('/')[-1].replace('.root','')
       noutfiles = len(goodfiles.get(filekey,[ ])+badfiles.get(filekey,[ ])+bugfiles.get(filekey,[ ]))
       if noutfiles>1:
-        print bcolors.BOLD + bcolors.WARNING + '[WN] %s has more than one output file\n\tgood:  %s\n\tbad:   %s\n\tbuggy: %s'%(filename,goodfiles[filekey],badfiles[filekey],bugfiles[filekey]) + bcolors.ENDC
+        print bcolors.BOLD + bcolors.WARNING + '[WN] %s has more than one output file\n\tgood:  %s\n\tbad:   %s\n\tbuggy: %s'%(filename,goodfiles.get(filekey,[ ]),badfiles.get(filekey,[ ]),bugfiles.get(filekey,[ ])) + bcolors.ENDC
       elif noutfiles==0:
         print bcolors.BOLD + bcolors.WARNING + '[WN] %s is missing an output file'%(filename) + bcolors.ENDC
         resubmitfiles.append(filename)

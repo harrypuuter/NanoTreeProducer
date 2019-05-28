@@ -1,5 +1,5 @@
 #! /bin/bash
-# Author: Izaak Neutelings (May 2018)
+# Author: Izaak Neutelings (May 2019)
 # Description: Run skimming postprocessor in NanoAOD and copy to PSI's T3 SE
 #              Assume environment is set.
 
@@ -68,5 +68,5 @@ done
 
 # CLEANING
 printf "\n# CLEANING\n"
-peval "rm -r $OUTDIR"
+peval "rm -r $OUTDIR";
 

@@ -19,21 +19,23 @@
 ## set cwd to submission host pwd
 #$ -cwd
 
+unset module # prevent error
 echo job start at `date`
 echo "Running job on machine $((uname -a))"
 
 export JOB_ID
 export TASKID=$((SGE_TASK_ID))
 JOBLIST=$1
-echo "JOB_ID=$JOB_ID"
-echo "SGE_TASK_ID=$TASKID"
-echo "JOBLIST=$JOBLIST"
+echo "\$JOB_ID=$JOB_ID"
+echo "\$SGE_TASK_ID=$TASKID"
+echo "\$HOSTNAME=$HOSTNAME"
+echo "\$JOBLIST=$JOBLIST"
 TASKCMD=$(cat $JOBLIST | sed "${TASKID}q;d")
 
 #eval $(scramv1 runtime -sh);
 pwd
 echo "Going to execute"
 echo "  $TASKCMD"
-eval $TASKCMD
+eval $TASKCMD;
 
-echo "Complete at $((date))"
+echo "Complete at $((date))";

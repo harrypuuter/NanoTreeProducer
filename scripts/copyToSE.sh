@@ -29,7 +29,7 @@ for year in $YEAR; do
   OUTPUT="ineuteli/analysis/LQ_$year"
   PNFS_OUTPUT="/pnfs/psi.ch/cms/trivcat/store/user/$OUTPUT"
   XRD="root://t3dcachedb.psi.ch:1094"
-    
+  
   cd "/scratch/$OUTPUT"
   FILES=`ls */*${CHANNEL}*.root`
   DIRS=`ls /scratch/$OUTPUT`
