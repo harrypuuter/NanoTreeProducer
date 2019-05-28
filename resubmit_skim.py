@@ -146,7 +146,7 @@ def main(args):
               nFilesPerJob = default
               break
           else:
-            nFilesPerJob = 4 # default
+            nFilesPerJob = 1 # default
         if args.verbose:
           print "nFilesPerJob = %s"%nFilesPerJob
         filelists = chunkify(resubmitfiles,nFilesPerJob)
