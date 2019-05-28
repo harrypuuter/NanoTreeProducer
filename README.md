@@ -96,7 +96,7 @@ Note: this submission works for the Sun Grid Engine (SGE) system of PSI Tier3 wi
 
 ### Examples
 
-More examples for running postprocessors are given in [`postprocessors`](postprocessors).
+More examples of postprocessors are given in [`postprocessors`](postprocessors).
 
 
 ## Notes

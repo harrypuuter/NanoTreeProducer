@@ -35,5 +35,5 @@ For a **local run** of the ditau analysis in Run II, do something like
 
 ## Skimming
 
-`skim.py` is a complete example of skimming of Run-II samples, including selecting data in the JSON (good run list), dropping unwanted branches, and applying latest JECs. It is meant to be submitted by [submit_skim.py](../submit_skim.py)
+`skim.py` is a complete example of skimming of Run-II samples, including selecting data in the JSON (good run list), dropping unwanted branches, and applying latest JECs. It is meant to be submitted by [submit_skim.py](../submit_skim.py).
 
