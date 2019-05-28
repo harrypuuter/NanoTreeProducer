@@ -77,7 +77,7 @@ and then do, **submit** with something like
 ```
 ./submit.py -c mutau -y 2017
 ```
-To **check job success**, you need to ensure that all the output file contains the expected tree with the expected number of events (`-d`):
+To the **check job success**, you need to ensure that all the output file contains the expected tree with the expected number of processed events (`-d` to compare to DAS):
 ```
 ./checkFiles.py -c mutau -y 2017 -d
 ```
