@@ -375,7 +375,7 @@ def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False,treenam
         if not isinstance(tree,TTree):
           print bcolors.FAIL + '[NG] no tree found in ' + filename + bcolors.ENDC
           badfiles.append(filename)
-        if not isinstance(file.Get('cutflow'),TH1):
+        elif not isinstance(file.Get('cutflow'),TH1):
           print bcolors.FAIL + '[NG] no cutflow found in ' + filename + bcolors.ENDC
           badfiles.append(filename)
         elif any(s in filename for s in ['DYJets','WJets']) and tree.GetMaximum('LHE_Njets')>10:
@@ -386,7 +386,7 @@ def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False,treenam
       file.Close()
     
     if len(badfiles)>0:
-      print bcolors.BOLD + bcolors.FAIL + "[NG] %s:   %d out of %d files %s no tree!"%(directory,len(badfiles),len(filelist),"have" if len(badfiles)>1 else "has") + bcolors.ENDC
+      print bcolors.BOLD + bcolors.FAIL + "[NG] %s:   %d out of %d files %s no tree or cutflow!"%(directory,len(badfiles),len(filelist),"have" if len(badfiles)>1 else "has") + bcolors.ENDC
     
     for cleanlist, cleanflag in [(badfiles,clean),(bugfiles,cleanBug)]:
       if len(cleanlist)>0 and cleanflag:
