@@ -6,15 +6,6 @@
 Official examples can by found in <https://github.com/cms-nanoAOD/nanoAOD-tools/tree/master/python/postprocessing/examples>
 
 
-## Simple analysis example
-
-A simple example of a postprocessor with a simple analysis code in [modules/ModuleSimple.py](modules/ModuleSimple.py) can be run as
-```
-./simple_example.py
-```
-The input file should be in the nanoAOD format. The output file will be created by the analysis module itself (`TreeProducerSimple`), as opposed to the postprocessor, which is has setting `noOut=True`. The output file contains a custom tree with variables needed for the analysis.
-
-
 ## Simple example of skimming
 
 A simple example of a postprocessor that skims a nanoAOD file by applying a simple preselection and selecting branches, can be found in
@@ -22,6 +13,15 @@ A simple example of a postprocessor that skims a nanoAOD file by applying a simp
 ./skim_example.py
 ```
 Both the input and output files are of the nanoAOD format.
+
+
+## Simple analysis example
+
+A simple example of a postprocessor with a simple analysis code in [modules/ModuleSimple.py](modules/ModuleSimple.py) can be run as
+```
+./simple_example.py
+```
+The input file should be in the nanoAOD format. The output file will be created by the analysis module itself (`TreeProducerSimple`), as opposed to the postprocessor, which is has setting `noOut=True`. The output file contains a custom tree with variables needed for the analysis.
 
 
 ## Example of applying jet/MET corrections
