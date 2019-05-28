@@ -47,8 +47,6 @@ for queue in $ALLHOSTS; do
   echo "    $queue"
 done
 
-ALLHOSTS="all.q@t3wn49.psi.ch  all.q@t3wn52.psi.ch  all.q@t3wn53.psi.ch  all.q@t3wn54.psi.ch  all.q@t3wn55.psi.ch  all.q@t3wn56.psi.ch  all.q@t3wn58.psi.ch  all.q@t3wn59.psi.ch  all.q@t3wn62.psi.ch  long.q@t3wn32.psi.ch"
-
 # CHECK FRACTION OF HOST's jobs affectred
 printf "\n# FRACTION OF JOBS ON QUEUE AFFECTED:\n"
 for queue in $ALLHOSTS; do
