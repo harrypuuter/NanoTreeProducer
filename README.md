@@ -125,7 +125,7 @@ More [notes](https://www.evernote.com/l/Ac8PKYGpaJxJArj4eng5ed95_wvpzwSNTgc).
 * **2017**: https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmV2017Analysis#DATA, [brilcalc](https://ineuteli.web.cern.ch/ineuteli/lumi/2017/)
 * **2018**: https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmV2018Analysis#DATA, [brilcalc](https://ineuteli.web.cern.ch/ineuteli/lumi/2018/)
 
-The integrated luminosity per era can be computed with [`scripts/eralumi.py`](script/eralumi.py) using `brilcalc` on `lxplus`.
+The integrated luminosity per era can be computed with [`scripts/eralumi.py`](scripts/eralumi.py) using `brilcalc` on `lxplus`.
 JSON files are copied to the [`json`](json) directory to prevent issues with connection to `/afs`.
 
 
