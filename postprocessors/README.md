@@ -35,7 +35,7 @@ There are two example postprocessors that apply jet/MET corrections meant for lo
 
 `skim.py` is a complete example of skimming of Run-II samples, including selecting data in the JSON (good run list), dropping unwanted branches, and applying latest JECs. It is meant to be submitted by [submit_skim.py](../submit_skim.py).
 ```
-./job.py -y 2017
+./skim.py -y 2017
 ```
 
 
