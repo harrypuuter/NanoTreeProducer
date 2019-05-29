@@ -22,17 +22,17 @@ class ElectronSFs:
           self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2016_legacy/Electron_Run2016_legacy_Ele25.root",'ZMass','ele_trig')
           self.sftool_reco  = ScaleFactor(pathPOG+"2016/EGM2D_BtoH_GT20GeV_RecoSF_Legacy2016.root",'EGamma_SF2D','ele_reco')
           #self.sftool_idiso = ScaleFactor(pathPOG+"2016/2016LegacyReReco_ElectronMVA90noiso_Fall17V2.root",'EGamma_SF2D','ele_id')
-          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016_legacy/Electron_Run2016_legacy_IdIso.root",'ZMass','ele_idiso')
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2016_legacy/Electron_Run2016_legacy_IdIso.root",'ZMass','ele_idiso') # MVA noIso Fall17 WP90, rho-corrected iso(dR<0.3)<0.1
         elif year==2017:
           self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2017/Electron_Ele32orEle35.root",'ZMass','ele_trig')
           self.sftool_reco  = ScaleFactor(pathPOG+"2017/egammaEffi.txt_EGM2D_runBCDEF_passingRECO.root",'EGamma_SF2D','ele_reco')
           #self.sftool_idiso = ScaleFactor(pathPOG+"2017/2017_ElectronMVA90noiso.root",'EGamma_SF2D','ele_id')
-          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2017/Electron_IdIso_IsoLt0.15_noIsoID_eff.root",'ZMass','ele_idiso')
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2017/Electron_Run2017_IdIso.root",'ZMass','ele_idiso') # MVA noIso Fall17 WP90, rho-corrected iso(dR<0.3)<0.1
         else:
           self.sftool_trig  = ScaleFactorHTT(pathHTT+"Run2018/Electron_Run2018_Ele32orEle35.root",'ZMass','ele_trig')
           self.sftool_reco  = ScaleFactor(pathPOG+"2018/egammaEffi.txt_EGM2D_updatedAll.root",'EGamma_SF2D','ele_reco')
           #self.sftool_idiso = ScaleFactor(pathPOG+"2018/2018_ElectronMVA90noiso.root",'EGamma_SF2D','ele_id')
-          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2018/Electron_Run2018_IdIso.root",'ZMass','ele_idiso') # MVA nonIso Fall17 WP90, rho-corrected Iso(dR<0.3)<0.1
+          self.sftool_idiso = ScaleFactorHTT(pathHTT+"Run2018/Electron_Run2018_IdIso.root",'ZMass','ele_idiso') # MVA noIso Fall17 WP90, rho-corrected iso(dR<0.3)<0.1
         
         if self.sftool_reco:
           self.sftool_idiso = self.sftool_reco * self.sftool_idiso
