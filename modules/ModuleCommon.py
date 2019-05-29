@@ -317,7 +317,7 @@ class CommonProducer(Module):
         self.out.btagweight_loose[0] = self.btagTool_loose.getWeight(event,jetIds)
         
     
-    def fillMETAndDiLeptonBranches(self,event, tau1, tau2, met, met_vars):
+    def fillMETAndDiLeptonBranches(self, event, tau1, tau2, met, met_vars):
         """Help function to compute variable related to the MET and visible tau candidates,
         and fill the corresponding branches."""
         
