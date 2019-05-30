@@ -7,17 +7,18 @@ This repository is meant for an analysis with a pair of tau leptons in several f
 
 First, install `NanoAODTools`:
 ```
-cmsrel CMSSW_9_4_6
-cd CMSSW_9_4_6/src
+export SCRAM_ARCH=slc6_amd64_gcc700
+cmsrel CMSSW_10_3_3
+cd CMSSW_10_3_3/src
 cmsenv
-git cms-init   #not really needed unless you later want to add some other cmssw stuff
 git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 scram b
 ```
 
 Then, install this `NanoTreeProducer`:
 ```
-git clone https://github.com/IzaakWN/NanoTreeProducer
+git clone https://github.com/IzaakWN/NanoTreeProducer NanoTreeProducer
+cd NanoTreeProducer
 ```
 
 In case you use [lepton scale factors and efficiencies from the HTT group](https://github.com/CMS-HTT/LeptonEfficiencies), it available as the submodule `HTT` in [`corrections/leptonEfficiencies`](corrections/leptonEfficiencies). You will need to make sure you have the latest version with
@@ -39,7 +40,7 @@ scram b
 
 Each time you want to run the code in a new shell session, do
 ```
-cd CMSSW_9_4_6/src
+cd CMSSW_10_3_3/src
 cmsenv
 source setupEnv.sh
 ```
@@ -91,7 +92,7 @@ To **resubmit failed jobs**, do:
 ```
 ./resubmit.py -c mutau -y 2017
 ```
-Note: this submission works for the Sun Grid Engine (SGE) system of PSI Tier3 with `qsub`. For other batch systems, one needs to create their own version of `submit.sh` and `psibatch_runner.sh`.
+Note: this submission works for the Sun Grid Engine (SGE) system of PSI Tier3 with `qsub`. For other batch systems, one needs to create their own version of `submit.sh` and `submit_SGE.sh`.
 
 
 ### Examples
@@ -139,3 +140,14 @@ JSON files are copied to the [`json`](json) directory to prevent issues with con
 
 Tools to apply corrections are available in [corrections](corrections).
 
+
+### Known issues
+
+Versions of ROOT older than `6.12` might give some problems when saving the `LHE_Njets` (`UChar_t`) variable in a integer branch, and when running the postprocessor, you might be prompted with the error
+```
+/work/ineuteli/analysis/CMSSW_9_4_6/python/PhysicsTools/NanoAODTools/postprocessing/framework/treeReaderArrayTools.py:69: RuntimeWarning: creating executor for unknown type "ULong64_t*"
+  ret = _vr.Get()[0]
+/work/ineuteli/analysis/CMSSW_9_4_6/python/PhysicsTools/NanoAODTools/postprocessing/framework/treeReaderArrayTools.py:69: RuntimeWarning: creating executor for unknown type "unsigned char*"
+  ret = _vr.Get()[0]
+```
+(See this [this issue](https://github.com/cms-nanoAOD/cmssw/issues/166), or [JIRA ticket](https://sft.its.cern.ch/jira/si/jira.issueviews:issue-html/ROOT-9068/ROOT-9068.html).)
