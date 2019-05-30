@@ -2,12 +2,12 @@ import numpy as num
 from ROOT import TTree, TFile, TH1D, TH2D
 
 root_dtype = {
-  float: 'D',  int: 'i',  bool: 'O',
-  'f':   'D',  'i': 'i',  '?':  'O',  'b': 'b',
+  float: 'D',  int: 'I',  bool: 'O',
+  'f':   'D',  'i': 'I',  '?':  'O',  'b': 'b',
 }
 
 num_dtype = {
-  'D':   'f',  'i': 'i',  'O':  '?',  'b': 'b'
+  'D':   'f',  'I': 'i',  'O':  '?',  'b': 'b'
 }
 
 
