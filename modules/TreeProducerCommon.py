@@ -202,6 +202,11 @@ class TreeProducerCommon(object):
         if hasattr(self,name):
           print "ERROR! TreeProducerCommon.addBranch: Branch of name '%s' already exists!"%(name)
           exit(1)
+        if isinstance(dtype,str):
+          if dtype.lower()=='f': # 'f' is only a 'float32', and 'F' is a 'complex64', which do not work for filling float branches
+            dtype = float        # float is a 'float64' ('f8')
+          elif dtype.lower()=='i': # 'i' is only a 'int32'
+            dtype = int            # int is a 'int64' ('i8')
         setattr(self,name,num.zeros(1,dtype=dtype))
         self.tree.Branch(name, getattr(self,name), '%s/%s'%(name,root_dtype[dtype]))
         if default!=None:
