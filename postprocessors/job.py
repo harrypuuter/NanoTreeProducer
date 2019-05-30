@@ -12,7 +12,7 @@ infiles = "root://cms-xrd-global.cern.ch//store/user/arizzi/Nano01Fall17/DY1Jets
 
 parser = ArgumentParser()
 parser.add_argument('-i', '--infiles', dest='infiles',   action='store', type=str, default=infiles)
-parser.add_argument('-o', '--outdir',  dest='outdir',    action='store', type=str, default="outdir")
+parser.add_argument('-o', '--outdir',  dest='outdir',    action='store', type=str, default="output")
 parser.add_argument('-N', '--outfile', dest='outfile',   action='store', type=str, default="noname")
 parser.add_argument('-n', '--nchunck', dest='nchunck',   action='store', type=int, default='test')
 parser.add_argument('-c', '--channel', dest='channel',   action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
@@ -49,8 +49,6 @@ kwargs        = {
 
 if isinstance(infiles,str):
   infiles = infiles.split(',')
-
-ensureDirectory(outdir)
 
 if dataType==None:
   dataType = 'mc'

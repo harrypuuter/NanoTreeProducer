@@ -174,7 +174,7 @@ def main():
                 print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files !\n     Resubmitting %s..."%(directory,len(misschunks),len(outfilelist),chunktext) + bcolors.ENDC
                 for chunk in misschunks:
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
+                  createJobs(jobslog,infiles,outdir,sample,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
             
             # RESUBMIT
             nChunks = len(badchunks)+len(misschunks)
