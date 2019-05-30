@@ -18,6 +18,8 @@ if __name__ == '__main__':
     parser = ArgumentParser(prog="checkFiles",description=description,epilog="Good luck!")
     parser.add_argument('-y', '--year',     dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
                                             help="select year" )
+    parser.add_argument('-p', '--prefetch', dest='prefetch', action='store_true', default=False,
+                                            help="copy nanoAOD files to a temporary directory before run on it" )
     parser.add_argument('-d', '--das',      dest='compareToDas', default=False, action='store_true',
                                             help="compare number of events in output to das" )
     parser.add_argument('-R', '--rm-bad',   dest='removeBadFiles', default=False, action='store_true',
@@ -67,12 +69,12 @@ def main(args):
     
     # GET LIST
     samplelist = [ ]
-    for directory in sorted(os.listdir(samplesdir)):
-      if args.samples and not matchSampleToPattern(directory,args.samples): continue
-      if args.vetos and matchSampleToPattern(directory,args.vetos): continue
-      if args.type=='mc' and any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
-      if args.type=='data' and not any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
-      directory = "%s/%s"%(samplesdir,directory)
+    for directory in sorted(glob.glob(samplesdir+"/*/*/NANOAOD*")):
+      sample = '/'.join(directory.split('/')[-3:])
+      if args.samples and not matchSampleToPattern(sample,args.samples): continue
+      if args.vetos and matchSampleToPattern(sample,args.vetos): continue
+      if args.type=='mc' and any(s in sample[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
+      if args.type=='data' and not any(s in sample[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
       if not os.path.isdir(directory): continue
       samplelist.append(directory)
     if not samplelist:
@@ -84,7 +86,7 @@ def main(args):
     print header(year,tag)    
     for directory in samplelist:
         
-        sample   = directory.split('/')[-1]
+        sample   = '__'.join(directory.split('/')[-3:])
         filelist = '%s/*_skim%s*.root'%(directory,tag)
         if args.verbose:
           print "directory  = %s"%(directory)
@@ -93,7 +95,8 @@ def main(args):
         
         # FILE LIST ON SE
         filelist = [director+d for d in sorted(glob.glob(filelist),key=naturalSort)]
-        if not filelist: continue
+        if not filelist:
+          print bcolors.BOLD + bcolors.WARNING + "[WN] %s empty filelist"%directory + bcolors.ENDC
         elif args.verbose:
           print "filelist   = %s"%(filelist[0])
           for file in filelist[1:]:
@@ -123,7 +126,7 @@ def main(args):
         else:
           print bcolors.BOLD + bcolors.WARNING + '[WN] %d / %d of %s need to be resubmitted...'%(len(resubmitfiles),len(infilelist),sample) + bcolors.ENDC
         
-        if not any(s in directory for s in ['LQ3','LQ_']):
+        if not any(s in directory for s in ['LQ3']):
           compareEventsToDAS(nevents,sample,treename='Events')
         if len(resubmitfiles)==0:
           print
@@ -155,7 +158,7 @@ def main(args):
         with open(jobList,'w') as jobs:
           nChunks = 0
           for filelist in filelists:
-              createSkimJobs(jobs,year,sample,filelist,outdir)
+              createSkimJobs(jobs,year,sample,filelist,outdir,prefetch=args.prefetch)
               nChunks = nChunks+1
         
         # SUBMIT

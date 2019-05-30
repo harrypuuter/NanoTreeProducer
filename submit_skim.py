@@ -6,13 +6,15 @@ from fnmatch import fnmatch
 import itertools
 from argparse import ArgumentParser
 from submit import getFileListDAS, getFileListLocal, saveFileListLocal, getBlackList, chunkify, checkExistingFiles
-import checkFiles
+import submit, checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header, ensureDirectory
 
 if __name__ == "__main__":
   parser = ArgumentParser()
   parser.add_argument('-f', '--force',     dest='force', action='store_true', default=False,
                                            help="submit jobs without asking confirmation" )
+  parser.add_argument('-p', '--prefetch',  dest='prefetch', action='store_true', default=False,
+                                           help="copy nanoAOD files to a temporary directory before run on it" )
   parser.add_argument('-y', '--year',      dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
                                            help="select year" )
   parser.add_argument('-s', '--sample',    dest='samples', type=str, nargs='+', default=[ ], action='store',
@@ -21,8 +23,8 @@ if __name__ == "__main__":
                                            help="veto this sample" )
   parser.add_argument('-t', '--type',      dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                            help="filter data or MC to submit" )
-  parser.add_argument('-d', '--das',       dest='useDAS', action='store_true', default=False,
-                                           help="get file list from DAS" )
+  ###parser.add_argument('-d', '--das',       dest='useDAS', action='store_true', default=False,
+  ###                                         help="get file list from DAS" )
   parser.add_argument('-n', '--njob',      dest='nFilesPerJob', action='store', type=int, default=-1,
                                            help="number of files per job" )
   parser.add_argument('-q', '--queue',     dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
@@ -34,6 +36,7 @@ if __name__ == "__main__":
   parser.add_argument('-v', '--verbose',   dest='verbose', default=False, action='store_true',
                                            help="set verbose" )
   args = parser.parse_args()
+  submit.args = args
   checkFiles.args = args
 else:
   args = None
@@ -51,16 +54,18 @@ class bcolors:
 # Diboson (WW, WZ, ZZ) have very large files and acceptance,
 # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
 nFilesPerJob_defaults = [
-  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_', "TTTo2L2Nu", "TTToSemiLep*RunIIFall17", 'Single','Tau', 'EGamma']),
-  ( 2, ['*VectorLQ_']),
+  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_',"TTTo2L2Nu","TTToSemiLep*RunIIFall17",'Single','Tau','EGamma','*VectorLQ_']),
   (40, ['LQ3','*_LQ_']),
 ]
 
 
 
-def createSkimJobs(jobsfile, year, name, infiles, outdir):
+def createSkimJobs(jobsfile, year, name, infiles, outdir, prefetch=False):
     """Create file with commands to execute per job."""
-    cmd = 'bash submit_skim.sh %s %s %s %s'%(year,name,','.join(infiles),outdir)
+    extraopts = ""
+    if prefetch:
+      extraopts += " -p"
+    cmd = 'bash submit_skim.sh %s %s %s %s%s'%(year,name.replace('__','/'),','.join(infiles),outdir,extraopts)
     if args.verbose:
       print cmd
     jobsfile.write(cmd+'\n')
@@ -122,20 +127,16 @@ def main():
           
           # FILE LIST
           files  = [ ]
-          parts  = directory.split('/')
-          name   = parts[-3] + '__' + parts[-2] + '__' + parts[-1]
-          if not args.useDAS:
-              files = getFileListLocal(directory,blacklist=blacklist)
-          if not files:
-            if not args.useDAS:
-              print "Getting file list from DAS/PNFS..."
-            if '/pnfs/' in directory:
-              print bcolors.BOLD + bcolors.WARNING + "Warning! Ignoring file on pnfs, " + directory + bcolors.ENDC
-              continue
-            else:
-              files = getFileListDAS(directory,blacklist=blacklist)
-            if files:
-              saveFileListLocal(name,files,blacklist=blacklist)
+          name   = '__'.join(directory.split('/')[-3:])
+          sample = '/'+name.replace('__','/')
+          ###if not args.useDAS:
+          ###    files = getFileListLocal(directory,blacklist=blacklist)
+          ###if not files:
+          ###if not args.useDAS:
+          ###  print "Getting file list from DAS..."
+          files = getFileListDAS(directory,blacklist=blacklist)
+          ###  if files:
+          ###    saveFileListLocal(name,files,blacklist=blacklist)
           if not files:
             print bcolors.BOLD + bcolors.WARNING + "Warning! EMPTY filelist for " + directory + bcolors.ENDC
             continue
@@ -172,7 +173,7 @@ def main():
           with open(jobList,'w') as jobs:
             nChunks = 0
             for filelist in filelists:
-                createSkimJobs(jobs,year,name,filelist,outdir)
+                createSkimJobs(jobs,year,name,filelist,outdir,prefetch=args.prefetch)
                 nChunks = nChunks+1
           
           # SUBMIT

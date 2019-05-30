@@ -46,7 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--sample',   dest='samples', type=str, nargs='+', default=[ ], action='store',
                                             help="samples to run over, glob patterns (wildcards * and ?) are allowed." )
     parser.add_argument('-x', '--veto',     dest='veto', action='store', type=str, default=None,
-                                            help="veto this sample" )
+                                            help="exclude/veto this sample" )
     parser.add_argument('-t', '--type',     dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                             help="filter data or MC to submit" )
     parser.add_argument('-T', '--tes',      dest='tes', type=float, default=1.0, action='store',
@@ -433,7 +433,7 @@ def compareEventsToDAS(inputarg,dasname,histname='cutflow',treename=""):
     dasname = dasname.replace('__', '/')
     if dasname[0]!='/': dasname = '/'+dasname
     if args.verbose:
-      print "compareEventsToDAS: %s, %s"%(filenames,dasname)
+      print "compareEventsToDAS: %s, %s"%(inputarg,dasname)
       #start = time.time()
     
     # COUNT EVENTS

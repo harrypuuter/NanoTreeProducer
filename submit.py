@@ -18,8 +18,8 @@ if __name__ == "__main__":
                                            help="channels to submit" )
   parser.add_argument('-s', '--sample',    dest='samples', type=str, nargs='+', default=[ ], action='store',
                                            help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
-  parser.add_argument('-x', '--veto',      dest='vetos', nargs='+', default=[ ], action='store',
-                                           help="veto this sample" )
+  parser.add_argument('-x', '--veto',      dest='vetoes', nargs='+', default=[ ], action='store',
+                                           help="exclude/veto this sample" )
   parser.add_argument('-t', '--type',      dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                            help="filter data or MC to submit" )
   parser.add_argument('-T', '--tes',       dest='tes', type=float, default=1.0, action='store',
@@ -32,6 +32,8 @@ if __name__ == "__main__":
                                            help="use Z mass window for dimuon spectrum" )
   parser.add_argument('-d', '--das',       dest='useDAS', action='store_true', default=False,
                                            help="get file list from DAS" )
+  parser.add_argument('-S', '--use-skim',  dest='useSkim', action='store_true', default=False,
+                                           help="use skimmed samples, if available" )
   parser.add_argument('-n', '--njob',      dest='nFilesPerJob', action='store', type=int, default=-1,
                                            help="number of files per job" )
   parser.add_argument('-q', '--queue',     dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
@@ -92,19 +94,6 @@ def chunkify(iterable, size):
     return chunks
     
 
-def getFileListLocal(dataset,blacklist=[ ]):
-    """Get list of files from local directory."""
-    filename = "filelist/filelist_%s.txt"%dataset.lstrip('/').replace('/','__')
-    filelist = [ ]
-    if os.path.exists(filename):
-      with open(filename,'r') as file:
-        for line in file:
-          line = line.rstrip('\n')
-          if line and '#' not in line and line not in blacklist:
-            filelist.append(line.rstrip('\n'))
-    return filelist
-    
-
 def getBlackList(filename):
     """Get blacklist of files from local directory."""
     #filename = "filelist/blacklist_%s.txt"%dataset.lstrip('/').replace('/','__')
@@ -118,14 +107,46 @@ def getBlackList(filename):
     return blacklist
     
 
-def saveFileListLocal(dataset,filelist,blacklist=[ ]):
+def saveFileListLocal(dataset,filelist,blacklist=[ ],tag=""):
     """Save a list of files to a local directory."""
-    filename = "filelist/filelist_%s.txt"%dataset.replace('/','__')
+    if '/pnfs/' in dataset:
+      tag += "_pnfs"
+    dataset  = '__'.join(dataset.split('/')[-3:])
+    filename = "filelist/filelist_%s%s.txt"%(dataset.replace('/','__'),tag)
     with open(filename,'w+') as file:
       for line in filelist:
         if line not in blacklist:
           file.write(line+'\n')
     return filename
+    
+
+def getFileListLocal(dataset,blacklist=[ ],tag=""):
+    """Get list of files from local directory."""
+    if '/pnfs/' in dataset:
+      tag += "_pnfs"
+    dataset  = '__'.join(dataset.split('/')[-3:])
+    filename = "filelist/filelist_%s%s.txt"%(dataset.lstrip('/').replace('/','__'),tag)
+    filelist = [ ]
+    if os.path.exists(filename):
+      with open(filename,'r') as file:
+        for line in file:
+          line = line.rstrip('\n')
+          if line and '#' not in line and line not in blacklist:
+            filelist.append(line.rstrip('\n'))
+    return filelist
+    
+
+def getFileList(dataset,blacklist=[ ]):
+    """Get list of files from DAS."""
+    if '/pnfs/' in dataset:
+      return getFileListPNFS(dataset,blacklist=blacklist)
+    elif any(s in directory for s in ['LQ3','LegacyRun2']):
+      if any(s in directory for s in ['LegacyRun2_2018_LQ_Pair','LegacyRun2_2018_LQ_Single']):
+        pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/rdelburg/'
+      else:
+        pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'
+      return getFileListPNFS(pnfspath+directory)
+    return getFileListDAS(dataset,blacklist=blacklist)
     
 
 def getFileListDAS(dataset,blacklist=[ ]):
@@ -146,25 +167,39 @@ def getFileListDAS(dataset,blacklist=[ ]):
     for line in tmpList:
       if '.root' in line and line not in blacklist:
         #files.append("root://cms-xrd-global.cern.ch/"+line)   
-        filelist.append("root://xrootd-cms.infn.it/"+line)    
+        filelist.append("root://xrootd-cms.infn.it/"+line)
+    filelist.sort()
     return filelist 
     
 
 def getFileListPNFS(dataset,blacklist=[ ]):
     """Get list of files from PSI T3's SE."""
     dataset  = dataset.replace('__','/')
-    user     = 'ytakahas'
-    cmd      = 'ls %s'%(dataset)
-    if args.verbose:
-      print "Executing ",cmd
-    cmd_out  = getoutput( cmd )
-    tmpList  = cmd_out.split(os.linesep)
+    tmpList  = glob.glob(dataset+'/*.root')
+    director = "dcap://t3se01.psi.ch:22125/"
     filelist = [ ]
-    for line in tmpList:
-      if '.root' in line and line not in blacklist:
-        filelist.append("dcap://t3se01.psi.ch:22125/"+dataset+'/'+line.rstrip())
+    for file in tmpList:
+      if '.root' in file and file not in blacklist:
+        filelist.append(director+file.rstrip())
+    if "SingleMuon/Run2018C-Nano14Dec2018-v1/NANOAOD" in dataset: # temporary solution
+      file = director+"/pnfs/psi.ch/cms/trivcat/store/user/ineuteli/samples/NANOAOD_2018/SingleMuon/Run2018C-Nano14Dec2018-v1/NANOAOD/DA99EFB9-860F-F648-8D46-5AD80205F53B_skimmed.root"
+      if file in filelist:
+        print bcolors.BOLD + bcolors.WARNING + "FOUND %s !"%file + bcolors.ENDC
+      else:
+        print bcolors.BOLD + bcolors.WARNING + "ADDED %s !"%file + bcolors.ENDC
+        filelist.append(file)
+    filelist.sort()
     return filelist
     
+
+def isSkimmed(sample,year):
+    """Find skimmed path, if it exists."""
+    skimmedpath = "/pnfs/psi.ch/cms/trivcat/store/user/ineuteli/samples"
+    skimmedpath = "%s/NANOAOD_%s/%s"%(skimmedpath,year,sample.lstrip('/').replace('__','/'))
+    if os.path.exists(skimmedpath):
+      return skimmedpath
+    return False
+
 
 def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs):
     """Create file with commands to execute per job."""
@@ -231,10 +266,12 @@ def main():
           line = line.rstrip().lstrip().split(' ')[0].rstrip('/')
           if line[:2].count('#')>0: continue
           if line=='': continue
-          if args.samples and not matchSampleToPattern(line,args.samples): continue
-          if args.vetos and matchSampleToPattern(line,args.vetos): continue
-          if args.type=='mc' and any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
-          if args.type=='data' and not any(s in line[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
+          if line.count('/')<2: continue
+          sample = '/'.join(line.split('/')[-3:])
+          if args.samples and not matchSampleToPattern(sample,args.samples): continue
+          if args.vetoes and matchSampleToPattern(sample,args.vetoes): continue
+          if args.type=='mc' and any(s in sample[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
+          if args.type=='data' and not any(s in sample[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           directories.append(line)
       if args.testrun:
         directories = directories[:1]
@@ -256,23 +293,24 @@ def main():
             if 'Tau' in directory[:5] and channel!='tautau': continue
             if 'LQ3' in directory[:5] and channel not in ['mutau','eletau','tautau']: continue
             
+            # GET SKIMMED
+            if args.useSkim and isSkimmed(directory,year):
+              directory = isSkimmed(directory,year)
+              if args.verbose:
+                print "skimmed:", directory
+            
             print bcolors.BOLD + bcolors.OKGREEN + directory + bcolors.ENDC
             
             # FILE LIST
             files = [ ]
-            parts = directory.split('/')
-            name  = parts[-3].replace('/','') + '__' + parts[-2].replace('/','') + '__' + parts[-1].replace('/','')
             if not args.useDAS:
                 files = getFileListLocal(directory,blacklist=blacklist)
             if not files:
               if not args.useDAS:
                 print "Getting file list from DAS/PNFS..."
-              if 'pnfs' in directory:
-                files = getFileListPNFS(directory,blacklist=blacklist)
-              else:
-                files = getFileListDAS(directory,blacklist=blacklist)
+              files = getFileList(directory,blacklist=blacklist)
               if files:
-                saveFileListLocal(name,files,blacklist=blacklist)
+                saveFileListLocal(directory,files,blacklist=blacklist)
             if not files:
               print bcolors.BOLD + bcolors.WARNING + "Warning! EMPTY filelist for " + directory + bcolors.ENDC
               continue
@@ -284,20 +322,21 @@ def main():
               files = files[:1]
             
             # JOB LIST
+            sample       = '__'.join(directory.split('/')[-3:])
             ensureDirectory('joblist')
-            jobList      = 'joblist/joblist_%s_%s%s.txt'%(name,channel,tag)
+            jobList      = 'joblist/joblist_%s_%s%s.txt'%(sample,channel,tag)
             print "Creating job file %s..."%(jobList)
             jobName      = getSampleShortName(directory)[1]
             jobName     += "_%s_%s"%(channel,year)+tag
             jobs         = open(jobList,'w')
-            outdir       = ensureDirectory("output_%s/%s"%(year,name))
+            outdir       = ensureDirectory("output_%s/%s"%(year,sample))
             ensureDirectory(outdir+'/logs/')
             
             # NFILESPERJOBS
             nFilesPerJob = args.nFilesPerJob
             if nFilesPerJob<1:
               for default, patterns in nFilesPerJob_defaults:
-                if matchSampleToPattern(directory,patterns):
+                if matchSampleToPattern(sample,patterns):
                   nFilesPerJob = default
                   break
               else:
@@ -312,7 +351,7 @@ def main():
             #filelists = chunkify(files,1)
             for file in filelists:
             #print "FILES = ",f
-                createJobs(jobs,file,outdir,name,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
+                createJobs(jobs,file,outdir,sample,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
                 nChunks = nChunks+1
             jobs.close()
             

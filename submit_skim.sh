@@ -17,6 +17,7 @@ YEAR="$1"
 SAMPLE="$2"
 INFILES="$3"
 OUTDIR="$4"
+OPTIONS="${@:5}"
 TAG=""
 [ "$YEAR"    = "" ] && echo ">>> ERROR! Year is not given!" && exit 1
 [ "$SAMPLE"  = "" ] && echo ">>> ERROR! Sample is not given!" && exit 1
@@ -36,7 +37,14 @@ function peval { echo ">>> $@"; eval "$@"; }
 
 # ENSURE RESULT DIRECTORY ON PSI T3 SE
 peval "mkdir -p $OUTDIR"
-[ ! -d $SERESULTDIR ] && peval "gfal-mkdir -p $GFAL/$SERESULTDIR" # always before cmsenv!
+if [ ! -d $SERESULTDIR ]; then
+  peval "gfal-mkdir -p $GFAL/$SERESULTDIR" # always before cmsenv!
+  TRY=0
+  printf ">>> checking success..."
+  while [ ! -e $SERESULTDIR -a $TRY -lt 15 ]; do
+    printf "."; sleep 4; TRY=$((TRY+1))
+  done
+fi
 if [ ! -d $SERESULTDIR ]; then
     echo "ERROR: Failed to create resultdir on the SE ($SERESULTDIR)! Aborting..." >&2
     exit 1
@@ -44,7 +52,7 @@ fi
 
 # MAIN FUNCTIONALITY
 printf "\n# MAIN FUNCTIONALITY\n"
-peval "python $SCRIPT -y $YEAR -i '$INFILES' -o $OUTDIR --tag '$TAG'"
+peval "python $SCRIPT -y $YEAR -i '$INFILES' -o $OUTDIR --tag '$TAG' $OPTIONS"
 peval "ls -hlt $OUTDIR"
 
 # COPY RESULTS
@@ -53,7 +61,7 @@ if [[ ! -d $SERESULTDIR ]]; then
     echo ">>> $SERESULTDIR does not exist!"
 fi
 [ 0"$DBG" -gt 2 ] && debug="-v"
-for outfile in "$RESULTFILES"; do
+for outfile in $RESULTFILES; do
   if [ -e $outfile ]; then
     seoutfile=`basename $outfile`
     echo ">>> copying $outfile to $SERESULTDIR/$seoutfile"
@@ -69,4 +77,3 @@ done
 # CLEANING
 printf "\n# CLEANING\n"
 peval "rm -r $OUTDIR";
-

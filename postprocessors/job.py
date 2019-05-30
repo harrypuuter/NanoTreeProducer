@@ -122,4 +122,4 @@ sys.stdout.flush()
 p = PostProcessor(outdir, infiles, None, noOut=True, modules=[module2run()], jsonInput=json, postfix=postfix)
 print "job.py: running PostProcessor..."
 p.run()
-print "DONE"
+print "job.py: Postprocessor is done"

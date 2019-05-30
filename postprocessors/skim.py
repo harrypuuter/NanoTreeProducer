@@ -14,22 +14,24 @@ from argparse import ArgumentParser
 
 infiles = "root://cms-xrd-global.cern.ch//store/user/arizzi/Nano01Fall17/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAOD-94X-Nano01Fall17/180205_160029/0000/test94X_NANO_70.root"
 parser = ArgumentParser()
-parser.add_argument('-i', '--infiles', dest='infiles',   action='store', type=str, default=infiles)
-parser.add_argument('-o', '--outdir',  dest='outdir',    action='store', type=str, default="output")
-parser.add_argument('-t', '--type',    dest='type',      action='store', choices=['data','mc'], default=None)
-parser.add_argument('-y', '--year',    dest='year',      action='store', choices=[2016,2017,2018], type=int, default=2017)
-parser.add_argument('-e', '--era',     dest='era',       action='store', type=str, default="")
-parser.add_argument('-l', '--tag',     dest='tag',       action='store', type=str, default="")
-parser.add_argument(      '--no-jec',  dest='doJEC',     action='store_false', default=True)
-parser.add_argument(      '--jec-sys', dest='doJECSys',  action='store_true',  default=None)
+parser.add_argument('-i', '--infiles',  dest='infiles',   action='store', type=str, default=infiles)
+parser.add_argument('-o', '--outdir',   dest='outdir',    action='store', type=str, default="output")
+parser.add_argument('-t', '--type',     dest='type',      action='store', choices=['data','mc'], default=None)
+parser.add_argument('-y', '--year',     dest='year',      action='store', choices=[2016,2017,2018], type=int, default=2017)
+parser.add_argument('-e', '--era',      dest='era',       action='store', type=str, default="")
+parser.add_argument('-l', '--tag',      dest='tag',       action='store', type=str, default="")
+parser.add_argument('-p', '--prefetch', dest='prefetch',  action='store_true',  default=False)
+parser.add_argument(      '--no-jec',   dest='doJEC',     action='store_false', default=True)
+parser.add_argument(      '--jec-sys',  dest='doJECSys',  action='store_true',  default=None)
 args = parser.parse_args()
 
-maxEvts       = None #int(1e3)
+outdir        = ensureDirectory(args.outdir)
 postfix       = '_skimmed'+args.tag
 presel        = None #"Muon_pt[0] > 50"
 branchsel     = "%s/keep_and_drop_skim_diboson.txt"%modulepath
 modules       = [ ]
-outdir        = ensureDirectory(args.outdir)
+maxEvts       = None #int(1e3)
+prefetch      = args.prefetch #and False # copy file to a local temporary directory
 year          = args.year
 era           = args.era
 dataType      = args.type
@@ -73,6 +75,7 @@ print ">>> %-12s = '%s'"%('dataType',dataType)
 print ">>> %-12s = '%s'"%('branchsel',branchsel)
 print ">>> %-12s = '%s'"%('json',json)
 print ">>> %-12s = %s"  %('modules',modules)
+print ">>> %-12s = %s"  %('prefetch',prefetch)
 print ">>> %-12s = %s"  %('doJEC',doJEC)
 print ">>> %-12s = %s"  %('doJECSys',doJECSys)
 print '-'*80
@@ -80,7 +83,7 @@ print '-'*80
 print "skim.py: creating PostProcessor..."
 sys.stdout.flush()
 p = PostProcessor(outdir, infiles, presel, branchsel, outputbranchsel=branchsel, noOut=False,
-                  modules=modules, jsonInput=json, postfix=postfix, maxEntries=maxEvts)
+                  modules=modules, jsonInput=json, postfix=postfix, maxEntries=maxEvts, prefetch=prefetch)
 print "skim.py: running PostProcessor..."
 p.run()
-print "DONE"
+print "skim.py: Postprocessor is done"

@@ -5,42 +5,45 @@ from commands import getoutput
 from argparse import ArgumentParser
 import submit, checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header
-from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getBlackList, getFileListLocal, saveFileListLocal, getFileListPNFS, getFileListDAS, submitJobs, chunkify
+from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getBlackList, getFileListLocal,\
+                   saveFileListLocal, getFileList, isSkimmed, submitJobs, chunkify
 import itertools
 import subprocess
 from ROOT import TFile, Double
 
 parser = ArgumentParser()
-parser.add_argument('-f', '--force',   dest='force', action='store_true', default=False,
-                                       help="submit jobs without asking confirmation" )
-parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
-                                       help="select year" )
-parser.add_argument('-c', '--channel', dest='channels', choices=['eletau','mutau','tautau','mumu','elemu'], type=str, nargs='+', default=['mutau'], action='store',
-                                       help="channels to submit" )
-parser.add_argument('-s', '--sample',  dest='samples', type=str, nargs='+', default=[ ], action='store',
-                                       help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
-parser.add_argument('-x', '--veto',    dest='vetos', type=str, nargs='+', default=[ ], action='store',
-                                       help="veto this sample" )
-parser.add_argument('-t', '--type',    dest='type', choices=['data','mc'], type=str, default=None, action='store',
-                                       help="filter data or MC to submit" )
-parser.add_argument('-T', '--tes',     dest='tes', type=float, default=1.0, action='store',
-                                       help="tau energy scale" )
-parser.add_argument('-L', '--ltf',     dest='ltf', type=float, default=1.0, action='store',
-                                       help="lepton to tau fake energy scale" )
-parser.add_argument('-J', '--jtf',     dest='jtf', type=float, default=1.0, action='store',
-                                       help="jet to tau fake energy scale" )
-parser.add_argument('-M', '--Zmass',   dest='Zmass', action='store_true', default=False,
-                                       help="use Z mass window for dimuon spectrum" )
-parser.add_argument('-d', '--das',     dest='useDAS', action='store_true', default=False,
-                                       help="get file list from DAS" )
-parser.add_argument('-n', '--njob',    dest='nFilesPerJob', action='store', type=int, default=-1,
-                                       help="number of files per job" )
-parser.add_argument('-q', '--queue',   dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
-                                       help="select queue for submission" )
-parser.add_argument('-m', '--mock',    dest='mock', action='store_true', default=False,
-                                       help="mock-submit jobs for debugging purposes" )
-parser.add_argument('-v', '--verbose', dest='verbose', default=False, action='store_true',
-                                       help="set verbose" )
+parser.add_argument('-f', '--force',    dest='force', action='store_true', default=False,
+                                        help="submit jobs without asking confirmation" )
+parser.add_argument('-y', '--year',     dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2017], action='store',
+                                        help="select year" )
+parser.add_argument('-c', '--channel',  dest='channels', choices=['eletau','mutau','tautau','mumu','elemu'], type=str, nargs='+', default=['mutau'], action='store',
+                                        help="channels to submit" )
+parser.add_argument('-s', '--sample',   dest='samples', type=str, nargs='+', default=[ ], action='store',
+                                        help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
+parser.add_argument('-x', '--veto',     dest='vetoes', type=str, nargs='+', default=[ ], action='store',
+                                        help="exclude/veto this sample" )
+parser.add_argument('-t', '--type',     dest='type', choices=['data','mc'], type=str, default=None, action='store',
+                                        help="filter data or MC to submit" )
+parser.add_argument('-T', '--tes',      dest='tes', type=float, default=1.0, action='store',
+                                        help="tau energy scale" )
+parser.add_argument('-L', '--ltf',      dest='ltf', type=float, default=1.0, action='store',
+                                        help="lepton to tau fake energy scale" )
+parser.add_argument('-J', '--jtf',      dest='jtf', type=float, default=1.0, action='store',
+                                        help="jet to tau fake energy scale" )
+parser.add_argument('-M', '--Zmass',    dest='Zmass', action='store_true', default=False,
+                                        help="use Z mass window for dimuon spectrum" )
+parser.add_argument('-d', '--use-das',  dest='useDAS', action='store_true', default=False,
+                                        help="get file list from DAS" )
+parser.add_argument('-S', '--use-skim', dest='useSkim', action='store_true', default=False,
+                                        help="use skimmed samples, if available" )
+parser.add_argument('-n', '--njob',     dest='nFilesPerJob', action='store', type=int, default=-1,
+                                        help="number of files per job" )
+parser.add_argument('-q', '--queue',    dest='queue', choices=['all.q','short.q','long.q'], type=str, default=None, action='store',
+                                        help="select queue for submission" )
+parser.add_argument('-m', '--mock',     dest='mock', action='store_true', default=False,
+                                        help="mock-submit jobs for debugging purposes" )
+parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
+                                        help="set verbose" )
 args = parser.parse_args()
 checkFiles.args = args
 submit.args = args
@@ -71,7 +74,7 @@ def main():
       for directory in sorted(os.listdir(outdir)):
           if not os.path.isdir(outdir+directory): continue
           if args.samples and not matchSampleToPattern(directory,args.samples): continue
-          if args.vetos and matchSampleToPattern(directory,args.vetos): continue
+          if args.vetoes and matchSampleToPattern(directory,args.vetoes): continue
           if args.type=='mc' and any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           if args.type=='data' and not any(s in directory[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): continue
           samplelist.append(directory)
@@ -94,20 +97,18 @@ def main():
             jobName     += "_%s_%s"%(channel,year)+tag
             if not outfilelist: continue            
             
+            # GET SKIMMED
+            if args.useSkim and isSkimmed(directory,year):
+                directory = isSkimmed(directory,year)
+            
             # FILE LIST
-            infiles   = [ ]
+            infiles = [ ]
             if not args.useDAS:
                 infiles = getFileListLocal(directory)
             if not infiles:
               if not args.useDAS:
                 print "Getting file list from DAS..."
-              if any(s in directory for s in ['LQ3','LegacyRun2']):
-                pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'
-                if any(s in directory for s in ['LegacyRun2_2018_LQ_Pair','LegacyRun2_2018_LQ_Single']):
-                  pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/rdelburg/'
-                infiles = getFileListPNFS(pnfspath+directory)
-              else:
-                infiles = getFileListDAS('/'+directory)
+              infiles = getFileList(directory)
               if infiles:
                 saveFileListLocal(directory,infiles)
             if not infiles:
@@ -119,10 +120,11 @@ def main():
                 print "           "+file
             
             # NFILESPERJOBS
+            sample       = '__'.join(directory.split('/')[-3:])
             nFilesPerJob = args.nFilesPerJob
             if nFilesPerJob<1:
               for default, patterns in nFilesPerJob_defaults:
-                if matchSampleToPattern(directory,patterns):
+                if matchSampleToPattern(sample,patterns):
                   nFilesPerJob = default
                   break
               else:
@@ -134,7 +136,7 @@ def main():
             # JOB LIST
             badchunks   = [ ]
             misschunks  = range(0,len(infilelists))
-            jobList = 'joblist/joblist_%s_%s%s_retry.txt'%(directory,channel,tag)
+            jobList     = 'joblist/joblist_%s_%s%s_retry.txt'%(sample,channel,tag)
             with open(jobList, 'w') as jobslog:
               for filename in outfilelist:
                   match = chunkpattern.search(filename)
@@ -157,14 +159,14 @@ def main():
                     if filename in infiles:
                       print ">>> removing blacklisted %s"%filename
                       infiles.remove(filename)
-                  createJobs(jobslog,infiles,outdir,directory,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
+                  createJobs(jobslog,infiles,outdir,sample,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
                   badchunks.append(chunk)
               
               # BAD CHUNKS
               if len(badchunks)>0:
                 badchunks.sort()
                 chunktext = ('chunks ' if len(badchunks)>1 else 'chunk ') + ', '.join(str(ch) for ch in badchunks)
-                print bcolors.BOLD + bcolors.WARNING + '[NG] %s, %d/%d failed!\n     Resubmitting %s...'%(directory,len(badchunks),len(outfilelist),chunktext) + bcolors.ENDC
+                print bcolors.BOLD + bcolors.WARNING + '[NG] %s, %d/%d jobs failed!\n     Resubmitting %s...'%(directory,len(badchunks),len(outfilelist),chunktext) + bcolors.ENDC
               
               # MISSING CHUNKS
               if len(misschunks)>0:
@@ -177,7 +179,7 @@ def main():
             # RESUBMIT
             nChunks = len(badchunks)+len(misschunks)
             if nChunks==0:
-                print bcolors.BOLD + bcolors.OKGREEN + '[OK] ' + directory + bcolors.ENDC
+                print bcolors.BOLD + bcolors.OKGREEN + '[OK] %s'%directory + bcolors.ENDC
             elif args.force:
                 submitJobs(jobName,jobList,nChunks,outdir,batchSystem)
             else:

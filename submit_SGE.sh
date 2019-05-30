@@ -5,6 +5,7 @@
 ## Black list nodes
 ##$ -l h=t3wn43.psi.ch
 ##$ -l h=!t3wn34.psi.ch
+##$ -l h=!t3wn5*.psi.ch
 ##$ -l h=!(t3wn34.psi.ch|t3wn5*.psi.ch)
 ## the cpu time for this job
 #$ -l h_rt=04:20:00
@@ -19,7 +20,6 @@
 ## set cwd to submission host pwd
 #$ -cwd
 
-unset module # prevent error
 echo job start at `date`
 echo "Running job on machine $((uname -a))"
 
@@ -38,4 +38,4 @@ echo "Going to execute"
 echo "  $TASKCMD"
 eval $TASKCMD;
 
-echo "Complete at $((date))";
+echo "Job complete at $((date))";
