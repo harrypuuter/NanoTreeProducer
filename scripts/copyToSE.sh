@@ -35,18 +35,16 @@ for year in $YEAR; do
   DIRS=`ls /scratch/$OUTPUT`
   
   # MAKE DIR
-  TRY=0
-  while [ ! -e $PNFS_OUTPUT -a $TRY -lt 4 ]; do
-    # Warning: gfal tools are broken by initialization of CMSSW environment!
-    if [ $TRY == 0 ]; then
-      echo ">>> Warning! $PNFS_OUTPUT does not exist..."
-      peval "gfal-mkdir -p gsiftp://t3se01.psi.ch/$PNFS_OUTPUT"
-    else
-      echo ">>> check again..."
-    fi
-    sleep 10; TRY=$((TRY+1))
-  done
-  [ ! -e $PNFS_OUTPUT ] && echo ">>>   ERROR! $PNFS_OUTPUT still does not exist after $TRY attempts..." && exit 1
+  if [ ! -e "$PNFS_OUTPUT" ]; then
+    peval "gfal-mkdir -p gsiftp://t3se01.psi.ch/$PNFS_OUTPUT"
+    TRY=0
+    printf ">>> checking success..."
+    while [ ! -e "$PNFS_OUTPUT" -a $TRY -lt 15 ]; do
+      printf "."; sleep 4; TRY=$((TRY+1))
+    done
+    [ ! -e "$PNFS_OUTPUT" ] && echo ">>> failed to make $PNFS_OUTPUT?" && continue
+  fi
+  [ ! -e "$PNFS_OUTPUT" ] && echo ">>>   ERROR! $PNFS_OUTPUT still does not exist after $TRY attempts..." && exit 1
   
   # MAKE DIR
   for d in $DIRS; do

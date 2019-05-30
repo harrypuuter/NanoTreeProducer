@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Author: Izaak Neutelings
+# Author: Izaak Neutelingsi (May 2019)
 # Links:
 #    https://twiki.cern.ch/twiki/bin/view/CMS/TWikiLUM
 #    https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmV2016Analysis

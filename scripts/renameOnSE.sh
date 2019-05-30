@@ -2,7 +2,7 @@
 # gfal-rm -r gsiftp://t3se01.psi.ch//pnfs/psi.ch/cms/trivcat/store/user/ineuteli/analysis/LQ_2017/DY
 
 
-YEAR='2017'
+YEAR='2018'
 OUTPUT="$USER/samples/NANOAOD_${YEAR}"
 PNFS_OUTPUT="/pnfs/psi.ch/cms/trivcat/store/user/$OUTPUT"
 XRD="root://t3dcachedb.psi.ch:1094"
