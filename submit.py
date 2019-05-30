@@ -140,8 +140,8 @@ def getFileList(dataset,blacklist=[ ]):
     """Get list of files from DAS."""
     if '/pnfs/' in dataset:
       return getFileListPNFS(dataset,blacklist=blacklist)
-    elif any(s in directory for s in ['LQ3','LegacyRun2']):
-      if any(s in directory for s in ['LegacyRun2_2018_LQ_Pair','LegacyRun2_2018_LQ_Single']):
+    elif any(s in dataset for s in ['LQ3','LegacyRun2']):
+      if any(s in dataset for s in ['LegacyRun2_2018_LQ_Pair','LegacyRun2_2018_LQ_Single']):
         pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/rdelburg/'
       else:
         pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'
