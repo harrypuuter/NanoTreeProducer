@@ -143,11 +143,11 @@ Tools to apply corrections are available in [corrections](corrections).
 
 ### Known issues
 
-Versions of ROOT older than `6.12` might give some problems when saving the `LHE_Njets` (`UChar_t`) variable in a integer branch, and when running the postprocessor, you might be prompted with the error
+When running the postprocessor with `ROOT` version older than `6.12`, you might be prompted with
 ```
 /work/ineuteli/analysis/CMSSW_9_4_6/python/PhysicsTools/NanoAODTools/postprocessing/framework/treeReaderArrayTools.py:69: RuntimeWarning: creating executor for unknown type "ULong64_t*"
   ret = _vr.Get()[0]
 /work/ineuteli/analysis/CMSSW_9_4_6/python/PhysicsTools/NanoAODTools/postprocessing/framework/treeReaderArrayTools.py:69: RuntimeWarning: creating executor for unknown type "unsigned char*"
   ret = _vr.Get()[0]
 ```
-(See this [this issue](https://github.com/cms-nanoAOD/cmssw/issues/166), or [JIRA ticket](https://sft.its.cern.ch/jira/si/jira.issueviews:issue-html/ROOT-9068/ROOT-9068.html).)
+And saving the `LHE_Njets` (`UChar_t`) variable in an integer branch (`Int_t` via an `numpy.int64` array) might give some unphysical values. (See this [JIRA ticket](https://sft.its.cern.ch/jira/si/jira.issueviews:issue-html/ROOT-9068/ROOT-9068.html), or this [this issue](https://github.com/cms-nanoAOD/cmssw/issues/166).)
