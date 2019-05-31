@@ -152,12 +152,17 @@ class CommonProducer(Module):
         if self.doJEC:
           jetIds_vars = { }
           if self.isData:
-            jetpt_corr, met_corr = self.jmeTool.correctJetMET_Data(event)
-            jetpt_vars, met_vars = { 'nom': jetpt_corr }, { 'nom': met_corr }
+            jetpt_nom, met_nom = self.jmeTool.correctJetMET_Data(event) # returns a list of jet pT and a MET TLorenzVector
+            met_vars = { }
           else:
-            jetpt_vars, met_vars = self.jmeTool.correctJetMET_MC(event)
+            jetpt_vars, met_vars = self.jmeTool.correctJetMET_MC(event) # returns a dict of jet pT lists and a dict of MET TLorenzVectors
+            jetpt_nom,  met_nom  = jetpt_vars['nom'], met_vars['nom']
             for label in self.jeclabels:
               jetIds_vars[label] = [ ]
+        else:
+          jetpt_nom = [event.Jet_pt[i] for i in xrange(event.nJet)]
+          met_nom   = self.met(event)
+          met_vars  = { }
         
         # COUNTER
         jetIds, bjetIds = [ ], [ ]
@@ -168,7 +173,7 @@ class CommonProducer(Module):
         # SELECT JET, remove overlap with selected objects
         jets = Collection(event,'Jet')
         #jets = filter(self.jetSel,jets)
-        for ijet in range(event.nJet):
+        for ijet in xrange(event.nJet):
             #print event.Jet_pt[ijet], jetpt_vars['nom'][ijet]
             if abs(event.Jet_eta[ijet]) > 4.7: continue
             if tau1.DeltaR(jets[ijet].p4()) < 0.5: continue
@@ -179,10 +184,7 @@ class CommonProducer(Module):
               for label in self.jeclabels:
                 if jetpt_vars[label][ijet] < self.jetCutPt: continue
                 jetIds_vars[label].append(ijet)
-              jpt = jetpt_vars['nom'][ijet]
-            else:
-              jpt = event.Jet_pt[ijet]
-            if jpt < self.jetCutPt: continue
+            if jetpt_nom[ijet] < self.jetCutPt: continue
             jetIds.append(ijet)
             
             if abs(event.Jet_eta[ijet]) > 2.4:
@@ -192,11 +194,11 @@ class CommonProducer(Module):
             
             if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.loose:
               nbtag_loose += 1
-              if jpt>50:
+              if jetpt_nom[ijet]>50:
                 nbtag50_loose += 1
               if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.medium:
                 nbtag += 1
-                if jpt>50:
+                if jetpt_nom[ijet]>50:
                   nbtag50 += 1
                 bjetIds.append(ijet)
         
@@ -211,7 +213,7 @@ class CommonProducer(Module):
         
         # FILL JET BRANCHES
         self.out.njets[0]         = len(jetIds)
-        self.out.njets50[0]       = len([i for i in jetIds if event.Jet_pt[i]>50])
+        self.out.njets50[0]       = len([i for i in jetIds if jetpt_nom>50])
         self.out.nfjets[0]        = nfjets
         self.out.ncjets[0]        = ncjets
         self.out.nbtag[0]         = nbtag
@@ -220,9 +222,9 @@ class CommonProducer(Module):
         self.out.nbtag50_loose[0] = nbtag50_loose
         
         # LEADING JET
-        jetIds.sort(key=lambda i: event.Jet_pt[i],reverse=True) # sort needed if JECs were applied
+        jetIds.sort(key=lambda i: jetpt_nom[i],reverse=True) # sort needed if JECs were applied
         if len(jetIds)>0:
-          self.out.jpt_1[0]       = event.Jet_pt[jetIds[0]]
+          self.out.jpt_1[0]       = jetpt_nom[jetIds[0]]
           self.out.jeta_1[0]      = event.Jet_eta[jetIds[0]]
           self.out.jphi_1[0]      = event.Jet_phi[jetIds[0]]
           self.out.jdeepb_1[0]    = event.Jet_btagDeepB[jetIds[0]]
@@ -234,7 +236,7 @@ class CommonProducer(Module):
         
         # SUBLEADING JET
         if len(jetIds)>1:
-          self.out.jpt_2[0]       = event.Jet_pt[jetIds[1]]
+          self.out.jpt_2[0]       = jetpt_nom[jetIds[1]]
           self.out.jeta_2[0]      = event.Jet_eta[jetIds[1]]
           self.out.jphi_2[0]      = event.Jet_phi[jetIds[1]]
           self.out.jdeepb_2[0]    = event.Jet_btagDeepB[jetIds[1]]
@@ -246,7 +248,7 @@ class CommonProducer(Module):
         
         # LEADING B JETS
         if len(bjetIds)>0:
-          self.out.bpt_1[0]       = event.Jet_pt[bjetIds[0]]
+          self.out.bpt_1[0]       = jetpt_nom[bjetIds[0]]
           self.out.beta_1[0]      = event.Jet_eta[bjetIds[0]]
         else:
           self.out.bpt_1[0]       = -1.
@@ -254,7 +256,7 @@ class CommonProducer(Module):
         
         # SUBLEADING B JETS
         if len(bjetIds)>1:
-          self.out.bpt_2[0]       = event.Jet_pt[bjetIds[1]]
+          self.out.bpt_2[0]       = jetpt_nom[bjetIds[1]]
           self.out.beta_2[0]      = event.Jet_eta[bjetIds[1]]
         else:
           self.out.bpt_2[0]       = -1.
@@ -276,14 +278,7 @@ class CommonProducer(Module):
             getattr(self.out,"jpt_1_"+label)[0]   = jetpt_vars[label][jetIds_vars[label][0]] if len(jetIds_vars[label])>0 else -1
             getattr(self.out,"jpt_2_"+label)[0]   = jetpt_vars[label][jetIds_vars[label][1]] if len(jetIds_vars[label])>1 else -1
         
-        # MET TLORENTZVECTOR
-        if self.doJEC:
-          met = met_vars['nom']
-        else:
-          met = self.met(event)
-          met_vars = { }
-        
-        return jetIds, met, njets_vars, met_vars
+        return jetIds, met_nom, njets_vars, met_vars
         
     
     def applyCommonCorrections(self, event, jetIds, met, njets_var, met_vars):
