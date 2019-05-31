@@ -181,7 +181,7 @@ class CommonProducer(Module):
             if event.Jet_jetId[ijet] < 2: continue
             
             if self.doJEC:
-              for label in self.jeclabels:
+              for label in jetIds_vars:
                 if jetpt_vars[label][ijet] < self.jetCutPt: continue
                 jetIds_vars[label].append(ijet)
             if jetpt_nom[ijet] < self.jetCutPt: continue
@@ -265,18 +265,18 @@ class CommonProducer(Module):
         # FILL JET VARIATION BRANCHES
         njets_vars = { }
         if self.doJECSys:
-          for label in self.jeclabels:
+          for label in jetIds_vars:
             jetIds_vars[label].sort(key=lambda i: jetpt_vars[label][i],reverse=True)
             njets_vars[label]    = len(jetIds_vars[label])
             jetIds_vars50        = [i for i in jetIds_vars[label]   if jetpt_vars[label][i]>50]
             bjetIds_vars50_loose = [i for i in jetIds_vars50        if event.Jet_btagDeepB[i] > self.deepcsv_wp.loose]
             bjetIds_vars50       = [i for i in bjetIds_vars50_loose if event.Jet_btagDeepB[i] > self.deepcsv_wp.medium]
-            getattr(self.out,"njets_"+label)[0]   = njets_vars[label]
-            getattr(self.out,"njets50_"+label)[0] = len(jetIds_vars50)
-            getattr(self.out,"nbtag50_"+label)[0] = len(bjetIds_vars50)
+            getattr(self.out,"njets_"+label)[0]         = njets_vars[label]
+            getattr(self.out,"njets50_"+label)[0]       = len(jetIds_vars50)
+            getattr(self.out,"nbtag50_"+label)[0]       = len(bjetIds_vars50)
             getattr(self.out,"nbtag50_loose_"+label)[0] = len(bjetIds_vars50_loose)
-            getattr(self.out,"jpt_1_"+label)[0]   = jetpt_vars[label][jetIds_vars[label][0]] if len(jetIds_vars[label])>0 else -1
-            getattr(self.out,"jpt_2_"+label)[0]   = jetpt_vars[label][jetIds_vars[label][1]] if len(jetIds_vars[label])>1 else -1
+            getattr(self.out,"jpt_1_"+label)[0]         = jetpt_vars[label][jetIds_vars[label][0]] if len(jetIds_vars[label])>0 else -1
+            getattr(self.out,"jpt_2_"+label)[0]         = jetpt_vars[label][jetIds_vars[label][1]] if len(jetIds_vars[label])>1 else -1
         
         return jetIds, met_nom, njets_vars, met_vars
         
