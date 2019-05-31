@@ -32,6 +32,7 @@ class JetReCalibrator:
         
         # BASE CORRECTIONS
         path           = os.path.expandvars(path) #"%s/src/CMGTools/RootTools/data/jec"%os.environ['CMSSW_BASE'];
+        print("Loading JES corrections from file '%s'..."%path)
         filenameL1     = ensureFile("%s/%s_L1FastJet_%s.txt"%( path,globalTag,jetFlavour))
         filenameL2     = ensureFile("%s/%s_L2Relative_%s.txt"%(path,globalTag,jetFlavour))
         filenameL3     = ensureFile("%s/%s_L3Absolute_%s.txt"%(path,globalTag,jetFlavour))
