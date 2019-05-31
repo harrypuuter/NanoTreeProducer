@@ -175,6 +175,7 @@ class TreeProducerCommon(object):
         self.addBranch('extraelec_veto',          '?')
         self.addBranch('extramuon_veto',          '?')
         self.addBranch('lepton_vetos',            '?')
+        self.addBranch('lepton_vetos_noTau',      '?')
         
         if not self._isData:
           ###self.addBranch('ngentauhads',           'i', -1)

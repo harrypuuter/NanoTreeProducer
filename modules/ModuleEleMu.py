@@ -147,7 +147,8 @@ class EleMuProducer(CommonProducer):
         
         # VETOS
         self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event,[dilepton.id1],[dilepton.id2],[ ],self.channel)
-        self.out.lepton_vetos[0] = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
+        self.out.lepton_vetos[0]       = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
+        self.out.lepton_vetos_noTau[0] = self.out.lepton_vetos[0]
         ###if self.doTight and (self.out.lepton_vetos[0] or event.Electron_pfRelIso03_all[dilepton.id1]>0.10 or\
         ###                     ord(event.Tau_idAntiMu[dilepton.id2]<1 or ord(event.Tau_idAntiEle[dilepton.id2]<8):
         ###  return False
