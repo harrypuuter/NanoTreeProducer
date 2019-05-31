@@ -145,7 +145,7 @@ def getFileList(dataset,blacklist=[ ]):
         pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/rdelburg/'
       else:
         pnfspath = '/pnfs/psi.ch/cms/trivcat/store/user/ytakahas/'
-      return getFileListPNFS(pnfspath+directory)
+      return getFileListPNFS(pnfspath+dataset)
     return getFileListDAS(dataset,blacklist=blacklist)
     
 
