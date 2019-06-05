@@ -250,7 +250,7 @@ class EleTauProducer(CommonProducer):
         
         
         # JETS
-        jetIds, met, njets_var, met_vars = self.fillJetBranches(event,electron,tau)
+        jetIds, jetIds50, met, njets_var, met_vars = self.fillJetBranches(event,electron,tau)
         if event.Tau_jetIdx[ltau.id2]>=0:
           self.out.jpt_match_2[0] = event.Jet_pt[event.Tau_jetIdx[ltau.id2]]
         else:
@@ -259,7 +259,7 @@ class EleTauProducer(CommonProducer):
         
         # WEIGHTS
         if not self.isData:
-          self.applyCommonCorrections(event,jetIds,met,njets_var,met_vars)
+          self.applyCommonCorrections(event,jetIds,jetIds50,met,njets_var,met_vars)
           if self.vlooseIso(event,ltau.id2) and event.Electron_pfRelIso03_all[ltau.id1]<0.50:
             self.btagTool.fillEfficiencies(event,jetIds)
             self.btagTool_loose.fillEfficiencies(event,jetIds)

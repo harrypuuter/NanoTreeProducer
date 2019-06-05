@@ -40,6 +40,7 @@ class CommonProducer(Module):
         self.doJECSys         = kwargs.get('doJECSys',   self.doJEC         ) and not self.isData and self.doJEC #and False
         self.isVectorLQ       = kwargs.get('isVectorLQ', 'VectorLQ' in name )
         self.jetCutPt         = 30
+        self.bjetCutEta       = 2.7
         
         # YEAR-DEPENDENT IDs
         self.vlooseIso        = getVLooseTauIso(self.year)
@@ -51,19 +52,19 @@ class CommonProducer(Module):
         self.jecMETlabels = [ ]
         if not self.isData:
           self.puTool         = PileupWeightTool(year=self.year)
-          self.btagTool       = BTagWeightTool('DeepCSV','medium',channel=channel,year=self.year)
-          self.btagTool_loose = BTagWeightTool('DeepCSV','loose',channel=channel,year=self.year)
+          self.btagTool       = BTagWeightTool('DeepCSV','medium',channel=channel,year=self.year,maxeta=self.bjetCutEta)
+          self.btagTool_loose = BTagWeightTool('DeepCSV','loose',channel=channel,year=self.year,maxeta=self.bjetCutEta)
           if self.doZpt:
             self.zptTool      = ZptCorrectionTool(year=self.year)
           if self.doRecoil:
             self.recoilTool   = RecoilCorrectionTool(year=self.year)
           if self.doJEC:
-            self.jmeTool      = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,systematics=self.doJECSys,updateEvent=False)
+            self.jmeTool      = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=self.doJECSys,updateEvent=True)
             if self.doJECSys:
               self.jeclabels    = [ u+v for u in ['jer','jes'] for v in ['Down','Up']]
               self.jecMETlabels = [ u+v for u in ['jer','jes','unclEn'] for v in ['Down','Up']]
         elif self.year in [2016,2017,2018]:
-          self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,systematics=self.doJECSys,updateEvent=False,data=True,era=self.era)
+          self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=self.doJECSys,updateEvent=True,data=True,era=self.era)
         else:
           self.doJEC = False
         self.deepcsv_wp       = BTagWPs('DeepCSV',year=self.year)
@@ -87,6 +88,7 @@ class CommonProducer(Module):
         print ">>> %-12s = %s"  %('isVectorLQ',self.isVectorLQ)
         print ">>> %-12s = %s"  %('doTight',   self.doTight)
         print ">>> %-12s = %s"  %('jetCutPt',  self.jetCutPt)
+        print ">>> %-12s = %s"  %('bjetCutEta',self.bjetCutEta)
         pass
         
     
@@ -192,7 +194,7 @@ class CommonProducer(Module):
             else:
               ncjets += 1
             
-            if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.loose:
+            if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.loose and abs(event.Jet_eta)<self.bjetCutEta:
               nbtag_loose += 1
               if jetpt_nom[ijet]>50:
                 nbtag50_loose += 1
@@ -212,8 +214,11 @@ class CommonProducer(Module):
         #    eventSum += j.p4()
         
         # FILL JET BRANCHES
+        jetIds.sort( key=lambda i: jetpt_nom[i],reverse=True) # sort needed if JECs were applied
+        bjetIds.sort(key=lambda i: jetpt_nom[i],reverse=True) # sort needed if JECs were applied
+        jetIds50                  = [i for i in jetIds if jetpt_nom[i]>50] # already sorted
         self.out.njets[0]         = len(jetIds)
-        self.out.njets50[0]       = len([i for i in jetIds if jetpt_nom>50])
+        self.out.njets50[0]       = len(jetIds50)
         self.out.nfjets[0]        = nfjets
         self.out.ncjets[0]        = ncjets
         self.out.nbtag[0]         = nbtag
@@ -222,7 +227,6 @@ class CommonProducer(Module):
         self.out.nbtag50_loose[0] = nbtag50_loose
         
         # LEADING JET
-        jetIds.sort(key=lambda i: jetpt_nom[i],reverse=True) # sort needed if JECs were applied
         if len(jetIds)>0:
           self.out.jpt_1[0]       = jetpt_nom[jetIds[0]]
           self.out.jeta_1[0]      = event.Jet_eta[jetIds[0]]
@@ -278,38 +282,40 @@ class CommonProducer(Module):
             getattr(self.out,"jpt_1_"+label)[0]         = jetpt_vars[label][jetIds_vars[label][0]] if len(jetIds_vars[label])>0 else -1
             getattr(self.out,"jpt_2_"+label)[0]         = jetpt_vars[label][jetIds_vars[label][1]] if len(jetIds_vars[label])>1 else -1
         
-        return jetIds, met_nom, njets_vars, met_vars
+        return jetIds, jetIds50, met_nom, njets_vars, met_vars
         
     
-    def applyCommonCorrections(self, event, jetIds, met, njets_var, met_vars):
+    def applyCommonCorrections(self, event, jetIds, jetIds50, met, njets_var, met_vars):
         """Help function to apply common corrections, and fill weight branches."""
         
         if self.doRecoil:
-          boson, boson_vis           = getBoson(event)
+          boson, boson_vis             = getBoson(event)
           self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,len(jetIds))
-          self.out.m_genboson[0]     = boson.M()
-          self.out.pt_genboson[0]    = boson.Pt()
+          self.out.m_genboson[0]       = boson.M()
+          self.out.pt_genboson[0]      = boson.Pt()
           
           for label in self.jecMETlabels:
             self.recoilTool.CorrectPFMETByMeanResolution(met_vars[label],boson,boson_vis,njets_var.get(label,len(jetIds)))
           
           if self.doZpt:
-            self.out.zptweight[0]    = self.zptTool.getZptWeight(boson.Pt(),boson.M())
+            self.out.zptweight[0]      = self.zptTool.getZptWeight(boson.Pt(),boson.M())
         
         elif self.doZpt:
           zboson = getZBoson(event)
-          self.out.m_genboson[0]     = zboson.M()
-          self.out.pt_genboson[0]    = zboson.Pt()
-          self.out.zptweight[0]      = self.zptTool.getZptWeight(zboson.Pt(),zboson.M())
+          self.out.m_genboson[0]       = zboson.M()
+          self.out.pt_genboson[0]      = zboson.Pt()
+          self.out.zptweight[0]        = self.zptTool.getZptWeight(zboson.Pt(),zboson.M())
         
         elif self.doTTpt:
-          toppt1, toppt2             = getTTPt(event)
-          self.out.ttptweight[0]     = getTTptWeight(toppt1,toppt2)
+          toppt1, toppt2               = getTTPt(event)
+          self.out.ttptweight[0]       = getTTptWeight(toppt1,toppt2)
         
-        self.out.genweight[0]        = event.genWeight
-        self.out.puweight[0]         = self.puTool.getWeight(event.Pileup_nTrueInt)
-        self.out.btagweight[0]       = self.btagTool.getWeight(event,jetIds)
-        self.out.btagweight_loose[0] = self.btagTool_loose.getWeight(event,jetIds)
+        self.out.genweight[0]          = event.genWeight
+        self.out.puweight[0]           = self.puTool.getWeight(event.Pileup_nTrueInt)
+        self.out.btagweight[0]         = self.btagTool.getWeight(event,jetIds)
+        self.out.btagweight_loose[0]   = self.btagTool_loose.getWeight(event,jetIds)
+        self.out.btagweight50[0]       = self.btagTool.getWeight(event,jetIds50)
+        self.out.btagweight50_loose[0] = self.btagTool_loose.getWeight(event,jetIds50)
         
     
     def fillMETAndDiLeptonBranches(self, event, tau1, tau2, met, met_vars):

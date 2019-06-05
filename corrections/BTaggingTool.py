@@ -5,6 +5,8 @@
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
+# nanoAOD-tools/python/postprocessing/modules/btv/btagSFProducer.py
+# https://github.com/cms-nanoAOD/nanoAOD-tools/blob/master/python/postprocessing/modules/btv/btagSFProducer.py
 from corrections import modulepath, ensureTFile, warning
 from array import array
 import ROOT
@@ -50,7 +52,7 @@ class BTagWPs:
 
 class BTagWeightTool:
     
-    def __init__(self, tagger, wp='medium', sigma='central', channel='mutau', year=2017):
+    def __init__(self, tagger, wp='medium', sigma='central', channel='mutau', year=2017, maxeta=2.4):
         """Load b tag weights from CSV file."""
         
         assert(year in [2016,2017,2018]), "You must choose a year from: 2016, 2017, or 2018."
@@ -136,18 +138,22 @@ class BTagWeightTool:
         self.reader  = reader
         self.hists   = hists
         self.effmaps = effmaps
+        self.maxeta  = maxeta
         
     def getWeight(self,event,jetids):
         """Get b tagging event weight for a given set of jets."""
         weight = 1.
         for id in jetids:
-          weight *= self.getSF(event.Jet_pt[id],event.Jet_eta[id],event.Jet_partonFlavour[id],self.tagged(event,id))
+          if abs(event.Jet_eta[id])<self.maxeta:
+            weight *= self.getSF(event.Jet_pt[id],event.Jet_eta[id],event.Jet_partonFlavour[id],self.tagged(event,id))
         return weight
         
     def getSF(self,pt,eta,flavor,tagged):
         """Get b tag SF for a single jet."""
         FLAV = flavorToFLAV(flavor)
-        SF   = self.reader.eval(FLAV,abs(eta),pt)
+        if   eta>=+2.4: eta = +2.399 # BTagCalibrationReader returns zero if |eta| > 2.4
+        elif eta<=-2.4: eta = -2.399
+        SF   = self.reader.eval(FLAV,abs(eta),pt) #eval_auto_bounds
         if tagged:
           weight = SF
         else:
@@ -170,8 +176,8 @@ class BTagWeightTool:
         if ybin==0: ybin = 1
         elif ybin>hist.GetYaxis().GetNbins(): ybin -= 1
         eff    = hist.GetBinContent(xbin,ybin)
-        #if eff==1:
-        #  print "Warning! BTagWeightTool.getEfficiency: MC efficiency is 1 for pt=%s, eta=%s, flavor=%s, SF=%s"%(pt,eta,flavor,SF)
+        ###if eff==1:
+        ###  print "Warning! BTagWeightTool.getEfficiency: MC efficiency is 1 for pt=%s, eta=%s, flavor=%s, SF=%s"%(pt,eta,flavor,SF)
         return eff
         
     def fillEfficiencies(self,event,jetids):
@@ -182,9 +188,9 @@ class BTagWeightTool:
           if self.tagged(event,id):
             self.hists[flavor].Fill(event.Jet_pt[id],event.Jet_eta[id])
           self.hists[flavor+'_all'].Fill(event.Jet_pt[id],event.Jet_eta[id])
-            
+        
     def setDirectory(self,directory,subdirname=None):
-        """Set directory of histograms before writing."""
+        """Set directory of histograms (efficiency map) before writing."""
         if subdirname:
           subdir = directory.Get(subdirname)
           if not subdir:
@@ -196,18 +202,18 @@ class BTagWeightTool:
 
 
 def flavorToFLAV(flavor):
-  """Help function to convert an integer flavor ID to a BTagEntry enum value."""
-  return FLAV_B if abs(flavor)==5 else FLAV_C if abs(flavor) in [4,15] else FLAV_UDSG       
-  
+    """Help function to convert an integer flavor ID to a BTagEntry enum value."""
+    return FLAV_B if abs(flavor)==5 else FLAV_C if abs(flavor) in [4,15] else FLAV_UDSG       
+    
 def flavorToString(flavor):
-  """Help function to convert an integer flavor ID to a string value."""
-  return 'b' if abs(flavor)==5 else 'c' if abs(flavor)==4 else 'udsg'
-  
+    """Help function to convert an integer flavor ID to a string value."""
+    return 'b' if abs(flavor)==5 else 'c' if abs(flavor)==4 else 'udsg'
+    
 def createEfficienyMap(histname):
     """Help function to create efficiency maps (TH2D) with uniform binning and layout.
     One method to rule them all."""
     ptbins  = array('d',[10,20,30,50,70,100,140,200,300,500,1000,1500])
-    etabins = array('d',[-2.5,-1.5,0.0,1.5,2.5])
+    etabins = array('d',[-2.7,-1.5,0.0,1.5,2.7])
     bins    = (len(ptbins)-1,ptbins,len(etabins)-1,etabins)
     hist    = TH2F(histname,histname,*bins)
     hist.GetXaxis().SetTitle("jet p_{T} [GeV]")

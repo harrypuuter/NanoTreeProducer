@@ -246,7 +246,7 @@ class MuTauProducer(CommonProducer):
         
         
         # JETS
-        jetIds, met, njets_var, met_vars = self.fillJetBranches(event,muon,tau)
+        jetIds, jetIds50, met, njets_var, met_vars = self.fillJetBranches(event,muon,tau)
         if event.Tau_jetIdx[ltau.id2]>=0:
           self.out.jpt_match_2[0] = event.Jet_pt[event.Tau_jetIdx[ltau.id2]]
         else:
@@ -255,7 +255,7 @@ class MuTauProducer(CommonProducer):
         
         # WEIGHTS
         if not self.isData:
-          self.applyCommonCorrections(event,jetIds,met,njets_var,met_vars)
+          self.applyCommonCorrections(event,jetIds,jetIds50,met,njets_var,met_vars)
           if self.vlooseIso(event,ltau.id2) and event.Muon_pfRelIso04_all[ltau.id1]<0.50:
             self.btagTool.fillEfficiencies(event,jetIds)
             self.btagTool_loose.fillEfficiencies(event,jetIds)

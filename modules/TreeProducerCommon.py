@@ -93,6 +93,8 @@ class TreeProducerCommon(object):
           self.addBranch('ttptweight',            'f', 1.)
           self.addBranch('btagweight',            'f', 1.)
           self.addBranch('btagweight_loose',      'f', 1.)
+          self.addBranch('btagweight50',          'f', 1.)
+          self.addBranch('btagweight50_loose',    'f', 1.)
         
         
         ############

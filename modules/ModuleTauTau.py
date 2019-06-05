@@ -328,12 +328,12 @@ class TauTauProducer(CommonProducer):
         
         
         # JETS
-        jetIds, met, njets_var, met_vars = self.fillJetBranches(event,tau1,tau2)
+        jetIds, jetIds50, met, njets_var, met_vars = self.fillJetBranches(event,tau1,tau2)
         
         
         # WEIGHTS
         if not self.isData:
-          self.applyCommonCorrections(event,jetIds,met,njets_var,met_vars)
+          self.applyCommonCorrections(event,jetIds,jetIds50,met,njets_var,met_vars)
           if self.vlooseIso(event,ditau.id1) and self.vlooseIso(event,ditau.id2):
             self.btagTool.fillEfficiencies(event,jetIds)
             self.btagTool_loose.fillEfficiencies(event,jetIds)

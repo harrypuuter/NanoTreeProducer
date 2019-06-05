@@ -11,7 +11,6 @@ from math import sqrt, atan2, cos, sin
 from JetCalibrationTool import JetReCalibrator
 from JetSmearingTool import JetSmearer
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
-from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.tools import matchObjectCollection, matchObjectCollectionMultiple
 pathJME = os.environ['CMSSW_BASE'] + "/src/PhysicsTools/NanoAODTools/data/jme/"
 pathJME_local = modulepath+"/jetMET/"
@@ -343,8 +342,8 @@ class JetMETCorrectionTool:
         
         # MATCH reconstructed jets to generator level ones
         # (needed to evaluate JER scale factors and uncertainties)
-        jets    = Collection(event, self.jetBranchName )
-        genJets = Collection(event, self.genJetBranchName )
+        jets    = Collection(event, self.jetBranchName)
+        genJets = Collection(event, self.genJetBranchName)
         rho     = getattr(event, self.rhoBranchName)
         pairs   = matchObjectCollection(jets, genJets)
         # APPLY JEC per jet
@@ -383,7 +382,7 @@ class JetMETCorrectionTool:
               smear_jer, smear_jerUp, smear_jerDown = self.jetSmearer.smearPt(jet,genJet,rho)
             else:
               smear_jer = self.jetSmearer.smearPt(jet,genJet,rho)[0]
-            jet_pt_nom = smear_jer*jet_pt
+            jet_pt_nom  = smear_jer*jet_pt
             if jet_pt_nom<0.0:
               jet_pt_nom *= -1.0
             jets_pt_nom.append(jet_pt_nom)

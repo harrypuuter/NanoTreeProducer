@@ -233,12 +233,12 @@ class EleMuProducer(CommonProducer):
         
         
         # JETS
-        jetIds, met, njets_var, met_vars = self.fillJetBranches(event,electron,muon)
+        jetIds, jetIds50, met, njets_var, met_vars = self.fillJetBranches(event,electron,muon)
         
         
         # WEIGHTS
         if not self.isData:
-          self.applyCommonCorrections(event,jetIds,met,njets_var,met_vars)
+          self.applyCommonCorrections(event,jetIds,jetIds50,met,njets_var,met_vars)
           if event.Electron_pfRelIso03_all[dilepton.id1]<0.50 and event.Muon_pfRelIso04_all[dilepton.id2]<0.50:
             self.btagTool.fillEfficiencies(event,jetIds)
             self.btagTool_loose.fillEfficiencies(event,jetIds)

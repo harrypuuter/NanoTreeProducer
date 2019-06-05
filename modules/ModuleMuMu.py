@@ -148,8 +148,8 @@ class MuMuProducer(CommonProducer):
         
         # VETOS
         self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event,[ ],[dilepton.id1,dilepton.id2],[ ],self.channel)
-        self.out.lepton_vetos_noTau[0] = extramuon or extraelec_veto or dilepton_veto
-        self.out.lepton_vetos[0]       = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
+        self.out.lepton_vetos_noTau[0]   = extramuon or extraelec_veto or dilepton_veto
+        self.out.lepton_vetos[0]         = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
         
         
         # EVENT
@@ -253,12 +253,12 @@ class MuMuProducer(CommonProducer):
         
         
         # JETS
-        jetIds, met, njets_var, met_vars = self.fillJetBranches(event,muon1,muon2)
+        jetIds, jetIds50, met, njets_var, met_vars = self.fillJetBranches(event,muon1,muon2)
         
         
         # WEIGHTS
         if not self.isData:
-          self.applyCommonCorrections(event,jetIds,met,njets_var,met_vars)
+          self.applyCommonCorrections(event,jetIds,jetIds50,met,njets_var,met_vars)
           if event.Muon_pfRelIso04_all[dilepton.id1]<0.50 and event.Muon_pfRelIso04_all[dilepton.id2]<0.50:
             self.btagTool.fillEfficiencies(event,jetIds)
             self.btagTool_loose.fillEfficiencies(event,jetIds)
