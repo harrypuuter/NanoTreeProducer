@@ -82,6 +82,7 @@ class JetMETCorrectionTool:
         isData           = kwargs.get('data',             False      )
         era              = kwargs.get('era',              ""         ) # for data; A, B, C, D, ...
         redoJEC          = kwargs.get('redoJEC',          True       )
+        doJER            = kwargs.get('smear',            not isData ) and not isData
         doSystematics    = kwargs.get('systematics',      True       ) and not isData
         noGroom          = kwargs.get('noGroom',          True       )
         jesUncertainties = kwargs.get('uncertainties',    ['Total'] if doSystematics else [ ] )
@@ -114,6 +115,8 @@ class JetMETCorrectionTool:
         self.jmsVals                 = [1.00, 0.99, 1.01] # TODO: change to real values
         self.unclEnThreshold         = 15. # energy threshold below which jets are considered as "unclustered energy"
                                            # cf. JetMETCorrections/Type1MET/python/correctionTermsPfMetType1Type2_cff.py
+        jetSmearer                   = None
+        jmr_vals                     = [ ]
         
         if isData:
           
@@ -132,8 +135,6 @@ class JetMETCorrectionTool:
               era           = "Run"+era
               globalTag     = "Autumn18_V8_DATA"
               globalTag_JES = "Autumn18_%s_V8_DATA"%era
-          
-          jetSmearer = None
           
         else:
           
@@ -156,8 +157,15 @@ class JetMETCorrectionTool:
             elif year==2018:
               globalTag_JER = "Autumn18_V1_MC"
           
+          # JERs: https://twiki.cern.ch/twiki/bin/view/CMS/JetWtagging
+          if year==2016 or year==2018: #update when 2018 values available
+            jmr_vals = [1.00, 1.20, 0.80] # nominal, up, down
+          else: 
+            jmr_vals = [1.09, 1.14, 1.04]
+          
           # READ JER uncertainties
-          jetSmearer = JetSmearer(globalTag_JER,jetType,systematics=doSystematics)
+          ###if doJER:
+          jetSmearer = JetSmearer(globalTag_JER,jetType,systematics=doSystematics,jmr_vals=jmr_vals)
         
         # READ JES
         path_JES = ensureJMEFiles(globalTag)
@@ -204,6 +212,7 @@ class JetMETCorrectionTool:
         self.isData           = isData
         self.era              = era
         self.redoJEC          = redoJEC
+        ###self.doJER            = doJER
         self.doSystematics    = doSystematics
         self.noGroom          = noGroom
         self.updateEvent      = updateEvent
@@ -211,6 +220,7 @@ class JetMETCorrectionTool:
         self.jesUncertainty   = jesUncertainty    # dictionairy
         self.path_JES         = path_JES
         self.filename_JES     = filename_JES
+        self.jmr_vals         = jmr_vals
         self.jetSmearer       = jetSmearer
         self.jetReCalibrator  = jetReCalibrator
         self.correctJetMET    = self.correctJetMET_Data if isData else self.correctJetMET_MC
@@ -256,6 +266,7 @@ class JetMETCorrectionTool:
               jet_pt_nom   = jet.pt
               jet_mass_nom = jet.mass
             jets_pt_nom.append(jet_pt_nom)
+            ###print "%10.4f %10.4f %10.5f %10.5f"%(jet_pt_raw,jet_pt_nom,jet.eta,jet.rawFactor)
             ###print "%10.4f %8.4f %8.4f %10.6f %10.6f"%(jet_pt_raw, jet_pt0, jet_pt_nom, jet.rawFactor, jet_pt_nom/jet_pt_raw-1.)
             
             #### UPDATE JET in event
@@ -386,7 +397,7 @@ class JetMETCorrectionTool:
             if jet_pt_nom<0.0:
               jet_pt_nom *= -1.0
             jets_pt_nom.append(jet_pt_nom)
-            ###print "%8.4f %8.4f %8.4f %8.4f %8.4f"%(jet_pt_raw, jet_pt0, jet_pt, jet_pt_nom, jet.rawFactor)
+            ###print "%8.4f %8.4f %8.4f %8.4f %8.4f %8.4f"%(jet_pt_raw, jet_pt0, jet_pt, jet_pt_nom, jet.rawFactor, smear_jer)
             
             #### SMEAR JMS and JMR scale factors
             ###jmsNomVal  = self.jmsVals[0]
@@ -471,7 +482,9 @@ class JetMETCorrectionTool:
             if self.corrMET and jet_pt_nom > self.unclEnThreshold:
                 jet_cosPhi       = cos(jet.phi)
                 jet_sinPhi       = sin(jet.phi)
+                ###print "%8.4f - met_px_nom = met_px_nom - (jet_pt_nom - jet_pt0)*jet_cosPhi = %8.4f - (%8.4f - %8.4f)*%8.4f = %8.4f"%(jet.phi,met_px_nom,jet_pt_nom,jet_pt0,jet_cosPhi,met_px_nom-(jet_pt_nom-jet_pt0)*jet_cosPhi)
                 met_px_nom       = met_px_nom     - (jet_pt_nom     - jet_pt0)*jet_cosPhi
+                ###print "%8.4f - met_py_nom = met_py_nom - (jet_pt_nom - jet_pt0)*jet_sinPhi = %8.4f - (%8.4f - %8.4f)*%8.4f = %8.4f"%(jet.phi,met_py_nom,jet_pt_nom,jet_pt0,jet_sinPhi,met_py_nom-(jet_pt_nom-jet_pt0)*jet_sinPhi)
                 met_py_nom       = met_py_nom     - (jet_pt_nom     - jet_pt0)*jet_sinPhi
                 if self.doSystematics:
                   met_px_jerUp   = met_px_jerUp   - (jet_pt_jerUp   - jet_pt0)*jet_cosPhi
@@ -501,7 +514,10 @@ class JetMETCorrectionTool:
         if self.corrMET:
             
             # PREPARE MET for return
+            ###print "met_px_nom = %8.4f"%(met_px_nom)
+            ###print "met_py_nom = %8.4f"%(met_py_nom)
             met_vars = { 'nom': TLorentzVector(met_px_nom,met_py_nom,0,sqrt(met_px_nom**2+met_py_nom**2)) }
+            #met_vars = { 'nom': TLorentzVector(met_px,met_py,0,sqrt(met_px**2+met_py**2)) }
             
             #### UPDATE MET in event
             ###if self.updateEvent:
