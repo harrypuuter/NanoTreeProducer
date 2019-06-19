@@ -217,9 +217,9 @@ class TauTauProducer(CommonProducer):
         
         
         # VETOS
-        extramuon, extraelec_veto, dilepton_veto = extraLeptonVetos(event,[ ],[ ],[ditau.id1,ditau.id2],self.channel)
+        extramuon_veto, extraelec_veto, dilepton_veto = extraLeptonVetos(event,[ ],[ ],[ditau.id1,ditau.id2],self.channel)
         self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event,[ ],[ ],[ ],self.name)
-        self.out.lepton_vetos_noTau[0] = extramuon or extraelec_veto
+        self.out.lepton_vetos_noTau[0] = extramuon_veto or extraelec_veto
         self.out.lepton_vetos[0]       = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] #or self.out.dilepton_veto[0]
         
         
@@ -232,6 +232,7 @@ class TauTauProducer(CommonProducer):
         self.out.eta_1[0]                      = event.Tau_eta[ditau.id1]
         self.out.phi_1[0]                      = event.Tau_phi[ditau.id1]
         self.out.m_1[0]                        = event.Tau_mass[ditau.id1]
+        self.out.y_1[0]                        = tau1.Rapidity()
         self.out.dxy_1[0]                      = event.Tau_dxy[ditau.id1]
         self.out.dz_1[0]                       = event.Tau_dz[ditau.id1]         
         self.out.leadTkPtOverTauPt_1[0]        = event.Tau_leadTkPtOverTauPt[ditau.id1]
@@ -263,6 +264,7 @@ class TauTauProducer(CommonProducer):
         self.out.eta_2[0]                      = event.Tau_eta[ditau.id2]
         self.out.phi_2[0]                      = event.Tau_phi[ditau.id2]
         self.out.m_2[0]                        = event.Tau_mass[ditau.id2]
+        self.out.y_2[0]                        = tau2.Rapidity()
         self.out.dxy_2[0]                      = event.Tau_dxy[ditau.id2]
         self.out.dz_2[0]                       = event.Tau_dz[ditau.id2]         
         self.out.leadTkPtOverTauPt_2[0]        = event.Tau_leadTkPtOverTauPt[ditau.id2]

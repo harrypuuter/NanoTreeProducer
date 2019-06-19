@@ -15,7 +15,7 @@ class TreeProducerCommon(object):
     """Class to create a custom output file & tree; as well as create and contain branches."""
     
     def __init__(self, name, dataType, **kwargs):
-        print 'TreeProducerCommon is called', name
+        print 'TreeProducerCommon is called for', name
         
         self.name       = name
         self._isData    = dataType=='data'
@@ -160,6 +160,7 @@ class TreeProducerCommon(object):
         self.addBranch('dR_ll',                   'f')
         self.addBranch('dphi_ll',                 'f')
         self.addBranch('deta_ll',                 'f')
+        self.addBranch('chi',                     'f')
         
         self.addBranch('pzetamiss',               'f')
         self.addBranch('pzetavis',                'f')

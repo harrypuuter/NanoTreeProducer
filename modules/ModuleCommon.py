@@ -1,6 +1,6 @@
 # Author: Izaak Neutelings (May 2019)
 import sys, re
-from math import sqrt, sin, cos, pi
+from math import sqrt, exp, sin, cos, pi
 from ROOT import TH1D, TH2D, TLorentzVector, TVector3
 from ModuleTools import *
 from corrections.PileupWeightTool import *
@@ -34,10 +34,10 @@ class CommonProducer(Module):
         self.jtf              = kwargs.get('jtf',        1.0  )
         self.doTTpt           = kwargs.get('doTTpt',     'TT' in name       )
         self.doZpt            = kwargs.get('doZpt',      'DY' in name       )
-        self.doRecoil         = kwargs.get('doRecoil',   ('DY' in name or re.search(r"W\d?Jets",name)) and self.year>2016)
+        self.doRecoil         = kwargs.get('doRecoil',   ('DY' in name or re.search(r"W\d?Jets",name)) and self.year!=2016) 
         self.doTight          = kwargs.get('doTight',    self.tes!=1 or self.ltf!=1 or self.jtf!=1)
-        self.doJEC            = kwargs.get('doJEC',      not self.doTight   ) #and False
-        self.doJECSys         = kwargs.get('doJECSys',   self.doJEC         ) and not self.isData and self.doJEC #and False
+        self.doJEC            = kwargs.get('doJEC',      True               ) and False
+        self.doJECSys         = kwargs.get('doJECSys',   self.doJEC         ) and not self.doTight and not self.isData and self.doJEC #and False
         self.isVectorLQ       = kwargs.get('isVectorLQ', 'VectorLQ' in name )
         self.jetCutPt         = 30
         self.bjetCutEta       = 2.7
@@ -45,6 +45,7 @@ class CommonProducer(Module):
         # YEAR-DEPENDENT IDs
         self.vlooseIso        = getVLooseTauIso(self.year)
         self.met, metbranch   = getMET(self.year)
+        self.metbranch        = metbranch
         self.filter           = getMETFilters(self.year,self.isData)
         
         # CORRECTIONS
@@ -59,12 +60,12 @@ class CommonProducer(Module):
           if self.doRecoil:
             self.recoilTool   = RecoilCorrectionTool(year=self.year)
           if self.doJEC:
-            self.jmeTool      = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=self.doJECSys,updateEvent=True)
+            self.jmeTool      = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=self.doJECSys,updateEvent=False,data=False)
             if self.doJECSys:
               self.jeclabels    = [ u+v for u in ['jer','jes'] for v in ['Down','Up']]
               self.jecMETlabels = [ u+v for u in ['jer','jes','unclEn'] for v in ['Down','Up']]
         elif self.year in [2016,2017,2018]:
-          self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=self.doJECSys,updateEvent=True,data=True,era=self.era)
+          self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=False,updateEvent=False,data=True,era=self.era)
         else:
           self.doJEC = False
         self.deepcsv_wp       = BTagWPs('DeepCSV',year=self.year)
@@ -74,7 +75,7 @@ class CommonProducer(Module):
         print '-'*80
         print ">>> %-12s = '%s'"%('outputfile',self.name)
         print ">>> %-12s = '%s'"%('channel',   self.channel)
-        print ">>> %-12s = %s"  %(  'isData',  self.isData)
+        print ">>> %-12s = %s"  %('isData',    self.isData)
         print ">>> %-12s = %s"  %('year',      self.year)
         print ">>> %-12s = '%s'"%('era',       self.era)
         print ">>> %-12s = %s"  %('tes',       self.tes)
@@ -194,7 +195,7 @@ class CommonProducer(Module):
             else:
               ncjets += 1
             
-            if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.loose and abs(event.Jet_eta)<self.bjetCutEta:
+            if event.Jet_btagDeepB[ijet] > self.deepcsv_wp.loose and abs(event.Jet_eta[ijet])<self.bjetCutEta:
               nbtag_loose += 1
               if jetpt_nom[ijet]>50:
                 nbtag50_loose += 1
@@ -358,6 +359,7 @@ class CommonProducer(Module):
         self.out.dR_ll[0]     = tau1.DeltaR(tau2)
         self.out.dphi_ll[0]   = deltaPhi(self.out.phi_1[0], self.out.phi_2[0])
         self.out.deta_ll[0]   = abs(self.out.eta_1[0] - self.out.eta_2[0])
+        self.out.chi[0]       = exp(abs(tau1.Rapidity() - tau2.Rapidity()))
         
 
 

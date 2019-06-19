@@ -163,6 +163,7 @@ class EleMuProducer(CommonProducer):
         self.out.eta_1[0]                 = event.Electron_eta[dilepton.id1]
         self.out.phi_1[0]                 = event.Electron_phi[dilepton.id1]
         self.out.m_1[0]                   = event.Electron_mass[dilepton.id1]
+        self.out.y_1[0]                   = electron.Rapidity()
         self.out.dxy_1[0]                 = event.Electron_dxy[dilepton.id1]
         self.out.dz_1[0]                  = event.Electron_dz[dilepton.id1]
         self.out.q_1[0]                   = event.Electron_charge[dilepton.id1]
@@ -179,6 +180,7 @@ class EleMuProducer(CommonProducer):
         self.out.eta_2[0]                 = event.Muon_eta[dilepton.id2]
         self.out.phi_2[0]                 = event.Muon_phi[dilepton.id2]
         self.out.m_2[0]                   = event.Muon_mass[dilepton.id2]
+        self.out.y_2[0]                   = muon.Rapidity()
         self.out.dxy_2[0]                 = event.Muon_dxy[dilepton.id2]
         self.out.dz_2[0]                  = event.Muon_dz[dilepton.id2]         
         self.out.q_2[0]                   = event.Muon_charge[dilepton.id2]

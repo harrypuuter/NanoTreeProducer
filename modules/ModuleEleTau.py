@@ -163,9 +163,9 @@ class EleTauProducer(CommonProducer):
         
         
         # VETOS
-        extramuon, extraelec_veto, dilepton_veto = extraLeptonVetos(event,[ltau.id1],[ ],[ltau.id2],self.channel)
+        extramuon_veto, extraelec_veto, dilepton_veto = extraLeptonVetos(event,[ltau.id1],[ ],[ltau.id2],self.channel)
         self.out.extramuon_veto[0], self.out.extraelec_veto[0], self.out.dilepton_veto[0] = extraLeptonVetos(event,[ltau.id1],[ ],[ ],self.channel)
-        self.out.lepton_vetos_noTau[0] = extramuon or extraelec_veto or dilepton_veto
+        self.out.lepton_vetos_noTau[0] = extramuon_veto or extraelec_veto or dilepton_veto
         self.out.lepton_vetos[0]       = self.out.extramuon_veto[0] or self.out.extraelec_veto[0] or self.out.dilepton_veto[0]
         ###if self.doTight and (self.out.lepton_vetos[0] or event.Electron_pfRelIso03_all[ltau.id1]>0.10 or\
         ###                     ord(event.Tau_idAntiMu[ltau.id2]<1 or ord(event.Tau_idAntiEle[ltau.id2]<8):
@@ -181,6 +181,7 @@ class EleTauProducer(CommonProducer):
         self.out.eta_1[0]                      = event.Electron_eta[ltau.id1]
         self.out.phi_1[0]                      = event.Electron_phi[ltau.id1]
         self.out.m_1[0]                        = event.Electron_mass[ltau.id1]
+        self.out.y_1[0]                        = electron.Rapidity()
         self.out.dxy_1[0]                      = event.Electron_dxy[ltau.id1]
         self.out.dz_1[0]                       = event.Electron_dz[ltau.id1]         
         self.out.q_1[0]                        = event.Electron_charge[ltau.id1]
@@ -197,6 +198,7 @@ class EleTauProducer(CommonProducer):
         self.out.eta_2[0]                      = event.Tau_eta[ltau.id2]
         self.out.phi_2[0]                      = event.Tau_phi[ltau.id2]
         self.out.m_2[0]                        = event.Tau_mass[ltau.id2]
+        self.out.y_2[0]                        = tau.Rapidity()
         self.out.dxy_2[0]                      = event.Tau_dxy[ltau.id2]
         self.out.dz_2[0]                       = event.Tau_dz[ltau.id2]         
         self.out.leadTkPtOverTauPt_2[0]        = event.Tau_leadTkPtOverTauPt[ltau.id2]
