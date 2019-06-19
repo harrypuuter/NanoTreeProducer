@@ -7,15 +7,16 @@
 #   https://gitlab.cern.ch/Zurich_ttH/tthbb13/blob/FHv2/MEAnalysis/python/nano_postproc.py#L34
 #   https://gitlab.cern.ch/Zurich_ttH/tthbb13/blob/FHv2/MEAnalysis/python/nano_config.py
 import os, sys
+from postprocessors import modulepath
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
 #from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puAutoWeight
 #from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties import jetmetUncertainties2017All
 from modules.ModuleSimpleJME import SimpleJMEProducer
 
 year     = 2017
-dataType = 'data'
+dataType = 'mc'
 maxEvts  = int(1e1)
-postfix  = 'jme.root'
+postfix  = 'jme_%s.root'%(year)
 if dataType=='data':
   if year==2016:
     infiles = [
@@ -43,6 +44,7 @@ else:
     ]
   elif year==2017:
     infiles = [
+      #'946BE003-BA74-554C-81C4-98F9B4D41772.root'
       'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/90000/946BE003-BA74-554C-81C4-98F9B4D41772.root',  #   83977
       ###'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/280000/1C5D9C07-B3BA-254E-832D-89AD21C9F258.root', #  109916
     ]
@@ -55,10 +57,10 @@ else:
 print ">>> %-10s = %s"%('year',year)
 print ">>> %-10s = '%s'"%('dataType',dataType)
 print ">>> %-10s = %s"%('maxEvts',maxEvts)
-print ">>> %-10s = %s"%('postfix',postfix)
+print ">>> %-10s = '%s'"%('postfix',postfix)
 print ">>> %-10s = %s"%('infiles',infiles)
 
 module2run = lambda: SimpleJMEProducer(postfix,year=year,dataType=dataType)
-p = PostProcessor("..", infiles, None, noOut=True, modules=[module2run()], provenance=False,
+p = PostProcessor(".", infiles, None, noOut=True, modules=[module2run()], provenance=False,
                   postfix=postfix, maxEntries=maxEvts)
 p.run()
