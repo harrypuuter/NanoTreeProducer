@@ -50,19 +50,24 @@ def getJetCalibrationData(year,era=""):
         'C': jetRecalib.jetRecalib2018C,
         'D': jetRecalib.jetRecalib2018D,
       }
-    for eras in calibrators:
-      if era in eras:
-        return calibrators[eras]()
+    for eraset in calibrators:
+      if era in eraset:
+        return calibrators[eraset]()
     raise "Could not find an appropiate calibrator for year %s and era %s..."%(year,era)
     
 
 def getJetCalibrationMC(year):
     """Get JME calibrator for MC of a given year."""
     if year==2016:
-      jetmetUncertainties2016 = lambda: jetmetUncertaintiesProducer('2016',"Summer16_07Aug2017_V11_MC",['Total'])
+      jetmetUncertainties2016 = lambda: jetmetUncertaintiesProducer('2016',"Summer16_07Aug2017_V11_MC",['Total'],redoJEC=True)
       return jetmetUncertainties2016
+      #return jetmetUncertainties.jetmetUncertainties2016
     elif year==2017:
-      return jetmetUncertainties.jetmetUncertainties2017
+      jetmetUncertainties2017 = lambda: jetmetUncertaintiesProducer("2017", "Fall17_17Nov2017_V32_MC",['Total'],redoJEC=True)
+      return jetmetUncertainties2017
+      #return jetmetUncertainties.jetmetUncertainties2017
     else:
-      return jetmetUncertainties.jetmetUncertainties2018
+      jetmetUncertainties2018 = lambda: jetmetUncertaintiesProducer("2018", "Autumn18_V8_MC",['Total'],redoJEC=True)
+      return jetmetUncertainties2018
+      #return jetmetUncertainties.jetmetUncertainties2018
     

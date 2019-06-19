@@ -14,6 +14,7 @@ parser = ArgumentParser()
 parser.add_argument('-i', '--infiles', dest='infiles',   action='store', type=str, default=infiles)
 parser.add_argument('-o', '--outdir',  dest='outdir',    action='store', type=str, default="output")
 parser.add_argument('-N', '--outfile', dest='outfile',   action='store', type=str, default="noname")
+parser.add_argument('-l', '--tag',     dest='tag',       action='store', type=str, default="")
 parser.add_argument('-n', '--nchunck', dest='nchunck',   action='store', type=int, default='test')
 parser.add_argument('-c', '--channel', dest='channel',   action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
 parser.add_argument('-t', '--type',    dest='type',      action='store', choices=['data','mc'], default=None)
@@ -57,6 +58,8 @@ if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in in
 
 json = None
 if dataType=='data':
+  if era=="" and infiles:
+    kwargs['era'] = getEra(infiles[0],year)
   jsonpath = '/work/ineuteli/analysis/LQ_legacy/NanoTreeProducer/json/'
   if year==2016:
     json = jsonpath+'Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
@@ -69,10 +72,7 @@ if dataType=='data':
     json = jsonpath+'Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
 
-if dataType=='data' and era=="" and infiles:
-  kwargs['era'] = getEra(infiles[0],year)
-
-tag = ""
+tag = args.tag
 if args.tes!=1: tag +="_TES%.3f"%(args.tes)
 if args.ltf!=1: tag +="_LTF%.3f"%(args.ltf)
 if args.jtf!=1: tag +="_JTF%.3f"%(args.jtf)

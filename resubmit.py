@@ -24,6 +24,8 @@ parser.add_argument('-x', '--veto',     dest='vetoes', type=str, nargs='+', defa
                                         help="exclude/veto this sample" )
 parser.add_argument('-t', '--type',     dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                         help="filter data or MC to submit" )
+parser.add_argument('-l', '--tag',      dest='tag', type=str, default="", action='store',
+                                        help="extra tag for output files" )
 parser.add_argument('-T', '--tes',      dest='tes', type=float, default=1.0, action='store',
                                         help="tau energy scale" )
 parser.add_argument('-L', '--ltf',      dest='ltf', type=float, default=1.0, action='store',
@@ -57,8 +59,9 @@ def main():
     jtf          = args.jtf
     Zmass        = args.Zmass
     batchSystem  = 'submit_SGE.sh'
-    tag          = ""
+    tag          = args.tag
     
+    if tag and tag[0]!='_': tag = '_'+tag
     if tes!=1.: tag += "_TES%.3f"%(tes)
     if ltf!=1.: tag += "_LTF%.3f"%(ltf)
     if jtf!=1.: tag += "_JTF%.3f"%(jtf)

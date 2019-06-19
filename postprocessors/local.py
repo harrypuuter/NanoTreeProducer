@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
 # Description: This postprocessor is used for local runs, to test the framework
+print
 from postprocessors import modulepath, ensureDirectory
 from postprocessors.config_jme import getEra
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
@@ -333,6 +334,7 @@ print ">>> %-10s = %s"  %('year',kwargs['year'])
 print ">>> %-10s = '%s'"%('era',kwargs['era'])
 print ">>> %-10s = '%s'"%('dataType',dataType)
 print ">>> %-10s = %s"  %('maxEvts',maxEvts)
+print ">>> %-10s = %s"  %('infiles',infiles)
 print '-'*80
 
 if channel=='tautau':
@@ -356,3 +358,4 @@ else:
 
 p = PostProcessor(".", infiles, None, noOut=True, modules=[module2run()], postfix=postfix, maxEntries=maxEvts)
 p.run()
+print

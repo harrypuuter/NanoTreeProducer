@@ -22,6 +22,8 @@ if __name__ == "__main__":
                                            help="exclude/veto this sample" )
   parser.add_argument('-t', '--type',      dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                            help="filter data or MC to submit" )
+  parser.add_argument('-l', '--tag',       dest='tag', type=str, default="", action='store',
+                                           help="extra tag for output files" )
   parser.add_argument('-T', '--tes',       dest='tes', type=float, default=1.0, action='store',
                                            help="tau energy scale" )
   parser.add_argument('-L', '--ltf',       dest='ltf', type=float, default=1.0, action='store',
@@ -62,7 +64,7 @@ class bcolors:
 # Diboson (WW, WZ, ZZ) have very large files and acceptance,
 # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
 nFilesPerJob_defaults = [
-  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_', "TTTo2L2Nu", "TTToSemiLep*RunIIFall17", 'Single','Tau', 'EGamma']),
+  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_',"TTTo2L2Nu","TTToSemiLep*RunIIFall17",'Single','Tau','EGamma','VBF']),
   ( 2, ['*VectorLQ_']),
   (40, ['LQ3','*_LQ_']),
 ]
@@ -248,8 +250,9 @@ def main():
     jtf         = args.jtf
     Zmass       = args.Zmass
     batchscript = 'submit_SGE.sh'
-    tag         = ""
+    tag         = args.tag
     
+    if tag and tag[0]!='_': tag = '_'+tag
     if tes!=1.: tag += "_TES%.3f"%(tes)
     if ltf!=1.: tag += "_LTF%.3f"%(ltf)
     if jtf!=1.: tag += "_JTF%.3f"%(jtf)
