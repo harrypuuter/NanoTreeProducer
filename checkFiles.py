@@ -125,8 +125,8 @@ sample_dict = [
    ('EGamma',         "EGamma_$RUN",                      "EGamma/$RUN"                                              ),
    ('LQ',             "SLQ_pair_M$MASS",                  "LegacyRun2_*_LQ_Pair_5f_Madgraph_LO_M$MASS"               ),
    ('LQ',             "SLQ_single_M$MASS",                "LegacyRun2_*_LQ_Single_5f_Madgraph_LO_M$MASS"             ),
-   ('LQ',             "SLQ_t-channel_M$MASS",             "LegacyRun2_*_LQ_NonRes_5f_Madgraph_LO_M$MASS"             ),
-   ('LQ',             "VLQ_t-channel_M$MASS",             "LegacyRun2_*_LQ_VecNonRes_5f_Madgraph_LO_M$MASS"          ),
+   ('LQ',             "SLQ_nonres_M$MASS",                "LegacyRun2_*_LQ_NonRes_5f_Madgraph_LO_M$MASS"             ),
+   ('LQ',             "VLQ_nonres_M$MASS",                "LegacyRun2_*_LQ_VecNonRes_5f_Madgraph_LO_M$MASS"          ),
    ('LQ',             "VLQ_pair_M$MASS",                  "PairVectorLQ_InclusiveDecay_M-$MASS"                      ),
    ('LQ',             "VLQ_single_M$MASS",                "SingleVectorLQ_InclusiveDecay_M-$MASS"                    ),
    ('LQ',             "LQ3ToTauB_t-channel_M$MASS",       "LQ3ToTauB_Fall2017_5f_Madgraph_LO_t-channel-M$MASS"       ),
@@ -134,6 +134,7 @@ sample_dict = [
    ('LQ',             "LQ3ToTauB_pair_M$MASS",            "LQ3ToTauB_Fall2017_5f_Madgraph_LO_pair-M$MASS"            ),
    ('LQ',             "VectorLQ3ToTauB_s-channel_M$MASS", "VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_s_channel_M$MASS" ),
    ('LQ',             "VectorLQ3ToTauB_pair_M$MASS",      "VectorLQ3ToTauB_Fall2017_5f_Madgraph_LO_pair_M$MASS"      ),
+   ('VBF',            "VBFHToTauTau_M$MASS",              "VBFHToTauTau_M$MASS"                                      ),
 ]
 sample_dict = [(d,s,p.replace('*','.*').replace('$MASS','(\d+)').replace('$RUN','(Run201\d[A-H])')) for d,s,p in sample_dict] # convert to regex pattern
 #sample_dict = { k: v.lstrip('/').replace('/','__') for k, v in sample_dict.iteritems() }
