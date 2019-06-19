@@ -32,7 +32,7 @@ class JetReCalibrator:
         
         # BASE CORRECTIONS
         path           = os.path.expandvars(path) #"%s/src/CMGTools/RootTools/data/jec"%os.environ['CMSSW_BASE'];
-        print("Loading JES corrections from file '%s'..."%path)
+        print("Loading JES corrections from '%s' with globalTag '%s'..."%(path,globalTag))
         filenameL1     = ensureFile("%s/%s_L1FastJet_%s.txt"%( path,globalTag,jetFlavour))
         filenameL2     = ensureFile("%s/%s_L2Relative_%s.txt"%(path,globalTag,jetFlavour))
         filenameL3     = ensureFile("%s/%s_L3Absolute_%s.txt"%(path,globalTag,jetFlavour))
@@ -63,19 +63,19 @@ class JetReCalibrator:
         if correctSeparate or correctType1MET:
             self.vParL1 = vector(JetCorrectorParameters)()
             self.vParL1.push_back(self.L1JetPar)
-            self.separateJetCorrectors["L1"] = FactorizedJetCorrector(self.vParL1)
+            self.separateJetCorrectors['L1'] = FactorizedJetCorrector(self.vParL1)
             if upToLevel >= 2 and correctSeparate:
                 self.vParL2 = vector(JetCorrectorParameters)()
                 for i in [self.L1JetPar,self.L2JetPar]: self.vParL2.push_back(i)
-                self.separateJetCorrectors["L1L2"] = FactorizedJetCorrector(self.vParL2)
+                self.separateJetCorrectors['L1L2'] = FactorizedJetCorrector(self.vParL2)
             if upToLevel >= 3 and correctSeparate:
                 self.vParL3 = vector(JetCorrectorParameters)()
                 for i in [self.L1JetPar,self.L2JetPar,self.L3JetPar]: self.vParL3.push_back(i)
-                self.separateJetCorrectors["L1L2L3"] = FactorizedJetCorrector(self.vParL3)
+                self.separateJetCorrectors['L1L2L3'] = FactorizedJetCorrector(self.vParL3)
             if doResidualJECs and correctSeparate:
                 self.vParL3Res = vector(JetCorrectorParameters)()
                 for i in [self.L1JetPar,self.L2JetPar,self.L3JetPar,self.ResJetPar]: self.vParL3Res.push_back(i)
-                self.separateJetCorrectors["L1L2L3Res"] = FactorizedJetCorrector(self.vParL3Res)
+                self.separateJetCorrectors['L1L2L3Res'] = FactorizedJetCorrector(self.vParL3Res)
         
         self.globalTag        = globalTag
         self.jetFlavour       = jetFlavour
@@ -105,16 +105,17 @@ class JetReCalibrator:
         if delta != 0:
           if not self.JetUncertainty:
             raise RuntimeError("Jet energy scale uncertainty shifts requested, but not available")
-          self.JetUncertainty.setJetEta(jet.eta())
-          self.JetUncertainty.setJetPt(corr * jet.pt() * jet.rawFactor())
+          self.JetUncertainty.setJetEta(jet.eta)
+          self.JetUncertainty.setJetPt(corr * jet.pt * (1.-jet.rawFactor))
           try:
               jet.jetEnergyCorrUncertainty = self.JetUncertainty.getUncertainty(True) 
           except RuntimeError as r:
-              print "Caught %s when getting uncertainty for jet of pt %.1f, eta %.2f\n"%(r,corr * jet.pt() * jet.rawFactor(),jet.eta())
+              print "Caught %s when getting uncertainty for jet of pt %.1f, eta %.2f\n"%(r,corr * jet.pt * (1.-jet.rawFactor),jet.eta)
               jet.jetEnergyCorrUncertainty = 0.5
           #print "   jet with corr pt %6.2f has an uncertainty %.2f "%(jet.pt()*jet.rawFactor()*corr, jet.jetEnergyCorrUncertainty)
           corr *= max(0, 1+delta*jet.jetEnergyCorrUncertainty)
         
+        #print "%10.4f %10.4f %10.5f %10.5f"%(jet.pt,jet.eta,jet.rawFactor,corr)
         return corr
         
     
@@ -131,6 +132,7 @@ class JetReCalibrator:
         """
         raw = 1.-jet.rawFactor
         corr = self.getCorrection(jet,rho,delta)
+        ###print "%8.4f %8.4f %8.4f"%(jet.pt,raw,corr)
         if corr <= 0:
             return jet.pt
         newpt   = raw*corr*jet.pt
