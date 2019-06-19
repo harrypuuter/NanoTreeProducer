@@ -76,7 +76,7 @@ def getMETFilters(year,isData):
   if year==2018:
     if isData:
       return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_ecalBadCalibFilterV2 and Flag_eeBadScFilter # and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_ecalBadCalibFilterV2 and e.Flag_eeBadScFilter # and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter
     else:
       return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
                        e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_ecalBadCalibFilterV2 
