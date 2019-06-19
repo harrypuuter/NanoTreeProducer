@@ -41,7 +41,7 @@ if [ ! -d $SERESULTDIR ]; then
   peval "gfal-mkdir -p $GFAL/$SERESULTDIR" # always before cmsenv!
   TRY=0
   printf ">>> checking success..."
-  while [ ! -e $SERESULTDIR -a $TRY -lt 15 ]; do
+  while [ ! -d $SERESULTDIR -a $TRY -lt 15 ]; do
     printf "."; sleep 4; TRY=$((TRY+1))
   done
 fi
