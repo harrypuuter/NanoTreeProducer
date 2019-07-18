@@ -1,6 +1,6 @@
 #! /bin/bash
 
-YEARS="2016 #2017 2018"
+YEARS="2016 2017 2018"
 CHANNELS='mutau'
 SAMPLES="DY"
 OPTIONS=""
@@ -24,11 +24,11 @@ while getopts "aBCc:dcfJLmRrs:Tvx:y:" option; do case "${option}" in
   m) OPTIONS+=" -m";;
   R) RESUBMIT=1;;
   r) OPTIONS+=" -r"; REMOVE=1;;
-  s) SAMPLES="${OPTARG}";;
+  s) SAMPLES="${OPTARG//,/ }";;
   T) VARFLAG="--tes"; VARIATIONS="0.970 1.030"; SAMPLES="DY TT";;
   v) OPTIONS+=" -v";;
-  x) OPTIONS+=" -x ${OPTARG}";;
-  y) YEARS=${OPTARG//,/ };;
+  x) OPTIONS+=" -x ${OPTARG//,/ }";;
+  y) YEARS="${OPTARG//,/ }";;
 esac done
 OPTIONS="-s ${SAMPLES}${OPTIONS}"
 function peval { echo ">>> $@"; eval "$@"; }
