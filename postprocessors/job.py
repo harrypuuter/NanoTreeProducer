@@ -11,26 +11,28 @@ from postprocessors import ensureDirectory
 infiles = "root://cms-xrd-global.cern.ch//store/user/arizzi/Nano01Fall17/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAOD-94X-Nano01Fall17/180205_160029/0000/test94X_NANO_70.root"
 
 parser = ArgumentParser()
-parser.add_argument('-i', '--infiles', dest='infiles',   action='store', type=str, default=infiles)
-parser.add_argument('-o', '--outdir',  dest='outdir',    action='store', type=str, default="output")
-parser.add_argument('-N', '--outfile', dest='outfile',   action='store', type=str, default="noname")
-parser.add_argument('-l', '--tag',     dest='tag',       action='store', type=str, default="")
-parser.add_argument('-n', '--nchunck', dest='nchunck',   action='store', type=int, default='test')
-parser.add_argument('-c', '--channel', dest='channel',   action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
-parser.add_argument('-t', '--type',    dest='type',      action='store', choices=['data','mc'], default=None)
-parser.add_argument('-y', '--year',    dest='year',      action='store', choices=[2016,2017,2018], type=int, default=2017)
-parser.add_argument('-e', '--era',     dest='era',       action='store', type=str, default="")
-parser.add_argument('-T', '--tes',     dest='tes',       action='store', type=float, default=1.0)
-parser.add_argument('-L', '--ltf',     dest='ltf',       action='store', type=float, default=1.0)
-parser.add_argument('-J', '--jtf',     dest='jtf',       action='store', type=float, default=1.0)
-parser.add_argument('-M', '--Zmass',   dest='Zmass',     action='store_true',  default=False)
-parser.add_argument(      '--no-jec',  dest='doJEC',     action='store_false', default=True)
-parser.add_argument(      '--jec-sys', dest='doJECSys',  action='store_true',  default=None)
+parser.add_argument('-i', '--infiles',  dest='infiles',   action='store', type=str, default=infiles)
+parser.add_argument('-o', '--outdir',   dest='outdir',    action='store', type=str, default="output")
+parser.add_argument('-N', '--outfile',  dest='outfile',   action='store', type=str, default="noname")
+parser.add_argument('-l', '--tag',      dest='tag',       action='store', type=str, default="")
+parser.add_argument('-n', '--nchunck',  dest='nchunck',   action='store', type=int, default='test')
+parser.add_argument('-p', '--prefetch', dest='prefetch',  action='store_true', default=False)
+parser.add_argument('-c', '--channel',  dest='channel',   action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
+parser.add_argument('-t', '--type',     dest='type',      action='store', choices=['data','mc'], default=None)
+parser.add_argument('-y', '--year',     dest='year',      action='store', choices=[2016,2017,2018], type=int, default=2017)
+parser.add_argument('-e', '--era',      dest='era',       action='store', type=str, default="")
+parser.add_argument('-T', '--tes',      dest='tes',       action='store', type=float, default=1.0)
+parser.add_argument('-L', '--ltf',      dest='ltf',       action='store', type=float, default=1.0)
+parser.add_argument('-J', '--jtf',      dest='jtf',       action='store', type=float, default=1.0)
+parser.add_argument('-M', '--Zmass',    dest='Zmass',     action='store_true',  default=False)
+parser.add_argument(      '--no-jec',   dest='doJEC',     action='store_false', default=True)
+parser.add_argument(      '--jec-sys',  dest='doJECSys',  action='store_true',  default=None)
 args = parser.parse_args()
 
 outdir        = ensureDirectory(args.outdir)
 outfile       = args.outfile
 nchunck       = args.nchunck
+prefetch      = args.prefetch #and False # copy file to a local temporary directory
 channel       = args.channel
 year          = args.year
 era           = args.era
@@ -73,10 +75,10 @@ if dataType=='data':
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
 
 tag = args.tag
-if args.tes!=1: tag +="_TES%.3f"%(args.tes)
-if args.ltf!=1: tag +="_LTF%.3f"%(args.ltf)
-if args.jtf!=1: tag +="_JTF%.3f"%(args.jtf)
-if args.Zmass:  tag +="_Zmass"
+#if args.tes!=1: tag +="_TES%.3f"%(args.tes)
+#if args.ltf!=1: tag +="_LTF%.3f"%(args.ltf)
+#if args.jtf!=1: tag +="_JTF%.3f"%(args.jtf)
+#if args.Zmass:  tag +="_Zmass"
 outfile = "%s_%s_%s%s.root"%(outfile,nchunck,channel,tag.replace('.','p'))
 postfix = "%s/%s"%(outdir,outfile)
 
@@ -117,7 +119,7 @@ else:
 
 print "job.py: creating PostProcessor..."
 sys.stdout.flush()
-p = PostProcessor(outdir, infiles, None, noOut=True, modules=[module2run()], jsonInput=json, postfix=postfix)
+p = PostProcessor(outdir, infiles, None, noOut=True, modules=[module2run()], jsonInput=json, postfix=postfix, prefetch=prefetch)
 print "job.py: running PostProcessor..."
 p.run()
 print "job.py: Postprocessor is done"

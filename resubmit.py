@@ -5,8 +5,8 @@ from commands import getoutput
 from argparse import ArgumentParser
 import submit, checkFiles
 from checkFiles import getSampleShortName, matchSampleToPattern, header
-from submit import args, bcolors, nFilesPerJob_defaults, createJobs, getBlackList, getFileListLocal,\
-                   saveFileListLocal, getFileList, isSkimmed, submitJobs, chunkify
+from submit import args, bcolors, nFilesPerJob_default, nFilesPerJob_defaults, createJobs, getBlackList,\
+                   getFileListLocal, saveFileListLocal, getFileList, isSkimmed, submitJobs, chunkify
 import itertools
 import subprocess
 from ROOT import TFile, Double
@@ -44,6 +44,8 @@ parser.add_argument('-q', '--queue',    dest='queue', choices=['all.q','short.q'
                                         help="select queue for submission" )
 parser.add_argument('-m', '--mock',     dest='mock', action='store_true', default=False,
                                         help="mock-submit jobs for debugging purposes" )
+parser.add_argument('-p', '--prefetch', dest='prefetch', action='store_true', default=False,
+                                        help="copy nanoAOD files to a temporary directory before run on it" )
 parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
                                         help="set verbose" )
 args = parser.parse_args()
@@ -58,6 +60,7 @@ def main():
     ltf          = args.ltf
     jtf          = args.jtf
     Zmass        = args.Zmass
+    prefetch     = args.prefetch
     batchSystem  = 'submit_SGE.sh'
     tag          = args.tag
     
@@ -131,7 +134,7 @@ def main():
                   nFilesPerJob = default
                   break
               else:
-                nFilesPerJob = 4
+                nFilesPerJob = nFilesPerJob_default
             if args.verbose:
               print "nFilesPerJob = %s"%nFilesPerJob
             infilelists = chunkify(infiles,nFilesPerJob)
@@ -162,7 +165,7 @@ def main():
                     if filename in infiles:
                       print ">>> removing blacklisted %s"%filename
                       infiles.remove(filename)
-                  createJobs(jobslog,infiles,outdir,sample,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
+                  createJobs(jobslog,infiles,outdir,sample,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass,tag=tag,prefetch=prefetch)
                   badchunks.append(chunk)
               
               # BAD CHUNKS
@@ -177,7 +180,7 @@ def main():
                 print bcolors.BOLD + bcolors.WARNING + "[WN] %s missing %d/%d files !\n     Resubmitting %s..."%(directory,len(misschunks),len(outfilelist),chunktext) + bcolors.ENDC
                 for chunk in misschunks:
                   infiles = infilelists[chunk]
-                  createJobs(jobslog,infiles,outdir,sample,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
+                  createJobs(jobslog,infiles,outdir,sample,chunk,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass,tag=tag,prefetch=prefetch)
             
             # RESUBMIT
             nChunks = len(badchunks)+len(misschunks)

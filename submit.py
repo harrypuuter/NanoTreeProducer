@@ -42,6 +42,8 @@ if __name__ == "__main__":
                                            help="select queue for submission" )
   parser.add_argument('-m', '--mock',      dest='mock', action='store_true', default=False,
                                            help="mock-submit jobs for debugging purposes" )
+  parser.add_argument('-p', '--prefetch',  dest='prefetch', action='store_true', default=False,
+                                           help="copy nanoAOD files to a temporary directory before run on it" )
   parser.add_argument(      '--test',      dest='testrun', action='store_true', default=False,
                                            help="submit only one job per sample as a test run" )
   parser.add_argument('-v', '--verbose',   dest='verbose', default=False, action='store_true',
@@ -63,9 +65,10 @@ class bcolors:
 
 # Diboson (WW, WZ, ZZ) have very large files and acceptance,
 # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
+nFilesPerJob_default  = 8 #4
 nFilesPerJob_defaults = [
-  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_',"TTTo2L2Nu","TTToSemiLep*RunIIFall17",'Single','Tau','EGamma','VBF']),
-  ( 2, ['*VectorLQ_']),
+  #( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_',"TTTo2L2Nu","TTToSemiLep*RunIIFall17",'Single','Tau','EGamma','VBF']),
+  #( 2, ['*VectorLQ_']),
   (40, ['LQ3','*_LQ_']),
 ]
 
@@ -168,8 +171,8 @@ def getFileListDAS(dataset,blacklist=[ ]):
     filelist = [ ]
     for line in tmpList:
       if '.root' in line and line not in blacklist:
-        #files.append("root://cms-xrd-global.cern.ch/"+line)   
-        filelist.append("root://xrootd-cms.infn.it/"+line)
+        #files.append("root://cms-xrd-global.cern.ch/"+line) # global
+        filelist.append("root://xrootd-cms.infn.it/"+line) # Eurasia
     filelist.sort()
     return filelist 
     
@@ -205,10 +208,12 @@ def isSkimmed(sample,year):
 
 def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs):
     """Create file with commands to execute per job."""
-    tes     = kwargs.get('tes',   1.)
-    ltf     = kwargs.get('ltf',   1.)
-    jtf     = kwargs.get('jtf',   1.)
-    Zmass   = kwargs.get('Zmass', False)
+    tag      = kwargs.get('tag',      "") # TODO: add
+    tes      = kwargs.get('tes',      1.)
+    ltf      = kwargs.get('ltf',      1.)
+    jtf      = kwargs.get('jtf',      1.)
+    Zmass    = kwargs.get('Zmass',    False)
+    prefetch = kwargs.get('prefetch', False)
     cmd = 'python postprocessors/job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
     if tes!=1.:
       cmd += " --tes %.3f"%(tes)
@@ -218,6 +223,10 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
       cmd += " --jtf %.3f"%(jtf)
     if Zmass and channel=='mumu':
       cmd += " --Zmass"
+    if prefetch:
+      cmd += " -p"
+    if tag:
+      cmd += " -l %s"%tag
     if args.verbose:
       print cmd
     jobsfile.write(cmd+'\n')
@@ -249,6 +258,7 @@ def main():
     ltf         = args.ltf
     jtf         = args.jtf
     Zmass       = args.Zmass
+    prefetch    = args.prefetch
     batchscript = 'submit_SGE.sh'
     tag         = args.tag
     
@@ -343,7 +353,7 @@ def main():
                   nFilesPerJob = default
                   break
               else:
-                nFilesPerJob = 4 # default
+                nFilesPerJob = nFilesPerJob_default
             if args.verbose:
               print "nFilesPerJob = %s"%nFilesPerJob
             filelists = chunkify(files,nFilesPerJob)
@@ -354,7 +364,7 @@ def main():
             #filelists = chunkify(files,1)
             for file in filelists:
             #print "FILES = ",f
-                createJobs(jobs,file,outdir,sample,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass)
+                createJobs(jobs,file,outdir,sample,nChunks,channel,year=year,tes=tes,ltf=ltf,jtf=jtf,Zmass=Zmass,tag=tag,prefetch=prefetch)
                 nChunks = nChunks+1
             jobs.close()
             

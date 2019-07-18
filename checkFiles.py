@@ -43,12 +43,16 @@ if __name__ == '__main__':
     parser.add_argument(      '--rm-bug',   dest='removeBuggedFiles', default=False, action='store_true',
                                             help="remove files that have bad LHE_Njets" )
     parser.add_argument('-o', '--outdir',   dest='outdir', type=str, default=None, action='store' )
-    parser.add_argument('-s', '--sample',   dest='samples', type=str, nargs='+', default=[ ], action='store',
+    parser.add_argument('-s', '--sample',   dest='samples', nargs='+', default=[ ], type=str, action='store',
                                             help="samples to run over, glob patterns (wildcards * and ?) are allowed." )
-    parser.add_argument('-x', '--veto',     dest='veto', action='store', type=str, default=None,
+    parser.add_argument('-x', '--veto',     dest='vetos', nargs='+', default=[ ], type=str, action='store',
                                             help="exclude/veto this sample" )
     parser.add_argument('-t', '--type',     dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                             help="filter data or MC to submit" )
+    parser.add_argument('-l', '--tag',      dest='intag', type=str, default="", action='store',
+                                            help="add a tag to the output file" )
+    parser.add_argument(      '--outtag',   dest='outtag', type=str, default="", action='store',
+                                            help="add a tag to the output file" )
     parser.add_argument('-T', '--tes',      dest='tes', type=float, default=1.0, action='store',
                                             help="tau energy scale" )
     parser.add_argument('-L', '--ltf',      dest='ltf', type=float, default=1.0, action='store',
@@ -57,8 +61,6 @@ if __name__ == '__main__':
                                             help="jet to tau fake energy scale" )
     parser.add_argument('-M', '--Zmass',    dest='Zmass', action='store_true', default=False,
                                             help="use Z mass window for dimuon spectrum" )
-    parser.add_argument('-l', '--tag',      dest='tag', type=str, default="", action='store',
-                                            help="add a tag to the output file" )
     parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true',
                                             help="set verbose" )
     args = parser.parse_args()
@@ -70,26 +72,37 @@ sample_dict = [
    ('DY',             "DYJetsToLL_M-10to50",              "DYJetsToLL_M-10to50_Tune*madgraph*pythia8"                ),
    ('DY',             "DYJetsToLL_M-10to50_nlo",          "DYJetsToLL_M-10to50_Tune*amcatnlo*pythia8"                ),
    ('DY',             "DYJetsToLL_M-50_ext",              "DYJetsToLL_M-50_Tune*madgraph*pythia8/*ext1"              ), # ext before reg !
+   #('DY',             "DYJetsToLL_M-50",                  "DYJetsToLL_M-50_Tune*madgraph*pythia8/RunIIAutumn18"      ), # ext before reg !
    ('DY',             "DYJetsToLL_M-50_reg",              "DYJetsToLL_M-50_Tune*madgraph*pythia8"                    ),
-   ('DY',             "DY1JetsToLL_M-50",                 "DY1JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
+   ('DY',             "DY1JetsToLL_M-50_ext",             "DY1JetsToLL_M-50_Tune*madgraph*pythia8/RunIIFall17*ext1"  ),
+   ('DY',             "DY1JetsToLL_M-50_reg",             "DY1JetsToLL_M-50_Tune*madgraph*pythia8/RunIIFall17"       ),
    ('DY',             "DY2JetsToLL_M-50_ext",             "DY2JetsToLL_M-50*/RunIIFall17*ext1"                       ), # ext before reg !
    ('DY',             "DY2JetsToLL_M-50_reg",             "DY2JetsToLL_M-50*/RunIIFall17"                            ),
    ('DY',             "DY3JetsToLL_M-50_ext",             "DY3JetsToLL_M-50*/RunIIFall17*ext1"                       ), # ext before reg !
    ('DY',             "DY3JetsToLL_M-50_reg",             "DY3JetsToLL_M-50*/RunIIFall17"                            ),
+   ('DY',             "DY1JetsToLL_M-50",                 "DY1JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('DY',             "DY2JetsToLL_M-50",                 "DY2JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('DY',             "DY3JetsToLL_M-50",                 "DY3JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('DY',             "DY4JetsToLL_M-50",                 "DY4JetsToLL_M-50_Tune*madgraph*pythia8"                   ),
    ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext1"                   ), # ext before reg !
-   ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext2"                   ),
+   ('WJ',             "WJetsToLNu_ext",                   "WJetsToLNu_Tune*madgraph*pythia8/*ext2"                   ), # ext before reg !
    ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIISummer16"           ),
    ('WJ',             "WJetsToLNu_reg",                   "WJetsToLNu_Tune*madgraph*pythia8/RunIIFall17"             ),
    ('WJ',             "WJetsToLNu",                       "WJetsToLNu_Tune*madgraph*pythia8"                         ),
+   ('WJ',             "W2JetsToLNu_ext",                  "W2JetsToLNu_Tune*madgraph*pythia8/RunIISummer16*ext"      ), # ext before reg !
+   ('WJ',             "W2JetsToLNu_reg",                  "W2JetsToLNu_Tune*madgraph*pythia8/RunIISummer16"          ),
+   ('WJ',             "W3JetsToLNu_ext",                  "W3JetsToLNu_Tune*madgraph*pythia8/RunIISummer16*ext"      ), # ext before reg !
+   ('WJ',             "W3JetsToLNu_reg",                  "W3JetsToLNu_Tune*madgraph*pythia8/RunIISummer16"          ),
+   ('WJ',             "W4JetsToLNu_ext1",                 "W4JetsToLNu_Tune*madgraph*pythia8/RunIISummer16*ext1"     ), # ext before reg !
+   ('WJ',             "W4JetsToLNu_ext2",                 "W4JetsToLNu_Tune*madgraph*pythia8/RunIISummer16*ext2"     ), # ext before reg !
+   ('WJ',             "W4JetsToLNu_reg",                  "W4JetsToLNu_Tune*madgraph*pythia8/RunIISummer16"          ),
    ('WJ',             "W1JetsToLNu",                      "W1JetsToLNu_Tune*madgraph*pythia8"                        ),
    ('WJ',             "W2JetsToLNu",                      "W2JetsToLNu_Tune*madgraph*pythia8"                        ),
    ('WJ',             "W3JetsToLNu",                      "W3JetsToLNu_Tune*madgraph*pythia8"                        ),
    ('WJ',             "W4JetsToLNu",                      "W4JetsToLNu_Tune*madgraph*pythia8"                        ),
    ('ST',             "ST_t-channel_antitop",             "ST_t-channel_antitop_4f_inclusiveDecays"                  ),
    ('ST',             "ST_t-channel_top",                 "ST_t-channel_top_4f_inclusiveDecays"                      ),
+   ('ST',             "ST_t-channel_top",                 "ST_t-channel_top_5f_TuneCP5"                              ),
    ('ST',             "ST_t-channel_antitop",             "ST_t-channel_antitop_4f_InclusiveDecays"                  ),
    ('ST',             "ST_t-channel_top",                 "ST_t-channel_top_4f_InclusiveDecays"                      ),
    ('ST',             "ST_tW_antitop",                    "ST_tW_antitop_5f_inclusiveDecays"                         ),
@@ -139,14 +152,18 @@ sample_dict = [
 sample_dict = [(d,s,p.replace('*','.*').replace('$MASS','(\d+)').replace('$RUN','(Run201\d[A-H])')) for d,s,p in sample_dict] # convert to regex pattern
 #sample_dict = { k: v.lstrip('/').replace('/','__') for k, v in sample_dict.iteritems() }
 haddsets = [
-  ('DY',             "DYJetsToLL_M-50",      [ 'DYJetsToLL_M-50_*'    ]),
-  ('DY',             "DY2JetsToLL_M-50",     [ 'DY2JetsToLL_M-50_*'   ]),
-  ('DY',             "DY3JetsToLL_M-50",     [ 'DY3JetsToLL_M-50_*'   ]),
-  ('WJ',             "WJetsToLNu",           [ 'WJetsToLNu_*'         ]),
-  ('Tau',            "Tau_$RUN",             [ 'Tau_$RUN?'            ]),
-  ('SingleMuon',     "SingleMuon_$RUN",      [ 'SingleMuon_$RUN?'     ]),
-  ('SingleElectron', "SingleElectron_$RUN",  [ 'SingleElectron_$RUN?' ]),
-  ('EGamma',         "EGamma_$RUN",          [ 'EGamma_$RUN?'         ]),
+  ('DY',             "DYJetsToLL_M-50",      [ 'DYJetsToLL_M-50_*'    ], [2016,2017]),
+  ('DY',             "DY1JetsToLL_M-50",     [ 'DY1JetsToLL_M-50_*'   ], [2017]),
+  ('DY',             "DY2JetsToLL_M-50",     [ 'DY2JetsToLL_M-50_*'   ], [2017]),
+  ('DY',             "DY3JetsToLL_M-50",     [ 'DY3JetsToLL_M-50_*'   ], [2017]),
+  ('WJ',             "WJetsToLNu",           [ 'WJetsToLNu_*'         ], ),
+  ('WJ',             "W2JetsToLNu",          [ 'W2JetsToLNu_*'        ], [2016]),
+  ('WJ',             "W3JetsToLNu",          [ 'W3JetsToLNu_*'        ], [2016]),
+  ('WJ',             "W4JetsToLNu",          [ 'W4JetsToLNu_*'        ], [2016]),
+  ('Tau',            "Tau_$RUN",             [ 'Tau_$RUN?'            ], ),
+  ('SingleMuon',     "SingleMuon_$RUN",      [ 'SingleMuon_$RUN?'     ], ),
+  ('SingleElectron', "SingleElectron_$RUN",  [ 'SingleElectron_$RUN?' ], [2016,2017]),
+  ('EGamma',         "EGamma_$RUN",          [ 'EGamma_$RUN?'         ], [2018]),
 ]
 
 
@@ -156,16 +173,15 @@ def main(args):
   
   years      = args.years
   channels   = args.channels
-  outtag     = args.tag
-  intag      = ""
+  intag      = args.intag
+  outtag     = args.outtag
   tes        = args.tes
   ltf        = args.ltf
   jtf        = args.jtf
   Zmass      = args.Zmass
   #submitted  = getSubmittedJobs()
   
-  if outtag and '_' not in outtag[0]:
-    outtag = '_'+outtag
+  if outtag and '_' not in outtag[0]: outtag = '_'+outtag
   if tes!=1.: intag += "_TES%.3f"%(tes)
   if ltf!=1.: intag += "_LTF%.3f"%(ltf)
   if jtf!=1.: intag += "_JTF%.3f"%(jtf)
@@ -186,7 +202,7 @@ def main(args):
         pattern  = infiles.split('/')[-1]
         for file in filelist:
           if not isValidSample(pattern): continue
-          checkFiles(file,pattern)
+          checkFiles(file,pattern,tag=intag)
       continue
     
     # GET LIST
@@ -226,7 +242,7 @@ def main(args):
             if not filelist: continue
             #running = [f for f in filelist if any(j.outfile in f for j in submitted)]
             
-            if checkFiles(filelist,directory,clean=args.removeBadFiles,force=args.force,cleanBug=args.removeBuggedFiles):
+            if checkFiles(filelist,directory,clean=args.removeBadFiles,force=args.force,cleanBug=args.removeBuggedFiles,tag=intag):
               print bcolors.BOLD + bcolors.OKGREEN + '[OK] ' + directory + ' ... can be hadded ' + bcolors.ENDC
             
             if not any(s in directory for s in ['LQ3','LQ_']):
@@ -275,17 +291,20 @@ def main(args):
       
       # HADD other
       if args.haddother:
-        for subdir, samplename, sampleset in haddsets:
+        for haddset in haddsets:
+            subdir, samplename, sampleset = haddset[:3]
+            haddyear = haddset[4] if len(haddset)>=4 else [ ]
             if args.verbose:
               print subdir, samplename, sampleset
             if args.samples and not matchSampleToPattern(samplename,args.samples): continue
-            if args.veto and matchSampleToPattern(directory,args.veto): continue
+            if args.vetos and matchSampleToPattern(directory,args.vetos): continue
             if 'SingleMuon' in subdir and channel not in ['mutau','mumu','elemu']: continue
             if ('SingleElectron' in subdir or 'EGamma' in subdir) and channel!='eletau': continue
             if 'Tau' in subdir and channel!='tautau': continue
             if 'LQ3' in subdir and channel not in ['mutau','tautau','eletau']: continue
             if '2017' in samplename and year!=2017: continue
             if '2018' in samplename and year!=2018: continue
+            if haddyear and year not in haddyear: continue
             if '$RUN' in samplename:
               samplename = samplename.replace('$RUN','Run%d'%year)
               sampleset  = [s.replace('$RUN','Run%d'%year) for s in sampleset]
@@ -341,14 +360,13 @@ def main(args):
 
 def isValidSample(pattern):
   if args.samples and not matchSampleToPattern(pattern,args.samples): return False
-  if args.veto and matchSampleToPattern(pattern,args.veto): return False
+  if args.vetos and matchSampleToPattern(pattern,args.vetos): return False
   if args.type=='mc' and any(s in pattern[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): return False
   if args.type=='data' and not any(s in pattern[:len(s)+2] for s in ['SingleMuon','SingleElectron','Tau','EGamma']): return False
   return True
 
 
-indexpattern = re.compile(r".*_(\d+)_[a-z]+(?:_[A-Z]+\dp\d+)?(?:_Zmass)?\.root")
-def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False,treename='tree'):
+def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False,treename='tree',tag=""):
     """Check if the file is valid."""
     if args.verbose:
       print "checkFiles: %s, %s"%(filelist,directory)
@@ -359,6 +377,7 @@ def checkFiles(filelist,directory,clean=False,force=False,cleanBug=False,treenam
     ifound   = [ ]
     nfiles   = len(filelist)
     #total_processed = 0
+    indexpattern = re.compile(r".*_(\d+)_[a-z]+%s\.root"%tag) #(?:_[A-Z]+\dp\d+)?(?:_Zmass)?
     for filename in filelist:
       match = indexpattern.search(filename)
       if match: ifound.append(int(match.group(1)))
