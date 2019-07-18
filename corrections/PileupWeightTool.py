@@ -24,7 +24,7 @@ class PileupWeightTool:
           self.mcfile   = ensureTFile( path+'MC_PileUp_2016_Moriond17.root', 'READ')
         elif year==2017:
           tag = ""
-          if sample:
+          if buggy or sample:
             if buggy or hasBuggyPU(sample): tag = "_old_pmx"
             else:                           tag = "_new_pmx"
           self.datafile = ensureTFile( path+'Data_PileUp_2017_%s.root'%(minbias), 'READ')
@@ -62,11 +62,11 @@ def hasBuggyPU(sample):
     #  /W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv5_PU2017_12Apr2018_v1-DeepTauv2_TauPOG-v1/USER
     #  /WZ_TuneCP5_13TeV-pythia8/RunIIFall17NanoAODv5_PU2017_12Apr2018_v1-DeepTauv2_TauPOG-v1/USER
     if "RunIIFall17" in sample:
-      if all(p in sample for p in ["DYJetsToLL_M-50","madgraph","pythia8","PU2017RECOSIMstep"]:
+      if all(p in sample for p in ["DYJetsToLL_M-50","madgraph","pythia8","PU2017RECOSIMstep"]):
         return True
-      if all(p in sample for p in ["W3JetsToLNu","madgraph","pythia8","PU2017"]:
+      if all(p in sample for p in ["W3JetsToLNu","madgraph","pythia8","PU2017"]):
         return True
-      if all(p in sample for p in ["WZ_","pythia8","PU2017"]:
+      if all(p in sample for p in ["WZ_","pythia8","PU2017"]):
         return True
     return False
-
+    

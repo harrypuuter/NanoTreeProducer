@@ -30,7 +30,7 @@ class LeptonTauFakeSFs:
           elif antiEleWP=='tight':  self.antiEleSFs = ( 1.486,  1.560 )
           elif antiEleWP=='vtight': self.antiEleSFs = ( 1.601,  1.401 )
           
-        else:
+        elif year==2017:
           #                               eta bins :  0.0 - 0.4 - 0.8 - 1.2 - 1.7 - 2.3
           if   antiMuWP=='loose':   self.antiMuSFs = (1.061, 1.022, 1.097, 1.030, 1.941)
           elif antiMuWP=='tight':   self.antiMuSFs = (1.170, 1.290, 1.140, 0.930, 1.610)
