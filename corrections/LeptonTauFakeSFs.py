@@ -42,17 +42,17 @@ class LeptonTauFakeSFs:
           elif antiEleWP=='tight':  self.antiEleSFs = ( 1.80,   1.53 )
           elif antiEleWP=='vtight': self.antiEleSFs = ( 1.96,   1.66 )
           
-#         else: # 2018
-#           #                               eta bins :  0.0 - 0.4 - 0.8 - 1.2 - 1.7 - 2.3
-#           if   antiMuWP=='loose':   self.antiMuSFs = (1.06,  0.96,  1.05,  1.23,  1.19)
-#           elif antiMuWP=='tight':   self.antiMuSFs = (1.28,  1.20,  1.08,  1.00,  2.30)
-#           
-#           #                                eta bins :  <1.460, >1.558
-#           if   antiEleWP=='vloose': self.antiEleSFs = ( 1.09,   1.19 )
-#           elif antiEleWP=='loose':  self.antiEleSFs = ( 1.17,   1.25 )
-#           elif antiEleWP=='medium': self.antiEleSFs = ( 1.40,   1.21 )
-#           elif antiEleWP=='tight':  self.antiEleSFs = ( 1.80,   1.53 )
-#           elif antiEleWP=='vtight': self.antiEleSFs = ( 1.96,   1.66 )
+        else: # 2018
+          #                               eta bins :  0.0 - 0.4 - 0.8 - 1.2 - 1.7 - 2.3
+          if   antiMuWP=='loose':   self.antiMuSFs = (1.05,  0.96,  1.06,  1.45,  1.75 )
+          elif antiMuWP=='tight':   self.antiMuSFs = (1.23,  1.37,  1.12,  1.84,  2.01 )
+          
+          #                                eta bins :  <1.460, >1.558
+          if   antiEleWP=='vloose': self.antiEleSFs = ( 1.130,  1.003 ) # PRELIMINARY
+          elif antiEleWP=='loose':  self.antiEleSFs = ( 1.229,  0.926 )
+          elif antiEleWP=='medium': self.antiEleSFs = ( 1.360,  0.910 )
+          elif antiEleWP=='tight':  self.antiEleSFs = ( 1.460,  1.020 )
+          elif antiEleWP=='vtight': self.antiEleSFs = ( 1.560,  1.030 )
         
     
     def getSF(self, genmatch, eta):
