@@ -16,7 +16,7 @@ from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib import jetR
 
 year     = 2017
 dataType = 'mc'
-maxEvts  = int(1e1)
+maxEvts  = -1 #int(1e1)
 postfix  = '_jme_%s'%(year)
 if dataType=='data':
   if year==2016:
@@ -45,8 +45,8 @@ else:
     ]
   elif year==2017:
     infiles = [
-      #'946BE003-BA74-554C-81C4-98F9B4D41772.root'
-      'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/90000/946BE003-BA74-554C-81C4-98F9B4D41772.root',  #   83977
+      '946BE003-BA74-554C-81C4-98F9B4D41772.root',
+      #'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/90000/946BE003-BA74-554C-81C4-98F9B4D41772.root',  #   83977
       ###'root://xrootd-cms.infn.it//store/mc/RunIIFall17NanoAODv4/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/280000/1C5D9C07-B3BA-254E-832D-89AD21C9F258.root', #  109916
     ]
   else:
