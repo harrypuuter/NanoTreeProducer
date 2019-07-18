@@ -48,7 +48,7 @@ def ensureJMEFiles(globalTag,path=None,tarbalpath=pathJME_local,JER=False):
       files_tgz = glob.glob(os.path.join(tarbalpath+globalTag+ext))
       if len(files_tgz)>0:
         tarfilename = files_tgz[0]
-        print("ensureJMEFiles: Untarring %s to %s..."%(tarfilename,path))
+        print("Extracting %s to %s..."%(tarfilename,path))
         archive = tarfile.open(tarfilename, "r:gz")
         archive.extractall(path)
         return path
@@ -160,7 +160,7 @@ class JetMETCorrectionTool:
           # JERs: https://twiki.cern.ch/twiki/bin/view/CMS/JetWtagging
           if year==2016 or year==2018: #update when 2018 values available
             jmr_vals = [1.00, 1.20, 0.80] # nominal, up, down
-          else: 
+          else:
             jmr_vals = [1.09, 1.14, 1.04]
           
           # READ JER uncertainties
@@ -426,6 +426,28 @@ class JetMETCorrectionTool:
             # EVALUATE JEC uncertainties
             if self.doSystematics:
                 
+                # EVALUATE JES uncertainties
+                jet_pt_jesUp     = { }
+                jet_pt_jesDown   = { }
+                for uncertainty in self.jesUncertainties:
+                    # (cf. https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties )
+                    self.jesUncertainty[uncertainty].setJetPt(jet_pt_nom)
+                    self.jesUncertainty[uncertainty].setJetEta(jet.eta)
+                    delta = self.jesUncertainty[uncertainty].getUncertainty(True)
+                    jet_pt_jesUp[uncertainty]   = jet_pt_nom*(1.+delta)
+                    jet_pt_jesDown[uncertainty] = jet_pt_nom*(1.-delta)
+                    jets_pt_jesUp[uncertainty]  .append(jet_pt_jesUp[uncertainty])
+                    jets_pt_jesDown[uncertainty].append(jet_pt_jesDown[uncertainty])
+                    ###jet_mass_jesUp   [uncertainty] = jet_mass_nom*(1. + delta)
+                    ###jet_mass_jesDown [uncertainty] = jet_mass_nom*(1. - delta)
+                    ###jets_mass_jesUp  [uncertainty].append(jet_mass_jesUp[uncertainty])
+                    ###jets_mass_jesDown[uncertainty].append(jet_mass_jesDown[uncertainty])
+                    ###if self.doGroomed:
+                    ###    jet_msdcorr_jesUp   [uncertainty] = jet_msdcorr_nom*(1. + delta)
+                    ###    jet_msdcorr_jesDown [uncertainty] = jet_msdcorr_nom*(1. - delta)
+                    ###    jets_msdcorr_jesUp  [uncertainty].append(jet_msdcorr_jesUp[uncertainty])
+                    ###    jets_msdcorr_jesDown[uncertainty].append(jet_msdcorr_jesDown[uncertainty])
+                
                 # EVALUATE JER uncertainties
                 jet_pt_jerUp   = smear_jerUp*jet_pt
                 jet_pt_jerDown = smear_jerDown*jet_pt
@@ -455,28 +477,6 @@ class JetMETCorrectionTool:
                 ###    jets_msdcorr_jmrDown.append(smear_jer *jet_msdcorr_jmrDownVal*jmsNomVal  *jet_msdcorr_raw)
                 ###    jets_msdcorr_jmsUp  .append(smear_jer *jet_msdcorr_jmrNomVal *jmsUpVal   *jet_msdcorr_raw)
                 ###    jets_msdcorr_jmsDown.append(smear_jer *jet_msdcorr_jmrNomVal *jmsDownVal *jet_msdcorr_raw)
-                
-                # EVALUATE JES uncertainties
-                jet_pt_jesUp     = { }
-                jet_pt_jesDown   = { }
-                for uncertainty in self.jesUncertainties:
-                    # (cf. https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties )
-                    self.jesUncertainty[uncertainty].setJetPt(jet_pt_nom)
-                    self.jesUncertainty[uncertainty].setJetEta(jet.eta)
-                    delta = self.jesUncertainty[uncertainty].getUncertainty(True)
-                    jet_pt_jesUp[uncertainty]   = jet_pt_nom*(1.+delta)
-                    jet_pt_jesDown[uncertainty] = jet_pt_nom*(1.-delta)
-                    jets_pt_jesUp[uncertainty]  .append(jet_pt_jesUp[uncertainty])
-                    jets_pt_jesDown[uncertainty].append(jet_pt_jesDown[uncertainty])
-                    ###jet_mass_jesUp   [uncertainty] = jet_mass_nom*(1. + delta)
-                    ###jet_mass_jesDown [uncertainty] = jet_mass_nom*(1. - delta)
-                    ###jets_mass_jesUp  [uncertainty].append(jet_mass_jesUp[uncertainty])
-                    ###jets_mass_jesDown[uncertainty].append(jet_mass_jesDown[uncertainty])
-                    ###if self.doGroomed:
-                    ###    jet_msdcorr_jesUp   [uncertainty] = jet_msdcorr_nom*(1. + delta)
-                    ###    jet_msdcorr_jesDown [uncertainty] = jet_msdcorr_nom*(1. - delta)
-                    ###    jets_msdcorr_jesUp  [uncertainty].append(jet_msdcorr_jesUp[uncertainty])
-                    ###    jets_msdcorr_jesDown[uncertainty].append(jet_msdcorr_jesDown[uncertainty])
             
             # PROPAGATE JER and JES corrections and uncertainties to MET
             if self.corrMET and jet_pt_nom > self.unclEnThreshold:
@@ -517,7 +517,6 @@ class JetMETCorrectionTool:
             ###print "met_px_nom = %8.4f"%(met_px_nom)
             ###print "met_py_nom = %8.4f"%(met_py_nom)
             met_vars = { 'nom': TLorentzVector(met_px_nom,met_py_nom,0,sqrt(met_px_nom**2+met_py_nom**2)) }
-            #met_vars = { 'nom': TLorentzVector(met_px,met_py,0,sqrt(met_px**2+met_py**2)) }
             
             #### UPDATE MET in event
             ###if self.updateEvent:

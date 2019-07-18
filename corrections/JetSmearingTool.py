@@ -31,11 +31,11 @@ class JetSmearer:
         # GLOBAL TAG
         if globalTag==None:
           if year==2016:
-            globalTag = "Summer16_25nsV1_MC"
+            globalTag = "Summer16_25nsV1_MC" #Fall17_25nsV1_MC
           elif year==2017:
             globalTag = "Fall17_V3_MC"
           elif year==2018:
-            globalTag = "Fall17_V3_MC"
+            globalTag = "Autumn18_V1_MC"
         
         # READ JER and JER scale factors and uncertainties
         # from https://github.com/cms-jet/JRDatabase/tree/master/textFiles/ )
