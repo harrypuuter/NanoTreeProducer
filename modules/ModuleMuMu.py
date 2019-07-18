@@ -225,16 +225,19 @@ class MuMuProducer(CommonProducer):
           maxId = itau
           maxPt = event.Tau_pt[itau]
         if maxId>-1:
-          self.out.pt_3[0]               = event.Tau_pt[maxId]
-          self.out.eta_3[0]              = event.Tau_eta[maxId]
-          self.out.m_3[0]                = event.Tau_mass[maxId]
-          self.out.decayMode_3[0]        = event.Tau_decayMode[maxId]
-          self.out.idAntiEle_3[0]        = ord(event.Tau_idAntiEle[maxId])
-          self.out.idAntiMu_3[0]         = ord(event.Tau_idAntiMu[maxId])
-          self.out.idMVAoldDM_3[0]       = ord(event.Tau_idMVAoldDM[maxId])
-          self.out.idMVAoldDM2017v1_3[0] = ord(event.Tau_idMVAoldDM2017v1[maxId])
-          self.out.idMVAoldDM2017v2_3[0] = ord(event.Tau_idMVAoldDM2017v2[maxId])
-          self.out.idMVAnewDM2017v2_3[0] = ord(event.Tau_idMVAnewDM2017v2[maxId])
+          self.out.pt_3[0]                   = event.Tau_pt[maxId]
+          self.out.eta_3[0]                  = event.Tau_eta[maxId]
+          self.out.m_3[0]                    = event.Tau_mass[maxId]
+          self.out.decayMode_3[0]            = event.Tau_decayMode[maxId]
+          self.out.idAntiEle_3[0]            = ord(event.Tau_idAntiEle[maxId])
+          self.out.idAntiMu_3[0]             = ord(event.Tau_idAntiMu[maxId])
+          self.out.idMVAoldDM_3[0]           = ord(event.Tau_idMVAoldDM[maxId])
+          self.out.idMVAoldDM2017v1_3[0]     = ord(event.Tau_idMVAoldDM2017v1[maxId])
+          self.out.idMVAoldDM2017v2_3[0]     = ord(event.Tau_idMVAoldDM2017v2[maxId])
+          self.out.idMVAnewDM2017v2_3[0]     = ord(event.Tau_idMVAnewDM2017v2[maxId])
+          self.out.idDeepTau2017v2VSe_3[0]   = ord(event.Tau_idDeepTau2017v2VSe[maxId])
+          self.out.idDeepTau2017v2VSmu_3[0]  = ord(event.Tau_idDeepTau2017v2VSmu[maxId])
+          self.out.idDeepTau2017v2VSjet_3[0] = ord(event.Tau_idDeepTau2017v2VSjet[maxId])
           self.out.idIso_3[0]            = Tau_idIso(event,maxId)
           if not self.isData:
             self.out.genPartFlav_3[0]    = genmatch(event,maxId) #ord(event.Tau_genPartFlav[maxId])

@@ -196,8 +196,8 @@ class TauTauProducer(CommonProducer):
               if idx1 >= idx2: continue
               dR = taus[idx1].p4().DeltaR(taus[idx2].p4())
               if dR < 0.5: continue
-              ditau = DiTauPair(idx1, event.Tau_pt[idx1], event.Tau_rawMVAoldDM[idx1],
-                                idx2, event.Tau_pt[idx2], event.Tau_rawMVAoldDM[idx2])
+              ditau = DiTauPair(idx1, event.Tau_pt[idx1], event.Tau_rawDeepTau2017v2VSjet[idx1],
+                                idx2, event.Tau_pt[idx2], event.Tau_rawDeepTau2017v2VSjet[idx2])
               ditaus.append(ditau)
         
         if len(ditaus)==0:
@@ -240,23 +240,29 @@ class TauTauProducer(CommonProducer):
         self.out.neutralIso_1[0]               = event.Tau_neutralIso[ditau.id1]
         self.out.photonsOutsideSignalCone_1[0] = event.Tau_photonsOutsideSignalCone[ditau.id1]
         self.out.puCorr_1[0]                   = event.Tau_puCorr[ditau.id1]
-        self.out.rawAntiEle_1[0]               = event.Tau_rawAntiEle[ditau.id1]
-        self.out.rawIso_1[0]                   = event.Tau_rawIso[ditau.id1]
-        self.out.rawMVAnewDM2017v2_1[0]        = event.Tau_rawMVAnewDM2017v2[ditau.id1]
-        self.out.rawMVAoldDM_1[0]              = event.Tau_rawMVAoldDM[ditau.id1]
-        self.out.rawMVAoldDM2017v1_1[0]        = event.Tau_rawMVAoldDM2017v1[ditau.id1]
-        self.out.rawMVAoldDM2017v2_1[0]        = event.Tau_rawMVAoldDM2017v2[ditau.id1]
         self.out.q_1[0]                        = event.Tau_charge[ditau.id1]
         self.out.decayMode_1[0]                = event.Tau_decayMode[ditau.id1]
+        self.out.rawAntiEle_1[0]               = event.Tau_rawAntiEle[ditau.id1]
         ###self.out.rawAntiEleCat_1[0]            = event.Tau_rawAntiEleCat[ditau.id1]
+        ###self.out.rawIso_1[0]                   = event.Tau_rawIso[ditau.id1]
+        ###self.out.rawMVAoldDM_1[0]              = event.Tau_rawMVAoldDM[ditau.id1]
+        ###self.out.rawMVAoldDM2017v1_1[0]        = event.Tau_rawMVAoldDM2017v1[ditau.id1]
+        self.out.rawMVAoldDM2017v2_1[0]        = event.Tau_rawMVAoldDM2017v2[ditau.id1]
+        self.out.rawMVAnewDM2017v2_1[0]        = event.Tau_rawMVAnewDM2017v2[ditau.id1]
+        self.out.rawDeepTau2017v2VSe_1[0]      = event.Tau_rawDeepTau2017v2VSe[ditau.id1]
+        self.out.rawDeepTau2017v2VSmu_1[0]     = event.Tau_rawDeepTau2017v2VSmu[ditau.id1]
+        self.out.rawDeepTau2017v2VSjet_1[0]    = event.Tau_rawDeepTau2017v2VSjet[ditau.id1]
         self.out.idAntiEle_1[0]                = ord(event.Tau_idAntiEle[ditau.id1])
         self.out.idAntiMu_1[0]                 = ord(event.Tau_idAntiMu[ditau.id1])
         self.out.idDecayMode_1[0]              = event.Tau_idDecayMode[ditau.id1]
         self.out.idDecayModeNewDMs_1[0]        = event.Tau_idDecayModeNewDMs[ditau.id1]
-        self.out.idMVAnewDM2017v2_1[0]         = ord(event.Tau_idMVAnewDM2017v2[ditau.id1])
-        self.out.idMVAoldDM_1[0]               = ord(event.Tau_idMVAoldDM[ditau.id1])
-        self.out.idMVAoldDM2017v1_1[0]         = ord(event.Tau_idMVAoldDM2017v1[ditau.id1])
+        ###self.out.idMVAoldDM_1[0]               = ord(event.Tau_idMVAoldDM[ditau.id1])
+        ###self.out.idMVAoldDM2017v1_1[0]         = ord(event.Tau_idMVAoldDM2017v1[ditau.id1])
         self.out.idMVAoldDM2017v2_1[0]         = ord(event.Tau_idMVAoldDM2017v2[ditau.id1])
+        self.out.idMVAnewDM2017v2_1[0]         = ord(event.Tau_idMVAnewDM2017v2[ditau.id1])
+        self.out.idDeepTau2017v2VSe_1[0]       = ord(event.Tau_idDeepTau2017v2VSe[ditau.id1])
+        self.out.idDeepTau2017v2VSmu_1[0]      = ord(event.Tau_idDeepTau2017v2VSmu[ditau.id1])
+        self.out.idDeepTau2017v2VSjet_1[0]     = ord(event.Tau_idDeepTau2017v2VSjet[ditau.id1])
         
         
         # TAU 2
@@ -272,23 +278,29 @@ class TauTauProducer(CommonProducer):
         self.out.neutralIso_2[0]               = event.Tau_neutralIso[ditau.id2]
         self.out.photonsOutsideSignalCone_2[0] = event.Tau_photonsOutsideSignalCone[ditau.id2]
         self.out.puCorr_2[0]                   = event.Tau_puCorr[ditau.id2]
-        self.out.rawAntiEle_2[0]               = event.Tau_rawAntiEle[ditau.id2]
-        self.out.rawIso_2[0]                   = event.Tau_rawIso[ditau.id2]
         self.out.q_2[0]                        = event.Tau_charge[ditau.id2]
         self.out.decayMode_2[0]                = event.Tau_decayMode[ditau.id2]
+        self.out.rawAntiEle_2[0]               = event.Tau_rawAntiEle[ditau.id2]
         ###self.out.rawAntiEleCat_2[0]            = event.Tau_rawAntiEleCat[ditau.id2]
+        ###self.out.rawIso_2[0]                   = event.Tau_rawIso[ditau.id2]
+        ###self.out.rawMVAoldDM_2[0]              = event.Tau_rawMVAoldDM[ditau.id2]
+        ###self.out.rawMVAoldDM2017v1_2[0]        = event.Tau_rawMVAoldDM2017v1[ditau.id2]
+        self.out.rawMVAoldDM2017v2_2[0]        = event.Tau_rawMVAoldDM2017v2[ditau.id2]
+        self.out.rawMVAnewDM2017v2_2[0]        = event.Tau_rawMVAnewDM2017v2[ditau.id2]
+        self.out.rawDeepTau2017v2VSe_2[0]      = event.Tau_rawDeepTau2017v2VSe[ditau.id2]
+        self.out.rawDeepTau2017v2VSmu_2[0]     = event.Tau_rawDeepTau2017v2VSmu[ditau.id2]
+        self.out.rawDeepTau2017v2VSjet_2[0]    = event.Tau_rawDeepTau2017v2VSjet[ditau.id2]
         self.out.idAntiEle_2[0]                = ord(event.Tau_idAntiEle[ditau.id2])
         self.out.idAntiMu_2[0]                 = ord(event.Tau_idAntiMu[ditau.id2])
         self.out.idDecayMode_2[0]              = event.Tau_idDecayMode[ditau.id2]
         self.out.idDecayModeNewDMs_2[0]        = event.Tau_idDecayModeNewDMs[ditau.id2]
-        self.out.rawMVAoldDM_2[0]              = event.Tau_rawMVAoldDM[ditau.id2]
-        self.out.rawMVAoldDM2017v1_2[0]        = event.Tau_rawMVAoldDM2017v1[ditau.id2]
-        self.out.rawMVAoldDM2017v2_2[0]        = event.Tau_rawMVAoldDM2017v2[ditau.id2]
-        self.out.rawMVAnewDM2017v2_2[0]        = event.Tau_rawMVAnewDM2017v2[ditau.id2]
-        self.out.idMVAoldDM_2[0]               = ord(event.Tau_idMVAoldDM[ditau.id2])
-        self.out.idMVAoldDM2017v1_2[0]         = ord(event.Tau_idMVAoldDM2017v1[ditau.id2])
+        ###self.out.idMVAoldDM_2[0]               = ord(event.Tau_idMVAoldDM[ditau.id2])
+        ###self.out.idMVAoldDM2017v1_2[0]         = ord(event.Tau_idMVAoldDM2017v1[ditau.id2])
         self.out.idMVAoldDM2017v2_2[0]         = ord(event.Tau_idMVAoldDM2017v2[ditau.id2])
         self.out.idMVAnewDM2017v2_2[0]         = ord(event.Tau_idMVAnewDM2017v2[ditau.id2])
+        self.out.idDeepTau2017v2VSe_2[0]       = ord(event.Tau_idDeepTau2017v2VSe[ditau.id2])
+        self.out.idDeepTau2017v2VSmu_2[0]      = ord(event.Tau_idDeepTau2017v2VSmu[ditau.id2])
+        self.out.idDeepTau2017v2VSjet_2[0]     = ord(event.Tau_idDeepTau2017v2VSjet[ditau.id2])
         
         
         # GENERATOR
