@@ -6,44 +6,49 @@
 
 import os, sys, shutil
 from argparse import ArgumentParser
+from corrections import ensureTFileAndTH1
+from tools import CMS_style
 import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
-from ROOT import TFile, TTree
+from ROOT import gROOT, gDirectory, gStyle, gPad, TFile, TTree, TCanvas, TH1, TLine, TLegend,\
+                 kBlack, kRed, kAzure, kGreen, kOrange, kMagenta, kYellow
+gROOT.SetBatch(True)
+gStyle.SetOptStat(False)
+gStyle.SetOptTitle(False)
+linecolors = [ kRed+1, kAzure+5, kGreen+2, kOrange+1, kMagenta-4, kYellow+1,
+               kRed-9, kAzure-4, kGreen-2, kOrange+6, kMagenta+3, kYellow+2, ]
 
 argv = sys.argv
 description = '''This script makes pileup profiles for MC and data.'''
 parser = ArgumentParser(prog="pileup",description=description,epilog="Succes!")
-parser.add_argument('-y', '--year',     dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2018], action='store',
-                                        help="select year" )
-parser.add_argument('-c', '--channel',  dest='channel', choices=['mutau','etau'], type=str, default='mutau', action='store',
-                                        help="select channel" )
-parser.add_argument('-t', '--type',     dest='types', choices=['data','mc'], type=str, nargs='+', default=['data','mc'], action='store',
-                                        help="make profile for data and/or MC" )
-parser.add_argument('-v', '--verbose',  dest='verbose', default=False, action='store_true', 
-                                        help="print verbose" )
+parser.add_argument('-y', '--year',    dest='years', choices=[2016,2017,2018], type=int, nargs='+', default=[2018], action='store',
+                                       help="select year" )
+parser.add_argument('-c', '--channel', dest='channel', choices=['mutau','etau'], type=str, default='mutau', action='store',
+                                       help="select channel" )
+parser.add_argument('-t', '--type',    dest='types', choices=['data','mc'], type=str, nargs='+', default=['data','mc'], action='store',
+                                       help="make profile for data and/or MC" )
+parser.add_argument('-p', '--plot',    dest='plot', default=False, action='store_true', 
+                                       help="plot profiles" )
+parser.add_argument('-v', '--verbose', dest='verbose', default=False, action='store_true', 
+                                       help="print verbose" )
 args = parser.parse_args()
 
 
 
-def getMCProfile(outfilename,indir,samples,channel,year):
+def getMCProfile(outfilename,indir,samples,channel,year,tag=""):
     """Get pileup profile in MC by adding Pileup_nTrueInt histograms from a given list of samples."""
-    print ">>> getMCProfile(%s)"%(outfilename)
+    print '>>> getMCProfile("%s")'%(outfilename)
     nprofiles = 0
     histname  = 'pileup'
-    tothist   = None    
+    tothist   = None
     for subdir, samplename in samples:
       filename = "%s/%s/%s_%s.root"%(indir,subdir,samplename,channel)
       print ">>>   %s"%(filename)
-      file = TFile(filename,'READ')
-      if not file or file.IsZombie():
-        print ">>>   Warning! getMCProfile: Could not open %s"%(filename)
-        continue
-      hist      = file.Get(histname)
-      if not hist:
-        print ">>>   Warning! getMCProfile: Could not open histogram in %s"%(filename)      
-        continue
+      file, hist = ensureTFileAndTH1(filename,histname)
+      if not file or not hist: continue
       if tothist==None:
         tothist = hist.Clone('pileup')
         tothist.SetTitle('pileup')
+        #tothist.SetTitle('MC average')
         tothist.SetDirectory(0)
         nprofiles += 1
       else:
@@ -54,13 +59,18 @@ def getMCProfile(outfilename,indir,samples,channel,year):
     
     file = TFile(outfilename,'RECREATE')
     tothist.Write('pileup')
+    tothist.SetDirectory(0)
     file.Close()
+    
+    return tothist
     
 
 
-def getDataProfile(outfilename,JSON,pileup,bins,minbias,local=False):
+def getDataProfile(outfilename,JSON,pileup,bins,year,minbias,local=False):
     """Get pileup profile in data with pileupCalc.py tool."""
-    print ">>> getDataProfile(%s,%d,%s)"%(outfilename,bins,minbias)
+    print '>>> getDataProfile("%s",%d,%s)'%(outfilename,bins,minbias)
+    
+    # CREATE profile
     if local:
       JSON   = copyToLocal(JSON)
       pileup = copyToLocal(pileup)
@@ -71,17 +81,21 @@ def getDataProfile(outfilename,JSON,pileup,bins,minbias,local=False):
     print ">>>   " + command
     os.system(command)
     
-    # CHECK
+    # GET profile
+    histname = 'pileup'
     if not os.path.isfile(outfilename):
       print ">>>   Warning! getDataProfile: Could find output file %s!"%(outfilename)
-      return    
-    file = TFile(outfilename,'READ')
-    if not file or file.IsZombie():
-      print ">>>   Warning! getDataProfile: Could not open output file %s!"%(outfilename)
       return
-    hist = file.Get('pileup')
+    file, hist = ensureTFileAndTH1(outfilename,histname)
+    hist.SetName("%s_%s"%(histname,str(minbias).replace('.','p')))
+    hist.SetTitle("Data %s, %.1f pb"%(year,minbias))
+    hist.SetDirectory(0)
+    hist.SetBinContent(0,0.0)
+    hist.SetBinContent(1,0.0)
     print ">>>   pileup profile in data with min. bias %s mb has a mean of %.1f"%(minbias,hist.GetMean())
     file.Close()
+    
+    return hist
     
 
 
@@ -171,6 +185,219 @@ def getGenProfile(outfilename,year):
     
 
 
+def compareMCProfiles(indir,samples,channel,year,tag=""):
+    """Compare MC profiles."""
+    print ">>> compareMCProfiles()"
+    
+    histname = 'pileup'
+    outdir   = ensureDirectory("plots")
+    avehist  = None
+    hists    = [ ]
+    if tag and tag[0]!='_': tag = '_'+tag
+    
+    # GET histograms
+    for subdir, samplename in samples:
+      filename = "%s/%s/%s_%s.root"%(indir,subdir,samplename,channel)
+      print ">>>   %s"%(filename)
+      file = TFile(filename,'READ')
+      if not file or file.IsZombie():
+        print ">>>   Warning! compareMCProfiles: Could not open %s"%(filename)
+        continue
+      hist = file.Get(histname)
+      hist.SetName(samplename)
+      hist.SetTitle(samplename)
+      hist.SetDirectory(0)
+      if not hist:
+        print ">>>   Warning! compareMCProfiles: Could not open histogram in %s"%(filename)      
+        continue
+      if avehist==None:
+        avehist = hist.Clone('average%s'%tag)
+        avehist.SetTitle('MC average')
+        avehist.SetDirectory(0)
+      avehist.Add(hist)
+      hist.Scale(1./hist.Integral())
+      hists.append(hist)
+      file.Close()
+    
+    # PLOT
+    hists  = [avehist]+hists
+    colors = [kBlack]+linecolors
+    avehist.Scale(1./avehist.Integral())
+    plotname = "%s/pileup_MC_%s%s"%(outdir,year,tag)
+    drawHistsWithRatio(hists,plotname,xtitle="Number of true interactions",ytitle="A.U.",
+                       textsize=0.032,rmin=0.45,rmax=1.55,colors=colors)
+    for hist in hists:
+      if hist==avehist: continue
+      if hist.GetDirectory():
+        gDirectory.Delete(hist.GetName())
+      else:
+        hist.Delete()
+    
+    return avehist
+    
+
+
+def compareDataMCProfiles(datahist,mchist,year,minbias,tag=""):
+    """Compare data/MC profiles."""
+    print ">>> compareDataMCProfiles()"
+    if tag and tag[0]!='_': tag = '_'+tag    
+    outdir = ensureDirectory("plots")
+    hists  = [datahist,mchist]
+    colors = [kBlack]+linecolors
+    
+    datahist.SetTitle("Data %s, %.1f pb"%(year,minbias))
+    mchist.SetTitle("MC average")
+    datahist.Scale(1./datahist.Integral())
+    mchist.Scale(1./mchist.Integral())
+    
+    plotname = "%s/pileup_Data-MC_%s_%s%s"%(outdir,year,str(minbias).replace('.','p'),tag)
+    drawHistsWithRatio(hists,plotname,xtitle="Number of interactions",ytitle="A.U.",rtitle="Data / MC",
+                       textsize=0.045,rmin=0.75,rmax=1.25,colors=colors)
+    
+
+
+def drawHistsWithRatio(hists,name,**kwargs):
+    """Draw histograms with ratios."""
+    
+    title      = kwargs.get('title',        ""                   )
+    xtitle     = kwargs.get('xtitle',       ""                   )
+    ytitle     = kwargs.get('ytitle',       ""                   )
+    rtitle     = kwargs.get('rtitle',       "Ratio"              )
+    xmin       = kwargs.get('xmin',         hists[0].GetXaxis().GetXmin() )
+    xmax       = kwargs.get('xmax',         hists[0].GetXaxis().GetXmax() )
+    ymin       = kwargs.get('ymin',         None                 )
+    ymax       = kwargs.get('ymax',         None                 )
+    rmin       = kwargs.get('rmin',         0.45                 )
+    rmax       = kwargs.get('rmax',         1.55                 )
+    logx       = kwargs.get('logx',         False                )
+    logy       = kwargs.get('logy',         False                )
+    denom      = kwargs.get('denom',        1                    )-1 # denominator for ratio
+    textsize   = kwargs.get('textsize',     0.045                )
+    texts      = kwargs.get('text',         [ ]                  )
+    #textheight = kwargs.get('textheight',   1.09                 )
+    #ctext      = kwargs.get('ctext',        [ ]                  ) # corner text
+    #cposition  = kwargs.get('cposition',    'topleft'            ).lower() # cornertext
+    #ctextsize  = kwargs.get('ctextsize',    1.4*legendtextsize   )
+    colors     = kwargs.get('colors',       linecolors           )
+    if not isinstance(texts,list) or isinstance(texts,tuple):
+      texts    = [texts]
+    if ymax==None:
+      ymax     = 1.12*max(h.GetMaximum() for h in hists)
+    
+    # MAIN plot
+    canvas = TCanvas('canvas','canvas',100,100,800,800)
+    canvas.SetFillColor(0)
+    canvas.SetBorderMode(0)
+    canvas.SetFrameBorderMode(0)
+    canvas.Divide(2)
+    canvas.SetMargin(0.0,0.0,0.0,0.0)
+    canvas.cd(1)
+    gPad.SetPad('pad1','pad1',0,0.33,1,1)
+    gPad.SetMargin(0.12,0.04,0.02,0.08)
+    gPad.SetFillColor(0)
+    gPad.SetBorderMode(0)
+    gPad.SetTickx(0); gPad.SetTicky(0)
+    gPad.SetGrid()
+    gPad.Draw()
+    canvas.cd(2)
+    gPad.SetPad('pad2','pad2',0,0,1,0.33)
+    gPad.SetMargin(0.12,0.04,0.30,0.03)
+    gPad.SetFillColor(0)
+    gPad.SetFillStyle(4000)
+    gPad.SetFrameFillStyle(0)
+    gPad.SetBorderMode(0)
+    gPad.Draw()
+    
+    # MAIN plot
+    canvas.cd(1)
+    for i, hist in enumerate(hists):
+      color = colors[i%len(colors)]
+      hist.SetLineColor(color)
+      hist.SetLineWidth(2)
+      hist.Draw('HIST SAME')
+    frame = hists[0]
+    frame.GetYaxis().SetTitleSize(0.060)
+    frame.GetXaxis().SetTitleSize(0)
+    frame.GetXaxis().SetLabelSize(0)
+    frame.GetYaxis().SetLabelSize(0.052)
+    frame.GetXaxis().SetLabelOffset(0.010)
+    frame.GetXaxis().SetTitleOffset(0.98)
+    frame.GetYaxis().SetTitleOffset(1.05)
+    frame.GetXaxis().SetNdivisions(508)
+    frame.GetYaxis().SetTitle(ytitle)
+    frame.GetXaxis().SetTitle(xtitle)
+    if logx: gPad.Update(); gPad.SetLogx()
+    if logy: gPad.Update(); gPad.SetLogy()
+    if ymin: frame.SetMinimum(ymin)
+    if ymax: frame.SetMaximum(ymax)
+    
+    width    = 0.25
+    height   = 1.1*textsize*len([l for l in texts+hists if l])
+    x1, y1   = 0.65, 0.88
+    x2, y2   = x1+width, y1-height
+    legend = TLegend(x1,y1,x2,y2)
+    legend.SetTextSize(textsize)
+    legend.SetBorderSize(0)
+    legend.SetFillStyle(0)
+    legend.SetFillColor(0)
+    legend.SetMargin(0.05/width)
+    if title:
+      legend.SetTextFont(62)
+      legend.SetHeader(title)
+    legend.SetTextFont(42)
+    for hist in hists:
+      legend.AddEntry(hist, hist.GetTitle(), 'l')
+    for text in texts:
+      legend.AddEntry(0, text, '')
+    legend.Draw()
+    
+    gPad.SetTicks(1,1)
+    gPad.Modified()
+    frame.Draw('AXIS SAME')
+    CMS_style.CMS_lumi(gPad,13,0)
+    
+    # RATIO plot
+    canvas.cd(2)
+    ratios = [ ]
+    for i, hist in enumerate(hists):
+      if i==denom: continue
+      ratio = hist.Clone(hist.GetName()+"_ratio")
+      ratio.Divide(hists[denom])
+      ratio.Draw('HIST SAME')
+      ratios.append(ratio)
+    frame_ratio = ratios[0]
+    frame_ratio.GetYaxis().SetRangeUser(rmin,rmax)
+    frame_ratio.GetYaxis().CenterTitle()
+    frame_ratio.GetYaxis().SetTitleSize(0.13)
+    frame_ratio.GetXaxis().SetTitleSize(0.13)
+    frame_ratio.GetXaxis().SetLabelSize(0.12)
+    frame_ratio.GetYaxis().SetLabelSize(0.11)
+    frame_ratio.GetXaxis().SetLabelOffset(0.012)
+    frame_ratio.GetXaxis().SetTitleOffset(1.02)
+    frame_ratio.GetYaxis().SetTitleOffset(0.48)
+    frame_ratio.GetXaxis().SetNdivisions(508)
+    frame_ratio.GetYaxis().CenterTitle(True)
+    frame_ratio.GetYaxis().SetTitle(rtitle)
+    frame_ratio.GetXaxis().SetTitle(xtitle)
+    frame_ratio.GetYaxis().SetNdivisions(505)
+    if logx: gPad.Update(); gPad.SetLogx()
+    line = TLine(xmin,1.,xmax,1.)
+    line.SetLineColor(hists[denom].GetLineColor())
+    line.SetLineWidth(hists[denom].GetLineWidth())
+    line.SetLineStyle(1)
+    line.Draw('SAME')
+    gPad.SetTicks(1,1)
+    gPad.Update()
+    gPad.SetGrid()
+    gPad.Modified()
+    frame_ratio.Draw('SAME AXIS')
+    
+    canvas.SaveAs(name+".png")
+    canvas.SaveAs(name+".pdf")
+    canvas.Close()
+
+
+
 def copyToLocal(filename):
   """Copy file to current directory, and return new name."""
   fileold = filename
@@ -179,20 +406,33 @@ def copyToLocal(filename):
   if not os.path.isfile(filenew):
     print ">>> ERROR! Copy %s failed!"%(filenew)
   return filenew
+  
 
+
+def ensureDirectory(dirname):
+  """Make directory if it does not exist."""
+  if not os.path.exists(dirname):
+    os.makedirs(dirname)
+    print '>>> made directory "%s"'%(dirname)
+    if not os.path.exists(dirname):
+      print '>>> failed to make directory "%s"'%(dirname)
+  return dirname
+  
 
 
 def main():
     
-    years   = args.years
-    channel = args.channel
-    types   = args.types
+    years     = args.years
+    channel   = args.channel
+    types     = args.types
+    minbiases = [ 69.2, 80.0, 69.2*1.046, 69.2*0.954 ]
     
     for year in args.years:
       filename  = "MC_PileUp_%d.root"%(year)
       indir     = "/scratch/ineuteli/analysis/LQ_%d"%(year)
       if year==2016:
-        JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
+        #JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
+        JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt"
         pileup  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/pileup_latest.txt"
         samples = [
           ( 'TT', "TT",                   ),
@@ -216,22 +456,35 @@ def main():
           ( 'VV', "ZZ",                   ),
         ]
       elif year==2017:
-        JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Final/Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt"
-        pileup  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/pileup_latest.txt"    
-        samples = [
+        filename_bug = filename.replace(".root","_old_pmx.root")
+        filename_fix = filename.replace(".root","_new_pmx.root")
+        JSON         = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Final/Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt"
+        pileup       = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/pileup_latest.txt"    
+        samples_bug  = [
+          ( 'DY', "DYJetsToLL_M-50",      ),
+          ( 'WJ', "W3JetsToLNu",          ),
+          ( 'VV', "WZ",                   ),
+        ]
+        samples_fix  = [
+          ( 'DY', "DYJetsToLL_M-10to50",  ),
+          ( 'DY', "DY1JetsToLL_M-50",     ),
+          #( 'DY', "DY1JetsToLL_M-50_reg", ),
+          #( 'DY', "DY1JetsToLL_M-50_ext", ),
+          #( 'DY', "DY2JetsToLL_M-50",     ),
+          ( 'DY', "DY2JetsToLL_M-50_reg", ),
+          ( 'DY', "DY2JetsToLL_M-50_ext", ),
+          #( 'DY', "DY3JetsToLL_M-50",     ),
+          ( 'DY', "DY3JetsToLL_M-50_reg", ),
+          ( 'DY', "DY3JetsToLL_M-50_ext", ),
+          ( 'DY', "DY4JetsToLL_M-50",     ),
           ( 'TT', "TTTo2L2Nu",            ),
           ( 'TT', "TTToHadronic",         ),
           ( 'TT', "TTToSemiLeptonic",     ),
-          ( 'DY', "DYJetsToLL_M-10to50",  ),
-          ( 'DY', "DYJetsToLL_M-50",      ),
-          ( 'DY', "DY1JetsToLL_M-50",     ),
-          ( 'DY', "DY2JetsToLL_M-50",     ),
-          ( 'DY', "DY3JetsToLL_M-50",     ),
-          ( 'DY', "DY4JetsToLL_M-50",     ),
-          ( 'WJ', "WJetsToLNu",           ),
+          #( 'WJ', "WJetsToLNu",           ),
+          ( 'WJ', "WJetsToLNu_reg",       ),
+          ( 'WJ', "WJetsToLNu_ext",       ),
           ( 'WJ', "W1JetsToLNu",          ),
           ( 'WJ', "W2JetsToLNu",          ),
-          ( 'WJ', "W3JetsToLNu",          ),
           ( 'WJ', "W4JetsToLNu",          ),
           ( 'ST', "ST_tW_top",            ),
           ( 'ST', "ST_tW_antitop",        ),
@@ -239,9 +492,9 @@ def main():
           ( 'ST', "ST_t-channel_antitop", ),
           #( 'ST', "ST_s-channel",         ),
           ( 'VV', "WW",                   ),
-          ( 'VV', "WZ",                   ),
           ( 'VV', "ZZ",                   ),
         ]
+        samples = samples_bug + samples_fix
       else:
         JSON    = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt"
         pileup  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PileUp/pileup_latest.txt"
@@ -270,16 +523,41 @@ def main():
           ( 'VV', "ZZ",                   ),
         ]
       
+      # DATA
+      datafiles = [ ]
+      datahists = [ ]
+      if 'data' in args.types:
+        for minbias in minbiases:
+          filename = "Data_PileUp_%d_%s.root"%(year,str(minbias).replace('.','p'))
+          datahist = getDataProfile(filename,JSON,pileup,100,year,minbias)
+          datahists.append(datahist)
+          datafiles.append(filename)
+      elif args.plot:
+        for minbias in minbiases:
+          filename = "Data_PileUp_%d_%s.root"%(year,str(minbias).replace('.','p'))
+          file, hist = ensureTFileAndTH1(filename,'pileup')
+          if not file or not hist: continue
+          hist.SetDirectory(0)
+          file.Close()
+          datahists.append(hist)
+      
       # MC
+      CMS_style.setYear(year)
       if 'mc' in args.types:
         getMCProfile(filename,indir,samples,channel,year)
-      
-      # DATA
-      if 'data' in args.types:
-        minbiases = [ 69.2, 80.0, 69.2*1.046, 69.2*0.954 ]
-        for minbias in minbiases:
-          filename = "Data_PileUp_%d_%s_new.root"%(year,str(minbias).replace('.','p'))
-          getDataProfile(filename,JSON,pileup,100,minbias)
+        if args.plot:
+          mchist = compareMCProfiles(indir,samples,channel,year)
+          for minbias, datahist in zip(minbiases,datahists):
+            compareDataMCProfiles(datahist,mchist,year,minbias)
+        if year==2017:
+          getMCProfile(filename_bug,indir,samples_bug,channel,year)
+          getMCProfile(filename_fix,indir,samples_fix,channel,year)
+          if args.plot:
+            mchist_bug = compareMCProfiles(indir,samples_bug,channel,year,tag="old_pmx")
+            mchist_fix = compareMCProfiles(indir,samples_fix,channel,year,tag="new_pmx")
+            for minbias, datahist in zip(minbiases,datahists):
+              compareDataMCProfiles(datahist,mchist_bug,year,minbias,tag="old_pmx")
+              compareDataMCProfiles(datahist,mchist_fix,year,minbias,tag="new_pmx")
       
 
 
