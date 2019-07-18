@@ -1,6 +1,6 @@
 # NanoTreeProducer
-Produce skimmed analysis trees directly from centrally-produced NanoAOD.
-This repository is meant for an analysis with a pair of tau leptons in several final states, and for 2016, 2017 and 2018 data.
+Produce skimmed analysis trees directly from centrally-produced NanoAOD, using the official [postprocessing tools](https://github.com/cms-nanoAOD/nanoAOD-tools).
+This repository is meant for an analysis with a pair of tau leptons in several final states, and for 2016, 2017 and 2018 data, but can easily be used for other analyses.
 
 
 ## Installation
