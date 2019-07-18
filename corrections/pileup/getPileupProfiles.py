@@ -461,7 +461,9 @@ def main():
         JSON         = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Final/Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt"
         pileup       = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/pileup_latest.txt"    
         samples_bug  = [
-          ( 'DY', "DYJetsToLL_M-50",      ),
+          #( 'DY', "DYJetsToLL_M-50",      ),
+          ( 'DY', "DYJetsToLL_M-50_reg",  ),
+          ( 'DY', "DYJetsToLL_M-50_ext",  ),
           ( 'WJ', "W3JetsToLNu",          ),
           ( 'VV', "WZ",                   ),
         ]
