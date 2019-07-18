@@ -34,9 +34,9 @@ class CommonProducer(Module):
         self.jtf              = kwargs.get('jtf',        1.0  )
         self.doTTpt           = kwargs.get('doTTpt',     'TT' in name       )
         self.doZpt            = kwargs.get('doZpt',      'DY' in name       )
-        self.doRecoil         = kwargs.get('doRecoil',   ('DY' in name or re.search(r"W\d?Jets",name)) and self.year!=2016) 
+        self.doRecoil         = kwargs.get('doRecoil',   ('DY' in name or re.search(r"W\d?Jets",name)) and self.year==2016) # and self.year==2016 
         self.doTight          = kwargs.get('doTight',    self.tes!=1 or self.ltf!=1 or self.jtf!=1)
-        self.doJEC            = kwargs.get('doJEC',      True               ) and False
+        self.doJEC            = kwargs.get('doJEC',      True               ) #and self.year==2016 #False
         self.doJECSys         = kwargs.get('doJECSys',   self.doJEC         ) and not self.doTight and not self.isData and self.doJEC #and False
         self.isVectorLQ       = kwargs.get('isVectorLQ', 'VectorLQ' in name )
         self.jetCutPt         = 30
@@ -60,12 +60,12 @@ class CommonProducer(Module):
           if self.doRecoil:
             self.recoilTool   = RecoilCorrectionTool(year=self.year)
           if self.doJEC:
-            self.jmeTool      = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=self.doJECSys,updateEvent=False,data=False)
+            self.jmeTool      = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=False,systematics=self.doJECSys,updateEvent=False,data=False)
             if self.doJECSys:
               self.jeclabels    = [ u+v for u in ['jer','jes'] for v in ['Down','Up']]
               self.jecMETlabels = [ u+v for u in ['jer','jes','unclEn'] for v in ['Down','Up']]
         elif self.year in [2016,2017,2018]:
-          self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=True,systematics=False,updateEvent=False,data=True,era=self.era)
+          self.jmeTool = JetMETCorrectionTool(self.year,jet='AK4PFchs',met=metbranch,redoJEC=False,systematics=False,updateEvent=False,data=True,era=self.era)
         else:
           self.doJEC = False
         self.deepcsv_wp       = BTagWPs('DeepCSV',year=self.year)

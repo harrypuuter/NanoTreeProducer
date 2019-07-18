@@ -16,6 +16,9 @@ def checkBranches(tree,year):
     ('Electron_mvaFall17V2noIso_WP80', 'Electron_mvaFall17noIso_WP80' ),
     ('Electron_mvaFall17V2noIso_WP90', 'Electron_mvaFall17noIso_WP90' ),
     ('HLT_Ele32_WPTight_Gsf',           False                         ),
+    ('HLT_IsoMu22_eta2p1',              False                         ),
+    ('HLT_IsoTkMu22_eta2p1',            False                         ),
+    #('Flag_ecalBadCalibFilterV2',       True                          ),
   ]
   if year==2017:
     branches += [
@@ -58,7 +61,8 @@ def setBranchStatuses(tree,otherbranches=[ ]):
 def getVLooseTauIso(year):
   """Return a method to check whether event passes the VLoose working
   point of all available tau IDs. (For tau ID measurement.)"""
-  return lambda e,i: ord(e.Tau_idMVAoldDM[i])>0 or ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v1[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0
+  return lambda e,i: ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0 or ord(e.Tau_idDeepTau2017v2VSjet[i])>0
+  #ord(e.Tau_idMVAoldDM[i])>0 or ord(e.Tau_idMVAoldDM2017v1[i])>0
   
 
 
@@ -70,16 +74,17 @@ def getMET(year):
     return lambda e: TLorentzVector(e.MET_pt*cos(e.MET_phi),e.MET_pt*sin(e.MET_phi),0,e.MET_pt), 'MET'
   
 
+
 def getMETFilters(year,isData):
   """Return a method to check if an event passes the recommended MET filters."""
   # https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2
   if year==2018:
     if isData:
       return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_ecalBadCalibFilterV2 and e.Flag_eeBadScFilter # and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_eeBadScFilter # and e.Flag_ecalBadCalibFilterV2 and e.Flag_BadChargedCandidateFilter and e.Flag_eeBadScFilter
     else:
       return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
-                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter and e.Flag_ecalBadCalibFilterV2 
+                       e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter #and e.Flag_ecalBadCalibFilterV2 
   elif year==2017:
     if isData:
       return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
@@ -94,6 +99,8 @@ def getMETFilters(year,isData):
     else:
       return lambda e: e.Flag_goodVertices and e.Flag_HBHENoiseFilter and e.Flag_HBHENoiseIsoFilter and e.Flag_globalSuperTightHalo2016Filter and\
                        e.Flag_EcalDeadCellTriggerPrimitiveFilter and e.Flag_BadPFMuonFilter
+  
+
 
 def Tau_idIso(event,i):
   """Compute WPs of cut-based tau ID."""
