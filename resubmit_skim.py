@@ -35,6 +35,10 @@ if __name__ == '__main__':
                                             help="veto this sample" )
     parser.add_argument('-t', '--type',     dest='type', choices=['data','mc'], type=str, default=None, action='store',
                                             help="filter data or MC to submit" )
+    parser.add_argument('-i', '--instance', dest='instance', choices=['NANOAOD','NANOAODSIM','NANOAOD*','USER'], type=str, default=None, action='store',
+                                            help="instance" )
+    parser.add_argument('-E', '--quick',    dest='checkEvents', action='store_false', default=True,
+                                            help="quick comparison of file lists; do not compare number of events" )
     parser.add_argument('-f', '--force',    dest='force', action='store_true', default=False,
                                             help="submit jobs without asking confirmation" )
     parser.add_argument('-m', '--mock',     dest='mock', action='store_true', default=False,
@@ -60,6 +64,7 @@ def main(args):
   
   years       = args.years
   tag         = args.tag
+  checkEvents = args.checkEvents
   outbasedir  = "/scratch/ineuteli"
   batchscript = 'submit_SGE.sh'
   director    = "root://t3dcachedb.psi.ch:1094/" #"root://xrootd-cms.infn.it/"
@@ -69,7 +74,11 @@ def main(args):
     
     # GET LIST
     samplelist = [ ]
-    for directory in sorted(glob.glob(samplesdir+"/*/*/NANOAOD*")):
+    if args.instance==None:
+      directories = glob.glob(samplesdir+"/*/*/NANOAOD*")+glob.glob(samplesdir+"/*/*/USER*")
+    else:
+      directories = glob.glob(samplesdir+"/*/*/"+args.instance)
+    for directory in sorted(directories):
       sample = '/'.join(directory.split('/')[-3:])
       if args.samples and not matchSampleToPattern(sample,args.samples): continue
       if args.vetos and matchSampleToPattern(sample,args.vetos): continue
@@ -118,7 +127,7 @@ def main(args):
             print "             "+file
         
         # FILE LIST FOR RESUBMISSION
-        nevents, resubmitfiles = checkFiles(filelist,infilelist,directory,clean=args.removeBadFiles,force=args.force,cleanBug=args.removeBuggedFiles)
+        nevents, resubmitfiles = checkFiles(filelist,infilelist,directory,clean=args.removeBadFiles,force=args.force,cleanBug=args.removeBuggedFiles,checkEvents=checkEvents)
         if len(resubmitfiles)==0:
           print bcolors.BOLD + bcolors.OKGREEN + '[OK] %s is complete ! '%sample + bcolors.ENDC
         elif len(resubmitfiles)>len(infilelist):
@@ -126,7 +135,7 @@ def main(args):
         else:
           print bcolors.BOLD + bcolors.WARNING + '[WN] %d / %d of %s need to be resubmitted...'%(len(resubmitfiles),len(infilelist),sample) + bcolors.ENDC
         
-        if not any(s in directory for s in ['LQ3']):
+        if checkEvents and not any(s in directory for s in ['LQ3']):
           compareEventsToDAS(nevents,sample,treename='Events')
         if len(resubmitfiles)==0:
           print
@@ -180,7 +189,7 @@ def main(args):
    
 
 
-def checkFiles(filelist,infilelist,directory,clean=False,force=False,cleanBug=False,treename='Events'):
+def checkFiles(filelist,infilelist,directory,clean=False,force=False,cleanBug=False,checkEvents=True,treename='Events'):
     """Check if the file is valid."""
     
     if args.verbose:
@@ -197,30 +206,36 @@ def checkFiles(filelist,infilelist,directory,clean=False,force=False,cleanBug=Fa
     
     # CHECK FILES
     # TODO: check timestamp
-    ntotevents = 0
-    for filename in filelist:
-      file    = TFile.Open(filename, 'READ')
-      filekey = re.sub(r"(?:_skim.*)?\.root","",filename.split('/')[-1])
-      if file==None:
-        print bcolors.FAIL + '[NG] file %s is None'%(filename) + bcolors.ENDC
-        appendListInDict(badfiles,filekey,filename)
-        continue
-      elif file.IsZombie():
-        print bcolors.FAIL + '[NG] file %s is a zombie'%(filename) + bcolors.ENDC
-        appendListInDict(badfiles,filekey,filename)
-      else:
-        tree = file.Get(treename)
-        if not isinstance(tree,TTree):
-          print bcolors.FAIL + '[NG] no tree found in ' + filename + bcolors.ENDC
+    if checkEvents:
+      ntotevents = 0
+      for filename in filelist:
+        file    = TFile.Open(filename, 'READ')
+        filekey = re.sub(r"(?:_skim.*)?\.root","",filename.split('/')[-1])
+        if file==None:
+          print bcolors.FAIL + '[NG] file %s is None'%(filename) + bcolors.ENDC
           appendListInDict(badfiles,filekey,filename)
-        elif any(s in filename for s in ['DYJets','WJets']) and tree.GetMaximum('LHE_Njets')>10:
-          print bcolors.BOLD + bcolors.WARNING + '[WN] %d/%d events have LHE_Njets = %d > 10 in %s'%(tree.GetEntries(),tree.GetEntries("LHE_Njets>10"),tree.GetMaximum('LHE_Njets'),filename) + bcolors.ENDC
-          appendListInDict(bugfiles,filekey,filename)
+          continue
+        elif file.IsZombie():
+          print bcolors.FAIL + '[NG] file %s is a zombie'%(filename) + bcolors.ENDC
+          appendListInDict(badfiles,filekey,filename)
         else:
-          appendListInDict(goodfiles,filekey,filename)
-        if isinstance(tree,TTree):
-          ntotevents += tree.GetEntries()
-      file.Close()
+          tree = file.Get(treename)
+          if not isinstance(tree,TTree):
+            print bcolors.FAIL + '[NG] no tree found in ' + filename + bcolors.ENDC
+            appendListInDict(badfiles,filekey,filename)
+          elif any(s in filename for s in ['DYJets','WJets']) and tree.GetMaximum('LHE_Njets')>10:
+            print bcolors.BOLD + bcolors.WARNING + '[WN] %d/%d events have LHE_Njets = %d > 10 in %s'%(tree.GetEntries(),tree.GetEntries("LHE_Njets>10"),tree.GetMaximum('LHE_Njets'),filename) + bcolors.ENDC
+            appendListInDict(bugfiles,filekey,filename)
+          else:
+            appendListInDict(goodfiles,filekey,filename)
+          if isinstance(tree,TTree):
+            ntotevents += tree.GetEntries()
+        file.Close()
+    else:
+      ntotevents = -1
+      for filename in filelist:
+        filekey = re.sub(r"(?:_skim.*)?\.root","",filename.split('/')[-1])
+        appendListInDict(goodfiles,filekey,filename)
     
     # MAKE RESUBMIT LIST
     resubmitfiles = [ ]

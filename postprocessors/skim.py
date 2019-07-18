@@ -20,9 +20,9 @@ parser.add_argument('-t', '--type',     dest='type',      action='store', choice
 parser.add_argument('-y', '--year',     dest='year',      action='store', choices=[2016,2017,2018], type=int, default=2017)
 parser.add_argument('-e', '--era',      dest='era',       action='store', type=str, default="")
 parser.add_argument('-l', '--tag',      dest='tag',       action='store', type=str, default="")
-parser.add_argument('-p', '--prefetch', dest='prefetch',  action='store_true',  default=False)
-parser.add_argument(      '--no-jec',   dest='doJEC',     action='store_false', default=True)
-parser.add_argument(      '--jec-sys',  dest='doJECSys',  action='store_true',  default=None)
+parser.add_argument('-p', '--prefetch', dest='prefetch',  action='store_true', default=False)
+parser.add_argument('-J', '--jec',      dest='doJEC',     action='store_true', default=False)
+parser.add_argument(      '--jec-sys',  dest='doJECSys',  action='store_true', default=None)
 args = parser.parse_args()
 
 outdir        = ensureDirectory(args.outdir)
@@ -49,7 +49,7 @@ if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in in
   dataType = 'data'
 
 json     = None
-doJEC    = args.doJEC and dataType=='data'
+doJEC    = args.doJEC #and dataType=='data'
 doJECSys = args.doJECSys
 if dataType=='data':
   if doJEC:

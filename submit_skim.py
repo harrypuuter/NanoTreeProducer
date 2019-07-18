@@ -53,8 +53,9 @@ class bcolors:
 
 # Diboson (WW, WZ, ZZ) have very large files and acceptance,
 # and the jet-binned DY and WJ files need to be run separately because of a bug affecting LHE_Njets
+nFilesPerJob_default  = 4
 nFilesPerJob_defaults = [
-  ( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_',"TTTo2L2Nu","TTToSemiLep*RunIIFall17",'Single','Tau','EGamma','*VectorLQ_']),
+  #( 1, ['DY',"W*J",'WW','WZ','ZZ','ST','TT_',"TTTo2L2Nu","TTToSemiLep*RunIIFall17",'Single','Tau','EGamma','*VectorLQ_']),
   (40, ['LQ3','*_LQ_']),
 ]
 
@@ -164,7 +165,7 @@ def main():
                 nFilesPerJob = default
                 break
             else:
-              nFilesPerJob = 1 # default
+              nFilesPerJob = nFilesPerJob_default # default
           if args.verbose:
             print "nFilesPerJob = %s"%nFilesPerJob
           filelists = chunkify(files,nFilesPerJob)
