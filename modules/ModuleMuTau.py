@@ -27,7 +27,8 @@ class MuTauProducer(CommonProducer):
         # CORRECTIONS
         if not self.isData:
           self.muSFs     = MuonSFs(year=self.year)
-          self.puTool    = PileupWeightTool(year=self.year)
+          if not self.isEmb:
+            self.puTool    = PileupWeightTool(year=self.year)
           self.ltfSFs    = LeptonTauFakeSFs('tight','vloose',year=self.year)
         
         # CUTFLOW
@@ -64,7 +65,7 @@ class MuTauProducer(CommonProducer):
         if self.isVectorLQ and hasTop(event):
           return False
         self.out.cutflow.Fill(self.Nocut)
-        if self.isData:
+        if self.isData or self.isEmb:
           self.out.cutflow.Fill(self.TotalWeighted, 1.)
           if event.PV_npvs>0:
             self.out.cutflow.Fill(self.TotalWeighted_no0PU, 1.)
@@ -264,14 +265,17 @@ class MuTauProducer(CommonProducer):
         # WEIGHTS
         if not self.isData:
           self.applyCommonCorrections(event,jetIds,jetIds50,met,njets_var,met_vars)
-          if self.vlooseIso(event,ltau.id2) and event.Muon_pfRelIso04_all[ltau.id1]<0.50:
-            self.btagTool.fillEfficiencies(event,jetIds)
-            self.btagTool_loose.fillEfficiencies(event,jetIds)
+          if not self.isEmb:
+            if self.vlooseIso(event,ltau.id2) and event.Muon_pfRelIso04_all[ltau.id1]<0.50:
+              self.btagTool.fillEfficiencies(event,jetIds)
+              self.btagTool_loose.fillEfficiencies(event,jetIds)
           self.out.trigweight[0]    = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
           self.out.idisoweight_1[0] = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
           self.out.idisoweight_2[0] = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
-          self.out.weight[0]        = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
-        
+          if not self.isEmb:
+            self.out.weight[0]        = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
+          else:
+            self.out.weight[0]        = self.out.genweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
         
         # MET & DILEPTON VARIABLES
         self.fillMETAndDiLeptonBranches(event,muon,tau,met,met_vars)

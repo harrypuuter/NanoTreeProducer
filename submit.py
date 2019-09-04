@@ -20,7 +20,7 @@ if __name__ == "__main__":
                                            help="filter these samples, glob patterns (wildcards * and ?) are allowed." )
   parser.add_argument('-x', '--veto',      dest='vetoes', nargs='+', default=[ ], action='store',
                                            help="exclude/veto this sample" )
-  parser.add_argument('-t', '--type',      dest='type', choices=['data','mc'], type=str, default=None, action='store',
+  parser.add_argument('-t', '--type',      dest='type', choices=['data','mc','emb'], type=str, default=None, action='store',
                                            help="filter data or MC to submit" )
   parser.add_argument('-l', '--tag',       dest='tag', type=str, default="", action='store',
                                            help="extra tag for output files" )
@@ -227,6 +227,7 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
       cmd += " -p"
     if tag:
       cmd += " -l %s"%tag
+    cmd += " -t %s"%args.type
     if args.verbose:
       print cmd
     jobsfile.write(cmd+'\n')

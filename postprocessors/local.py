@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
 # Description: This postprocessor is used for local runs, to test the framework
-print
+#print
 from postprocessors import modulepath, ensureDirectory
 from postprocessors.config_jme import getEra
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import *
@@ -234,7 +234,7 @@ else:
         ]
     elif year==2017:
         infiles = [
-          'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ineuteli/samples/NANOAOD_2017/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv4-PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/NANOAODSIM/946BE003-BA74-554C-81C4-98F9B4D41772_skimmed.root', #   83977
+          'root://xrootd-cms.infn.it//store/user/aakhmets/taupog/nanoAOD/DYJetsToLLM50_RunIIFall17MiniAODv2_PU2017RECOSIMstep_13TeV_MINIAOD_madgraph-pythia8_v1/99/myNanoProdMc2017_NANO_998.root', #   83977
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ineuteli/samples/NANOAOD_2017/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv4-PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/NANOAODSIM/1C5D9C07-B3BA-254E-832D-89AD21C9F258_skimmed.root', #  109916
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ineuteli/samples/NANOAOD_2017/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv4-PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/NANOAODSIM/94D4274B-B7AE-3E4B-9F98-398C07A5B18D_skimmed.root', #  257903
           #'dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/ineuteli/samples/NANOAOD_2017/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv4-PU2017_12Apr2018_Nano14Dec2018_v3_102X_mc2017_realistic_v6_ext1-v1/NANOAODSIM/FF440F9C-5EC7-CB4F-A75A-81A055F3A3BD_skimmed.root', #  757244

@@ -75,4 +75,6 @@ class TreeProducerMuTau(TreeProducerCommon):
           self.addBranch('genvistaupt_2',            'f', -1)
           self.addBranch('genvistaueta_2',           'f', -9)
           self.addBranch('genvistauphi_2',           'f', -9)
+        if self._isEmb:
+          self.addBranch('generatorWeight',          'f', -9)
         

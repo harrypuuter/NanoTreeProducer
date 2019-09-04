@@ -15,10 +15,10 @@ parser.add_argument('-i', '--infiles',  dest='infiles',   action='store', type=s
 parser.add_argument('-o', '--outdir',   dest='outdir',    action='store', type=str, default="output")
 parser.add_argument('-N', '--outfile',  dest='outfile',   action='store', type=str, default="noname")
 parser.add_argument('-l', '--tag',      dest='tag',       action='store', type=str, default="")
-parser.add_argument('-n', '--nchunck',  dest='nchunck',   action='store', type=int, default='test')
+parser.add_argument('-n', '--nchunck',  dest='nchunck',   action='store', type=int, default='0')
 parser.add_argument('-p', '--prefetch', dest='prefetch',  action='store_true', default=False)
 parser.add_argument('-c', '--channel',  dest='channel',   action='store', choices=['tautau','mutau','eletau','mumu','elemu'], type=str, default='tautau')
-parser.add_argument('-t', '--type',     dest='type',      action='store', choices=['data','mc'], default=None)
+parser.add_argument('-t', '--type',     dest='type',      action='store', choices=['data','mc','emb'], default=None)
 parser.add_argument('-y', '--year',     dest='year',      action='store', choices=[2016,2017,2018], type=int, default=2017)
 parser.add_argument('-e', '--era',      dest='era',       action='store', type=str, default="")
 parser.add_argument('-T', '--tes',      dest='tes',       action='store', type=float, default=1.0)
@@ -48,6 +48,7 @@ kwargs        = {
   'doJEC':       args.doJEC,
   'doJECSys':    args.doJECSys,
   'ZmassWindow': args.Zmass,
+  'doTight': True,
 }
 
 if isinstance(infiles,str):
@@ -59,10 +60,10 @@ if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in in
   dataType = 'data'
 
 json = None
-if dataType=='data':
+if dataType=='data' or dataType=='emb':
   if era=="" and infiles:
     kwargs['era'] = getEra(infiles[0],year)
-  jsonpath = '/work/ineuteli/analysis/LQ_legacy/NanoTreeProducer/json/'
+  jsonpath = '/portal/ekpbms1/home/sbrommer/nanoaod/CMSSW_10_3_3/src/NanoTreeProducer/json/'
   if year==2016:
     json = jsonpath+'Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'

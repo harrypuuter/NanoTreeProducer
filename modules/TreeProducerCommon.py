@@ -19,6 +19,7 @@ class TreeProducerCommon(object):
         
         self.name       = name
         self._isData    = dataType=='data'
+        self._isEmb     = dataType=='emb'
         self.doJECSys   = kwargs.get('doJECSys', True ) and not self._isData
         ###self.isVectorLQ = kwargs.get('isVectorLQ', 'VectorLQ' in self.name )
         
@@ -67,12 +68,13 @@ class TreeProducerCommon(object):
         self.addBranch('lumi',                    'i')
         self.addBranch('event',                   'i')
         self.addBranch('isData',                  '?', self._isData)
+        self.addBranch('isEmb',                   '?', self._isEmb)
         
         self.addBranch('npvs',                    'i')
         self.addBranch('npvsGood',                'i')
         self.addBranch('metfilter',               '?')
         
-        if not self._isData:
+        if not any(True for x in [self._isData, self._isEmb]):
           self.addBranch('nPU',                   'i', -1)
           self.addBranch('nTrueInt',              'i', -1)
           self.addBranch('LHE_Njets',             'i', -1)
@@ -144,7 +146,7 @@ class TreeProducerCommon(object):
         ###self.addBranch('metcovXY',                'f')
         ###self.addBranch('metcovYY',                'f')
         ###self.addBranch('fixedGridRhoFastjetAll',  'f')
-        if not self._isData:
+        if not any(True for x in [self._isData, self._isEmb]):
           self.addBranch('genmet',                'f', -1)
           self.addBranch('genmetphi',             'f', -9)
         

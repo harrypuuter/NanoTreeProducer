@@ -26,6 +26,7 @@ class CommonProducer(Module):
         # SETTINGS
         self.name             = name
         self.isData           = dataType=='data'
+        self.isEmb            = dataType=='emb'
         self.channel          = channel
         self.year             = kwargs.get('year',       2017 )
         self.era              = kwargs.get('era',        ""   )
@@ -51,7 +52,7 @@ class CommonProducer(Module):
         # CORRECTIONS
         self.jeclabels    = [ ]
         self.jecMETlabels = [ ]
-        if not self.isData:
+        if not any(True for x in [self.isData, self.isEmb]):
           self.puTool         = PileupWeightTool(year=self.year)
           self.btagTool       = BTagWeightTool('DeepCSV','medium',channel=channel,year=self.year,maxeta=self.bjetCutEta)
           self.btagTool_loose = BTagWeightTool('DeepCSV','loose',channel=channel,year=self.year,maxeta=self.bjetCutEta)
@@ -94,7 +95,7 @@ class CommonProducer(Module):
         
     
     def endJob(self):
-        if not self.isData:
+        if not any(True for x in [self.isData, self.isEmb]):
           self.btagTool.setDirectory(self.out.outputfile,'btag')
           self.btagTool_loose.setDirectory(self.out.outputfile,'btag')
           if self.doJEC:
@@ -121,6 +122,7 @@ class CommonProducer(Module):
         
         # EVENT
         self.out.isData[0]          = self.isData
+        self.out.isEmb[0]           = self.isEmb
         self.out.run[0]             = event.run
         self.out.lumi[0]            = event.luminosityBlock
         self.out.event[0]           = event.event & 0xffffffffffffffff
@@ -128,7 +130,7 @@ class CommonProducer(Module):
         self.out.npvsGood[0]        = event.PV_npvsGood
         self.out.metfilter[0]       = self.filter(event)
         
-        if not self.isData:
+        if not any(True for x in [self.isData, self.isEmb]):
           ###self.out.ngentauhads[0]   = ngentauhads
           ###self.out.ngentaus[0]      = ngentaus
           self.out.genmet[0]        = event.GenMET_pt
@@ -144,7 +146,8 @@ class CommonProducer(Module):
           
           ###if self.isVectorLQ:
           ###  self.out.ntops[0]       = countTops(event)
-          
+        if self.isEmb:
+          self.out.generatorWeight[0] = event.Generator_weight
     
     def fillJetBranches(self,event,tau1,tau2):
         """Help function to select jets and b tags, after removing overlap with tau decay candidates,
@@ -155,6 +158,9 @@ class CommonProducer(Module):
         if self.doJEC:
           jetIds_vars = { }
           if self.isData:
+            jetpt_nom, met_nom = self.jmeTool.correctJetMET_Data(event) # returns a list of jet pT and a MET TLorenzVector
+            met_vars = { }
+          if self.isEmb:
             jetpt_nom, met_nom = self.jmeTool.correctJetMET_Data(event) # returns a list of jet pT and a MET TLorenzVector
             met_vars = { }
           else:
@@ -312,12 +318,13 @@ class CommonProducer(Module):
           self.out.ttptweight[0]       = getTTptWeight(toppt1,toppt2)
         
         self.out.genweight[0]          = event.genWeight
-        self.out.puweight[0]           = self.puTool.getWeight(event.Pileup_nTrueInt)
-        self.out.btagweight[0]         = self.btagTool.getWeight(event,jetIds)
-        self.out.btagweight_loose[0]   = self.btagTool_loose.getWeight(event,jetIds)
-        self.out.btagweight50[0]       = self.btagTool.getWeight(event,jetIds50)
-        self.out.btagweight50_loose[0] = self.btagTool_loose.getWeight(event,jetIds50)
-        
+        if not self.isEmb:
+          self.out.puweight[0]           = self.puTool.getWeight(event.Pileup_nTrueInt)
+          self.out.btagweight[0]         = self.btagTool.getWeight(event,jetIds)
+          self.out.btagweight_loose[0]   = self.btagTool_loose.getWeight(event,jetIds)
+          self.out.btagweight50[0]       = self.btagTool.getWeight(event,jetIds50)
+          self.out.btagweight50_loose[0] = self.btagTool_loose.getWeight(event,jetIds50)
+          
     
     def fillMETAndDiLeptonBranches(self, event, tau1, tau2, met, met_vars):
         """Help function to compute variable related to the MET and visible tau candidates,
