@@ -61,7 +61,7 @@ def setBranchStatuses(tree,otherbranches=[ ]):
 def getVLooseTauIso(year):
   """Return a method to check whether event passes the VLoose working
   point of all available tau IDs. (For tau ID measurement.)"""
-  return lambda e,i: ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0 or ord(e.Tau_idDeepTau2017v2VSjet[i])>0
+  return lambda e,i: ord(e.Tau_idMVAnewDM2017v2[i])>0 or ord(e.Tau_idMVAoldDM2017v2[i])>0 or ord(e.Tau_idDeepTau2017v2p1VSjet[i])>0
   #ord(e.Tau_idMVAoldDM[i])>0 or ord(e.Tau_idMVAoldDM2017v1[i])>0
   
 
