@@ -6,7 +6,6 @@ from postprocessors import modulepath, ensureDirectory
 from postprocessors.config_jme import getEra
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from argparse import ArgumentParser
-from postprocessors import ensureDirectory
 
 infiles = "root://cms-xrd-global.cern.ch//store/user/arizzi/Nano01Fall17/DY1JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAOD-94X-Nano01Fall17/180205_160029/0000/test94X_NANO_70.root"
 

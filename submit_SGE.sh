@@ -20,16 +20,20 @@
 ## set cwd to submission host pwd
 #$ -cwd
 
+
 echo job start at `date`
 echo "Running job on machine $((uname -a))"
 
-export JOB_ID
-export TASKID=$((SGE_TASK_ID))
-JOBLIST=$1
-echo "\$JOB_ID=$JOB_ID"
+# export TASKID=$((SGE_TASK_ID))
+TASKID=$(($1+1))
+JOBLIST=$2
 echo "\$SGE_TASK_ID=$TASKID"
 echo "\$HOSTNAME=$HOSTNAME"
 echo "\$JOBLIST=$JOBLIST"
+
+echo "export PYTHONPATH=$PYTHONPATH:${CMSSW_BASE}/src/NanoTreeProducer"
+export PYTHONPATH=$PYTHONPATH:${CMSSW_BASE}/src/NanoTreeProducer
+echo "PYTHONPATH=$PYTHONPATH"
 TASKCMD=$(cat $JOBLIST | sed "${TASKID}q;d")
 
 #eval $(scramv1 runtime -sh);
@@ -37,5 +41,6 @@ pwd
 echo "Going to execute"
 echo "  $TASKCMD"
 eval $TASKCMD;
+ls -lrth
 
 echo "Job complete at $((date))";

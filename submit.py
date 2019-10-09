@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
-import os, re, glob
+import os, re, glob, time
 from commands import getoutput
 from fnmatch import fnmatch
 import itertools
@@ -48,6 +48,10 @@ if __name__ == "__main__":
                                            help="submit only one job per sample as a test run" )
   parser.add_argument('-v', '--verbose',   dest='verbose', default=False, action='store_true',
                                            help="set verbose" )
+  parser.add_argument('-w', '--workdir',   dest='workdir', default=os.getcwd(),
+                                           help="set working directory")
+  parser.add_argument('--wall-time',       dest='wall_time', default=10800,
+                                           help="Wall time of jobs.")
   args = parser.parse_args()
   checkFiles.args = args
 else:
@@ -214,7 +218,7 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
     jtf      = kwargs.get('jtf',      1.)
     Zmass    = kwargs.get('Zmass',    False)
     prefetch = kwargs.get('prefetch', False)
-    cmd = 'python postprocessors/job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
+    cmd = 'python ${CMSSW_BASE}/src/NanoTreeProducer/postprocessors/job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
     if tes!=1.:
       cmd += " --tes %.3f"%(tes)
     if ltf!=1.:
@@ -249,7 +253,35 @@ def submitJobs(jobName, jobList, nchunks, outdir, batchscript):
     if not args.mock:
       os.system(subCmd)
     return 1
-    
+
+
+def submitJobs_gc(jobName, jobList, nchunks,
+                  outdir, batchscript, workdir,
+                  year, channel):
+    """Submit jobs with grid-control."""
+    if args.verbose:
+        print 'Reading joblist...'
+        print jobList
+    # Read in configuration template.
+    gc_template_path = os.path.join(os.environ["CMSSW_BASE"], "src/NanoTreeProducer/grid_control_template.conf")
+    gc_file = open(gc_template_path, "r")
+    gc_conf_temp = gc_file.read()
+    # Replace configuration keys by config values.
+    gc_date_tag = "{}_{}".format("tauid_nano_analysis", time.strftime("%Y-%m-%d_%H-%M-%S"))
+    extra_se_info = "se output files = *.root\nse output pattern = @XBASE@.@XEXT@"
+    gc_storage_dir = "srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=/pnfs/gridka.de/cms/disk-only/" + "store/user/{}/gc_storage/{}/{}_{}_{}".format(os.environ["USER"],gc_date_tag,jobName, year, channel)
+    script_arg = "$GC_JOB_ID {}".format("${CMSSW_BASE}/src/NanoTreeProducer/"+jobList)
+    taskdir = os.path.join(workdir, "_".join([jobName, str(year), channel]))
+    gc_conf_temp = gc_conf_temp.format(
+            WALLTIME=time.strftime("%H:%M:%S", time.gmtime(args.wall_time)), NJOBS=nchunks, STORAGE_DIR=gc_storage_dir,
+            EXTRA_SE_INFO=extra_se_info, EXECUTABLE=batchscript,
+            TASKDIR=taskdir,SCRIPT_ARGS=script_arg)
+    # Write config file back to workdir.
+    if not os.path.exists(os.path.join(workdir, "gc_conf")):
+        os.makedirs(os.path.join(workdir, "gc_conf"))
+    with open(os.path.join(workdir, "gc_conf", "{}_{}_{}.conf".format(jobName, str(year), channel)), "w") as output:
+        output.write(gc_conf_temp)
+    return
 
 def main():
     
@@ -292,6 +324,7 @@ def main():
       #print directories
       blacklist = getBlackList("filelist/blacklist.txt")
       
+      tasks = []
       for channel in channels:
         print header(year,channel,tag)
         
@@ -343,7 +376,8 @@ def main():
             jobName      = getSampleShortName(directory)[1]
             jobName     += "_%s_%s"%(channel,year)+tag
             jobs         = open(jobList,'w')
-            outdir       = ensureDirectory("output_%s/%s"%(year,sample))
+            # outdir       = ensureDirectory("output_%s/%s"%(year,sample))
+            outdir = "$PWD"
             ensureDirectory(outdir+'/logs/')
             
             # NFILESPERJOBS
@@ -371,7 +405,7 @@ def main():
             
             # SUBMIT
             if args.force:
-              submitJobs(jobName,jobList,nChunks,outdir,batchscript)
+              submitJobs_gc(jobName,jobList,nChunks,outdir,batchscript, args.workdir, year, channel)
             else:
               submit = raw_input("Do you also want to submit %d jobs to the batch system? [y/n] "%(nChunks))
               if submit.lower()=='force':
@@ -380,10 +414,23 @@ def main():
               if submit.lower()=='quit':
                 exit(0)
               if submit.lower()=='y':
-                submitJobs(jobName,jobList,nChunks,outdir,batchscript)
+                submitJobs_gc(jobName,jobList,nChunks,outdir,batchscript, args.workdir, year, channel)
               else:
                 print "Not submitting jobs"
             print
+            tasks.append("_".join([jobName, str(year), channel]))
+    # Assemble while script to start every gc task.
+    while_temp = open(os.environ["CMSSW_BASE"]+"/src/NanoTreeProducer/while_temp.sh", "r").read()
+    task_list = ["go.py {}gc_conf/{}.conf".format(args.workdir,task) for task in tasks]
+    print task_list
+    print while_temp
+    print "\n\t".join(task_list)
+    while_temp = while_temp.format(TASK_COMMANDS="\n".join(task_list))
+    print while_temp
+    with open(os.path.join(args.workdir, "while.sh"), "w") as out:
+        out.write(while_temp)
+    print 'Submit samples with: "bash {}"'.format(os.path.join(args.workdir, "while.sh"))
+
 
 
 
