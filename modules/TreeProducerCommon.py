@@ -97,6 +97,8 @@ class TreeProducerCommon(object):
           self.addBranch('btagweight_loose',      'f', 1.)
           self.addBranch('btagweight50',          'f', 1.)
           self.addBranch('btagweight50_loose',    'f', 1.)
+        if self._isEmb:
+          self.addBranch('embselweight',          'f', 1.)
         
         
         ############

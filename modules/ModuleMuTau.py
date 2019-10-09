@@ -2,6 +2,7 @@ import sys
 from ModuleCommon import *
 from TreeProducerMuTau import *
 from corrections.MuonSFs import *
+from corrections.EmbeddingSFs import *
 from corrections.LeptonTauFakeSFs import *
 
 
@@ -25,11 +26,15 @@ class MuTauProducer(CommonProducer):
         self.tauCutPt    = 20
         
         # CORRECTIONS
-        if not self.isData:
+        if self.isEmb:
+          self.muSFs     = EmbeddingSFs(year=self.year)
+          self.ltfSFs    = LeptonTauFakeSFs('tight','vloose',year=self.year)
+        elif not self.isData:
           self.muSFs     = MuonSFs(year=self.year)
           if not self.isEmb:
             self.puTool    = PileupWeightTool(year=self.year)
           self.ltfSFs    = LeptonTauFakeSFs('tight','vloose',year=self.year)
+        
         
         # CUTFLOW
         self.Nocut = 0
@@ -269,13 +274,18 @@ class MuTauProducer(CommonProducer):
             if self.vlooseIso(event,ltau.id2) and event.Muon_pfRelIso04_all[ltau.id1]<0.50:
               self.btagTool.fillEfficiencies(event,jetIds)
               self.btagTool_loose.fillEfficiencies(event,jetIds)
-          self.out.trigweight[0]    = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.idisoweight_1[0] = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
-          self.out.idisoweight_2[0] = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
+            self.out.trigweight[0]    = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
+            self.out.idisoweight_1[0] = self.muSFs.getIdIsoSF(self.out.pt_1[0],self.out.eta_1[0])
+            self.out.idisoweight_2[0] = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
+          else:
+            self.out.trigweight[0]    = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
+            self.out.idisoweight_1[0] = self.muSFs.getIdSF(self.out.pt_1[0],self.out.eta_1[0]) * self.muSFs.getIsoSF(self.out.pt_1[0],self.out.eta_1[0])
+            self.out.embselweight[0] = self.muSFs.getEmbSelSF(self.out.pt_1[0],self.out.eta_1[0])
+            self.out.idisoweight_2[0] = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
           if not self.isEmb:
             self.out.weight[0]        = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
           else:
-            self.out.weight[0]        = self.out.genweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
+            self.out.weight[0]        = self.out.genweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]*self.out.embselweight[0]
         
         # MET & DILEPTON VARIABLES
         self.fillMETAndDiLeptonBranches(event,muon,tau,met,met_vars)

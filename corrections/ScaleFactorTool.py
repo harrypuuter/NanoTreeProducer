@@ -83,7 +83,39 @@ class ScaleFactorHTT(ScaleFactor):
         #print "ScaleFactorHTT(%s).getSF: pt = %6.2f, eta = %6.3f, data = %6.3f, mc = %6.3f, sf = %6.3f"%(self.name,pt,eta,data,mc,sf)
         return sf
     
+class ScaleFactorEmb(ScaleFactor):
+    
+    def __init__(self, filename, type):
+        print '>>> ScaleFactor.init(name="%s" ,type="%s")'%(filename,type)
+        self.type      = type
+        self.filename  = filename
+        if type != 'single':
+          self.datafile  = ensureTFile(filename)
+          self.embfile   = ensureTFile(filename.replace('Data','Embedding'))
+          self.datahist  = self.datafile.Get('{}_pt_eta_bins'.format(type))
+          self.embhist  = self.embfile.Get('{}_pt_eta_bins'.format(type))
+        else:
+          # in this case, we only read out the efficiency of one single histogram 
+          self.datafile = ensureTFile(filename)
+          self.datahist  = self.datafile.Get('ID_pt_eta_bins')
 
+    
+    def getSF(self, pt, eta):
+      """Get SF for a given pT, eta."""
+      abseta = abs(eta)
+      data = self.datahist.GetBinContent(self.datahist.FindBin(pt,abseta))
+      emb = self.embhist.GetBinContent(self.embhist.FindBin(pt,abseta))
+      sf = data/emb
+      #print "ScaleFactorEmb.getSF: pt = %6.2f, eta = %6.3f, data = %6.3f, emb = %6.3f, sf = %6.3f"%(pt,eta,data,emb,sf)
+      return sf
+    
+    def getSelectionSF(self, pt, eta):
+      """ Get Selection SF needed for Embedding"""
+      abseta = abs(eta)
+      data = self.datahist.GetBinContent(self.datahist.FindBin(pt,abseta))
+      sf = 1/data
+      #print "ScaleFactorEmb.getSF: pt = %6.2f, eta = %6.3f, data = %6.3f, sf = %6.3f"%(pt,eta,data,sf)
+      return sf
 
 class ScaleFactorProduct:
     
