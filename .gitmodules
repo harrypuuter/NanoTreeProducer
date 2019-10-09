@@ -1,3 +1,6 @@
 [submodule "corrections/leptonEfficiencies/HTT"]
 	path = corrections/leptonEfficiencies/HTT
 	url = https://github.com/CMS-HTT/LeptonEfficiencies
+[submodule "corrections/leptonEfficiencies/kit"]
+	path = corrections/leptonEfficiencies/kit
+	url = git@github.com:KIT-CMS/LegacyCorrectionsWorkspace.git
