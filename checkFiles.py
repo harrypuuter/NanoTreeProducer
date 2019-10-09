@@ -135,6 +135,7 @@ sample_dict = [
    ('SingleElectron', "SingleElectron_Run2017D",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_D"   ),
    ('SingleElectron', "SingleElectron_Run2017E",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_E"   ),
    ('SingleElectron', "SingleElectron_Run2017F",          "SingleElectron/ytakahas-Nano_SingleElectron_20180507_F"   ),
+   ('MuTauEmb',       "Embedding_MuTau_$RUN",             "Embedding$RUN"                                            ),
    ('EGamma',         "EGamma_$RUN",                      "EGamma/$RUN"                                              ),
    ('LQ',             "SLQ_pair_M$MASS",                  "LegacyRun2_*_LQ_Pair_5f_Madgraph_LO_M$MASS"               ),
    ('LQ',             "SLQ_single_M$MASS",                "LegacyRun2_*_LQ_Single_5f_Madgraph_LO_M$MASS"             ),
