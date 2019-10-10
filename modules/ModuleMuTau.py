@@ -257,7 +257,19 @@ class MuTauProducer(CommonProducer):
           self.out.genvistaupt_2[0]  = genpt
           self.out.genvistaueta_2[0] = geneta
           self.out.genvistauphi_2[0] = genphi
-        
+
+          # for embedded selection trigger, the generator pt and eta are needed, 
+          # using the infomation, that in embedding a 15 and a -15 genparticle are always present
+          if self.isEmb:
+            for particle in xrange(event.nGenPart):
+              if event.GenPart_pdgId[particle] == 15:
+                gentaupt_1 = event.GenPart_pt[particle]
+                gentaueta_1 = event.GenPart_eta[particle]
+              elif event.GenPart_pdgId[particle] == -15:
+                gentaupt_2 = event.GenPart_pt[particle]
+                gentaueta_2 = event.GenPart_eta[particle]
+            #print "Gen", gentaupt_1, gentaueta_1, gentaupt_2, gentaueta_2
+            #print "Reco", event.Muon_pt[ltau.id1],  event.Muon_eta[ltau.id1], event.Tau_pt[ltau.id2], event.Tau_eta[ltau.id2]
         
         # JETS
         jetIds, jetIds50, met, njets_var, met_vars = self.fillJetBranches(event,muon,tau)
@@ -280,7 +292,7 @@ class MuTauProducer(CommonProducer):
           else:
             self.out.trigweight[0]    = self.muSFs.getTriggerSF(self.out.pt_1[0],self.out.eta_1[0])
             self.out.idisoweight_1[0] = self.muSFs.getIdSF(self.out.pt_1[0],self.out.eta_1[0]) * self.muSFs.getIsoSF(self.out.pt_1[0],self.out.eta_1[0])
-            self.out.embselweight[0] = self.muSFs.getEmbSelSF(self.out.pt_1[0],self.out.eta_1[0])
+            self.out.embselweight[0] = self.muSFs.getEmbSelSF(gentaupt_1,gentaueta_1,gentaupt_2,gentaueta_2)
             self.out.idisoweight_2[0] = self.ltfSFs.getSF(self.out.genPartFlav_2[0],self.out.eta_2[0])
           if not self.isEmb:
             self.out.weight[0]        = self.out.genweight[0]*self.out.puweight[0]*self.out.trigweight[0]*self.out.idisoweight_1[0]*self.out.idisoweight_2[0]
