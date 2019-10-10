@@ -2,6 +2,7 @@
 # Authors: Yuta Takahashi & Izaak Neutelings (2018)
 # Description: This postprocessor is meant for actual processing of samples for analysis
 import sys
+import os
 from postprocessors import modulepath, ensureDirectory
 from postprocessors.config_jme import getEra
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
@@ -53,25 +54,20 @@ kwargs        = {
 if isinstance(infiles,str):
   infiles = infiles.split(',')
 
-if dataType==None:
-  dataType = 'mc'
-if 'SingleMuon' in infiles[0] or "/Tau/" in infiles[0] or 'SingleElectron' in infiles[0] or 'EGamma' in infiles[0]:
-  dataType = 'data'
-
 json = None
 if dataType=='data' or dataType=='emb':
   if era=="" and infiles:
     kwargs['era'] = getEra(infiles[0],year)
-  jsonpath = '/portal/ekpbms1/home/sbrommer/nanoaod/CMSSW_10_3_3/src/NanoTreeProducer/json/'
+  jsonpath = os.environ["CMSSW_BASE"] + '/src/NanoTreeProducer/json/'
   if year==2016:
     json = jsonpath+'Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Final/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt'
   elif year==2017:
-    json = jsonpath+'Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt'
+    json = jsonpath+'Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Final/Cert_294927-306462_13TeV_PromptReco_Collisions17_JSON.txt'
   else:
-    json = jsonpath+'Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
+    json = jsonpath+'Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt'
     #json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
 
 tag = args.tag

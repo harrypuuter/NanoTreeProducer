@@ -52,7 +52,7 @@ class CommonProducer(Module):
         # CORRECTIONS
         self.jeclabels    = [ ]
         self.jecMETlabels = [ ]
-        if not any(True for x in [self.isData, self.isEmb]):
+        if not any(x for x in [self.isData, self.isEmb]):
           self.puTool         = PileupWeightTool(year=self.year)
           self.btagTool       = BTagWeightTool('DeepCSV','medium',channel=channel,year=self.year,maxeta=self.bjetCutEta)
           self.btagTool_loose = BTagWeightTool('DeepCSV','loose',channel=channel,year=self.year,maxeta=self.bjetCutEta)

@@ -218,7 +218,13 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
     jtf      = kwargs.get('jtf',      1.)
     Zmass    = kwargs.get('Zmass',    False)
     prefetch = kwargs.get('prefetch', False)
-    cmd = 'python ${CMSSW_BASE}/src/NanoTreeProducer/postprocessors/job.py -i %s -o %s -N %s -n %i -c %s -y %s'%(','.join(infiles),outdir,name,nchunks,channel,year)
+    if "Embedding" in name:
+        filetype = "emb"
+    elif "SingleMuon" in name or "SingleElectron" in name or "EGamma" in name or "Tau__" in name:
+        filetype = "data"
+    else:
+        filetype = "mc"
+    cmd = 'python ${CMSSW_BASE}/src/NanoTreeProducer/postprocessors/job.py -i %s -o %s -N %s -n %i -c %s -y %s -t %s'%(','.join(infiles),outdir,name,nchunks,channel,year, filetype)
     if tes!=1.:
       cmd += " --tes %.3f"%(tes)
     if ltf!=1.:
@@ -231,7 +237,6 @@ def createJobs(jobsfile, infiles, outdir, name, nchunks, channel, year, **kwargs
       cmd += " -p"
     if tag:
       cmd += " -l %s"%tag
-    cmd += " -t %s"%args.type
     if args.verbose:
       print cmd
     jobsfile.write(cmd+'\n')
@@ -422,11 +427,7 @@ def main():
     # Assemble while script to start every gc task.
     while_temp = open(os.environ["CMSSW_BASE"]+"/src/NanoTreeProducer/while_temp.sh", "r").read()
     task_list = ["go.py {}gc_conf/{}.conf".format(args.workdir,task) for task in tasks]
-    print task_list
-    print while_temp
-    print "\n\t".join(task_list)
     while_temp = while_temp.format(TASK_COMMANDS="\n".join(task_list))
-    print while_temp
     with open(os.path.join(args.workdir, "while.sh"), "w") as out:
         out.write(while_temp)
     print 'Submit samples with: "bash {}"'.format(os.path.join(args.workdir, "while.sh"))
