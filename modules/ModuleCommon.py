@@ -95,7 +95,7 @@ class CommonProducer(Module):
         
     
     def endJob(self):
-        if not any(True for x in [self.isData, self.isEmb]):
+        if not any(x for x in [self.isData, self.isEmb]):
           self.btagTool.setDirectory(self.out.outputfile,'btag')
           self.btagTool_loose.setDirectory(self.out.outputfile,'btag')
           if self.doJEC:
@@ -130,7 +130,7 @@ class CommonProducer(Module):
         self.out.npvsGood[0]        = event.PV_npvsGood
         self.out.metfilter[0]       = self.filter(event)
         
-        if not any(True for x in [self.isData, self.isEmb]):
+        if not any(x for x in [self.isData, self.isEmb]):
           ###self.out.ngentauhads[0]   = ngentauhads
           ###self.out.ngentaus[0]      = ngentaus
           self.out.genmet[0]        = event.GenMET_pt
@@ -160,7 +160,7 @@ class CommonProducer(Module):
           if self.isData:
             jetpt_nom, met_nom = self.jmeTool.correctJetMET_Data(event) # returns a list of jet pT and a MET TLorenzVector
             met_vars = { }
-          if self.isEmb:
+          elif self.isEmb:
             jetpt_nom, met_nom = self.jmeTool.correctJetMET_Data(event) # returns a list of jet pT and a MET TLorenzVector
             met_vars = { }
           else:
