@@ -85,7 +85,7 @@ class ScaleFactorHTT(ScaleFactor):
     
 class ScaleFactorEmb(ScaleFactor):
     
-    def __init__(self, filename_1, filename_2, type):
+    def __init__(self, filename_1, filename_2, type, year):
         print '>>> ScaleFactor.init(file_1="%s", file_2="%s" ,type="%s")'%(filename_1, filename_2,type)
         self.type      = type
         self.filename_1  = filename_1
@@ -97,9 +97,13 @@ class ScaleFactorEmb(ScaleFactor):
           self.embhist  = self.embfile.Get('{}_pt_eta_bins'.format(type))
         else:
           self.file_1 = ensureTFile(filename_1)
-          self.file_1_hist  = self.file_1.Get('Mu8_pt_eta_bins')
           self.file_2 = ensureTFile(filename_2)
-          self.file_2_hist  = self.file_2.Get('Mu17_pt_eta_bins')
+          if year == 2018:
+            self.file_1_hist  = self.file_1.Get('Mu8_pt_eta_bins')
+            self.file_2_hist  = self.file_2.Get('Mu17_pt_eta_bins')
+          elif year == 2017:
+            self.file_1_hist  = self.file_1.Get('data_trg_eff')
+            self.file_2_hist  = self.file_2.Get('data_trg_eff')
 
     
     def getSF(self, pt, eta):

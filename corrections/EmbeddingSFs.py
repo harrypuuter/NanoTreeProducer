@@ -30,41 +30,41 @@ class EmbeddingSFs:
             self.sftool_id = ScaleFactorEmb(
                 pathEmb + "muon_TP_Data_2017_Fits_ID_pt_eta_bins.root",
                 pathEmb + "muon_TP_Embedding_2017_Fits_ID_pt_eta_bins.root",
-                'ID')  # MediumID,
+                'ID',2017)  # MediumID,
             self.sftool_iso = ScaleFactorEmb(
                 pathEmb + "muon_TP_Data_2017_Fits_Iso_pt_eta_bins.root",
                 pathEmb + "muon_TP_Embedding_2017_Fits_Iso_pt_eta_bins.root",
-                "Iso")  # isolation
+                "Iso",2017)  # isolation
             self.sftool_trig = ScaleFactorEmb(
                 pathEmb +
                 "muon_TP_Data_2017_Fits_Trg_IsoMu27_or_IsoMu24_pt_eta_bins.root",
                 pathEmb +
                 "muon_TP_Embedding_2017_Fits_Trg_IsoMu27_or_IsoMu24_pt_eta_bins.root",
-                'Trg_IsoMu27_or_IsoMu24')
+                'Trg_IsoMu27_or_IsoMu24',2017)
             self.sftool_seltrig = ScaleFactorEmb(
                 pathEmbSel + "Mu8/muon_SFs.root",
-                pathEmbSel + "Mu17/muon_SFs.root"
-                'selection')
+                pathEmbSel + "Mu17/muon_SFs.root",
+                'selection',2017)
         else:
             pathEmb = modulepath + "/leptonEfficiencies/kit/inputs/2018/KIT/v18_2/"
             pathEmbSel = modulepath + "/leptonEfficiencies/kit/inputs/2018/KIT/2018/"
             self.sftool_id = ScaleFactorEmb(
                 pathEmb + "muon_TP_Data_2018_Fits_ID_pt_eta_bins.root",
                 pathEmb + "muon_TP_Embedding_2018_Fits_ID_pt_eta_bins.root",
-                'ID')  # MediumID,
+                'ID',2018)  # MediumID,
             self.sftool_iso = ScaleFactorEmb(
                 pathEmb + "muon_TP_Data_2018_Fits_Iso_pt_eta_bins.root",
                 pathEmb + "muon_TP_Embedding_2018_Fits_Iso_pt_eta_bins.root",
-                "Iso")  # isolation
+                "Iso",2018)  # isolation
             self.sftool_trig = ScaleFactorEmb(
                 pathEmb +
                 "muon_TP_Data_2018_Fits_Trg_IsoMu27_or_IsoMu24_pt_eta_bins.root",
                 pathEmb +
                 "muon_TP_Embedding_2018_Fits_Trg_IsoMu27_or_IsoMu24_pt_eta_bins.root",
-                'Trg_IsoMu27_or_IsoMu24')
+                'Trg_IsoMu27_or_IsoMu24',2018)
             self.sftool_seltrig = ScaleFactorEmb(
                 pathEmbSel + "Mu8/muon_SFs.root",
-                pathEmbSel + "Mu17/muon_SFs.root", 'selection')
+                pathEmbSel + "Mu17/muon_SFs.root", 'selection',2018)
 
     def getTriggerSF(self, pt, eta):
         """Get SF for single muon trigger."""
