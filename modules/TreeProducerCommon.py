@@ -74,7 +74,7 @@ class TreeProducerCommon(object):
         self.addBranch('npvsGood',                'i')
         self.addBranch('metfilter',               '?')
         
-        if not any(True for x in [self._isData, self._isEmb]):
+        if not any(x for x in [self._isData, self._isEmb]):
           self.addBranch('nPU',                   'i', -1)
           self.addBranch('nTrueInt',              'i', -1)
           self.addBranch('LHE_Njets',             'i', -1)
@@ -148,7 +148,7 @@ class TreeProducerCommon(object):
         ###self.addBranch('metcovXY',                'f')
         ###self.addBranch('metcovYY',                'f')
         ###self.addBranch('fixedGridRhoFastjetAll',  'f')
-        if not any(True for x in [self._isData, self._isEmb]):
+        if not any(x for x in [self._isData, self._isEmb]):
           self.addBranch('genmet',                'f', -1)
           self.addBranch('genmetphi',             'f', -9)
         
