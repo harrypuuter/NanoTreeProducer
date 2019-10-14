@@ -295,7 +295,7 @@ class CommonProducer(Module):
     def applyCommonCorrections(self, event, jetIds, jetIds50, met, njets_var, met_vars):
         """Help function to apply common corrections, and fill weight branches."""
         
-        if self.doRecoil:
+        if self.doRecoil and not self.isEmb:
           boson, boson_vis             = getBoson(event)
           self.recoilTool.CorrectPFMETByMeanResolution(met,boson,boson_vis,len(jetIds))
           self.out.m_genboson[0]       = boson.M()
@@ -304,16 +304,16 @@ class CommonProducer(Module):
           for label in self.jecMETlabels:
             self.recoilTool.CorrectPFMETByMeanResolution(met_vars[label],boson,boson_vis,njets_var.get(label,len(jetIds)))
           
-          if self.doZpt:
+          if self.doZpt and not self.isEmb:
             self.out.zptweight[0]      = self.zptTool.getZptWeight(boson.Pt(),boson.M())
         
-        elif self.doZpt:
+        elif self.doZpt and not self.isEmb:
           zboson = getZBoson(event)
           self.out.m_genboson[0]       = zboson.M()
           self.out.pt_genboson[0]      = zboson.Pt()
           self.out.zptweight[0]        = self.zptTool.getZptWeight(zboson.Pt(),zboson.M())
         
-        elif self.doTTpt:
+        elif self.doTTpt and not self.isEmb:
           toppt1, toppt2               = getTTPt(event)
           self.out.ttptweight[0]       = getTTptWeight(toppt1,toppt2)
         

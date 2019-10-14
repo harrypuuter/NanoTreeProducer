@@ -14,16 +14,26 @@ class EmbeddingSFs:
             2016, 2017, 2018
         ], "EmbeddingSFs: You must choose a year from: 2016, 2017, or 2018."
         if year == 2016:
-            pathEmb = modulepath + "/leptonEfficiencies/kit/inputs/2018/KIT/v18_2/"
+            pathEmb = modulepath + "/leptonEfficiencies/kit/inputs/2016/KIT/legacy_16_v1/"
+            pathEmbSel = modulepath + "/leptonEfficiencies/kit/inputs/2016/KIT/embeddingselection/"
+            self.sftool_id = ScaleFactorEmb(
+                pathEmb + "muon_TP_Data_2016_Fits_ID_pt_eta_bins.root",
+                pathEmb + "muon_TP_Embedding_2016_Fits_ID_pt_eta_bins.root",
+                'ID',2016)  # MediumID,
+            self.sftool_iso = ScaleFactorEmb(
+                pathEmb + "muon_TP_Data_2016_Fits_Iso_pt_eta_bins.root",
+                pathEmb + "muon_TP_Embedding_2016_Fits_Iso_pt_eta_bins.root",
+                "Iso",2016)  # isolation
             self.sftool_trig = ScaleFactorEmb(
-                pathEmb + "Muon_Run2016_legacy_IsoMu22.root", 'ZMass',
-                'mu_trig')
-            self.sftool_idiso = ScaleFactorEmb(
-                pathEmb + "Muon_Run2016_legacy_IdIso.root", 'ZMass',
-                'mu_idiso')
+                pathEmb +
+                "muon_TP_Data_2016_Fits_Trg_pt_eta_bins.root",
+                pathEmb +
+                "muon_TP_Embedding_2016_Fits_Trg_pt_eta_bins.root",
+                'Trg',2016)
             self.sftool_seltrig = ScaleFactorEmb(
-                pathEmb + "Muon_Run2016_DoubleMuon.root", 'ZMass',
-                'emb_sel_trig')
+                pathEmbSel + "embeddingselection_TP_Data_2016_Fits_Trg8_pt_eta_bins.root",
+                pathEmbSel + "embeddingselection_TP_Data_2016_Fits_Trg17_pt_eta_bins.root",
+                'selection',2016)
         elif year == 2017:
             pathEmb = modulepath + "/leptonEfficiencies/kit/inputs/2017/KIT/legacy/"
             pathEmbSel = modulepath + "/leptonEfficiencies/kit/inputs/2017/ICSF/2017/"

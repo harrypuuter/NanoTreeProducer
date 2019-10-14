@@ -104,6 +104,9 @@ class ScaleFactorEmb(ScaleFactor):
           elif year == 2017:
             self.file_1_hist  = self.file_1.Get('data_trg_eff')
             self.file_2_hist  = self.file_2.Get('data_trg_eff')
+          elif year == 2016:
+            self.file_1_hist  = self.file_1.Get('Trg8_pt_eta_bins')
+            self.file_2_hist  = self.file_2.Get('Trg17_pt_eta_bins')
 
     
     def getSF(self, pt, eta):
@@ -121,13 +124,13 @@ class ScaleFactorEmb(ScaleFactor):
       elif "2017" in self.filename_1:
         scale = 0.9959
       elif "2016" in self.filename_1:
-        scale = -999
+        scale = 1.00
       mu8_1 = self.file_1_hist.GetBinContent(self.file_1_hist.FindBin(pt_1,min(eta_1,2.399)))
       mu8_2 = self.file_1_hist.GetBinContent(self.file_1_hist.FindBin(pt_1,min(eta_2,2.399)))
       mu17_1 = self.file_2_hist.GetBinContent(self.file_2_hist.FindBin(pt_1,min(eta_1,2.399)))
       mu17_2 = self.file_2_hist.GetBinContent(self.file_2_hist.FindBin(pt_1,min(eta_2,2.399)))
       
-      data = scale*(mu8_1*mu17_2+mu8_1*mu17_1-mu8_2*mu17_2)
+      data = scale*(mu8_1*mu17_2+mu8_2*mu17_1-mu17_1*mu17_2)
       sf = 1./data
       if sf < 0:
         print pt_1, eta_1, pt_2, eta_2
