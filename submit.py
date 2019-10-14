@@ -167,7 +167,7 @@ def getFileListDAS(dataset,blacklist=[ ]):
     if 'USER' in dataset:
         instance = 'prod/phys03'
     #cmd='das_client --limit=0 --query="file dataset=%s instance=%s"'%(dataset,instance)
-    cmd = 'das_client --limit=0 --query="file dataset=%s instance=%s status=*"'%(dataset,instance)
+    cmd = 'dasgoclient --limit=0 --query="file dataset=%s instance=%s status=*"'%(dataset,instance)
     if args.verbose:
       print "Executing ",cmd
     cmd_out  = getoutput( cmd )
