@@ -272,7 +272,7 @@ def submitJobs_gc(jobName, jobList, nchunks,
     gc_file = open(gc_template_path, "r")
     gc_conf_temp = gc_file.read()
     # Replace configuration keys by config values.
-    gc_date_tag = "{}_{}".format("tauid_nano_analysis", time.strftime("%Y-%m-%d_%H-%M-%S"))
+    gc_date_tag = "{}_{}".format("tauid_nano_analysis", time.strftime("%Y-%m-%d_%H-%M"))
     extra_se_info = "se output files = *.root\nse output pattern = @XBASE@.@XEXT@"
     gc_storage_dir = "srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=/pnfs/gridka.de/cms/disk-only/" + "store/user/{}/gc_storage/{}/{}_{}_{}".format(os.environ["USER"],gc_date_tag,jobName, year, channel)
     script_arg = "$GC_JOB_ID {}".format("${CMSSW_BASE}/src/NanoTreeProducer/"+jobList)
